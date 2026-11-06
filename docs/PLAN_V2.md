@@ -29,6 +29,9 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
   appliqué à la palette) ; six pays et huit icônes de jeu de plus ; arme déposée sur un avion chargée avec le scénario.
 - **v0.8.1** : fond de carte par défaut sur les photographies IGN (Géoplateforme, sans clé) au lieu de CARTO, dont les
   tuiles exigent désormais une clé.
+- **v0.9.0** : essaim réactif (jalon 16, MODELE § 22) : l'essaim apprend ses pertes par son réseau maillé, se
+  réaffecte vers les cibles qui laissent passer, contourne les foyers défendus et esquive les tirs air ; désactivé par
+  défaut (contribution de cagoffin, PR #3).
 
 ## Arborescence cible
 ```
