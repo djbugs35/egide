@@ -3,8 +3,9 @@
 Simulation de défense du territoire face à un essaim de drones rapides, jouable comme un jeu de stratégie vu de
 dessus et assez rigoureuse pour en prouver les résultats. Vous déployez radars, centres de commandement et de contrôle
 (C2), batteries sol-air, avions et drones défensifs sur la vraie Terre et son relief ; vous les reliez par radio,
-satellite, fil ou optique ; l'essaim attaque selon la tactique choisie ou le plan de vol que vous dessinez, et Égide
-compte les frappes, raconte qui a vu quoi, et dit pourquoi chaque unité a agi.
+satellite, fil ou optique ; l'essaim attaque selon la tactique choisie ou le plan de vol que vous dessinez, et peut
+**réagir** : il apprend de ses pertes, se reporte sur les cibles qui cèdent, contourne vos sites et esquive vos tirs.
+Égide compte les frappes, raconte qui a vu quoi, et dit pourquoi chaque unité a agi.
 
 ![L'interface en lecture : attaque « fourmi », les avions convergent sur l'essaim, le bilan évolue en direct](docs/images/interface.gif)
 
@@ -50,7 +51,7 @@ tourne quand même (panneau Calques, « Scope seul »).
    (dômes bleus) convergent, le bilan en haut à droite compte drones en vol, abattus en l'air, abattus au sol et
    frappes. La frise et les vitesses ×0,25 à ×16 sont en bas ; ← et → sautent de 30 s.
 2. **Changer de tactique** : en haut, « Directs », « Dispersés », « Fourmi » ou « Plan de vol ». Le raid se recalcule
-   aussitôt ; « Autre raid » tire une autre graine.
+   aussitôt ; « Autre raid » tire une autre graine. Cochez « Réactif » (R) pour que l'essaim manœuvre contre vous.
 3. **Demander pourquoi** : cliquez un avion, un drone, un radar ou un site. L'inspecteur, à droite, dit pourquoi l'avion
    a été envoyé là, quels tirs le drone a subis, ce que le radar voit.
 4. **Déployer** : « Éditer » (E). La palette du catalogue s'ouvre à gauche ; cliquez « Radar de veille longue
@@ -108,6 +109,7 @@ ni ne s'édite.
 | Espace | Lire / pause | ← → | Reculer / avancer de 30 s |
 | 1 à 7 | Ouvrir un panneau | Échap | Fermer le panneau ou l'inspecteur |
 | E | Éditer | V | Vue du CDC |
+| R | Essaim réactif ou non (hors édition) | | |
 | S, C, R, K, L, P, Z | Outils Sélection, Cible, Radar, CDC, Liaison, Plan de vol, Zone (en édition) | Suppr | Effacer la sélection (en édition) ou la mettre hors service (en plein raid) |
 | X | Gomme : effacer l'unité cliquée | Maj+clic | Pendant un dépôt : effacer l'unité visée (curseur rouge) |
 | Ctrl+1 à 9 | Mémoriser la sélection comme groupe | 1 à 9 | Rappeler le groupe (en édition) |
@@ -116,7 +118,7 @@ ni ne s'édite.
 
 ## 4 · Jouer un raid
 
-### Trois tactiques adverses, plus la vôtre
+### Trois tactiques adverses, plus la vôtre, et un essaim qui réagit
 
 <table>
 <tr>
@@ -133,7 +135,42 @@ ni ne s'édite.
 <tr>
 <td colspan="2"><b>Dispersés</b> : chaque drone vient seul, de n'importe quel cap, départs étalés. La plus facile à défendre : les avions trouvent des cibles partout. La quatrième tactique, <b>Plan de vol</b>, suit l'itinéraire que vous dessinez (outil P de l'éditeur) ; le panneau Profil trace son altitude au-dessus du relief.</td>
 </tr>
+<tr>
+<td colspan="2" align="center"><img src="docs/images/reactif.gif" alt="Dispersés réactif, de 9:00 à 21:00 : les drones contournent les sites défendus et quittent C3 pour C9 et C10, le journal raconte chaque décision"></td>
+</tr>
+<tr>
+<td colspan="2"><b>Réactif</b>, ici sur les dispersés, de 9:00 à 21:00 : les drones contournent les sites où l'essaim a déjà perdu des siens, puis quittent C3, qui tue, pour C9 et C10, déjà frappées. Le journal, filtré sur « Réactions de l'essaim », raconte chaque décision. La case Réactif se combine à n'importe quelle tactique (voir ci-dessous).</td>
+</tr>
 </table>
+
+### Un essaim qui réagit
+
+Cochez **Réactif** à côté des tactiques : l'essaim cesse de voler droit et cherche à maximiser ses frappes. Il ne voit
+pas votre défense ; il apprend par ses pertes, que son réseau maillé fait connaître à tous les drones en 2 s.
+
+- **Il se reporte sur la brèche.** Un drone dont la cible tue ses semblables la quitte pour une cible déjà frappée, où
+  l'essaim perd moins de drones, si le détour reste court. Engagé à moins de 10 km de sa cible, il n'en change plus.
+- **Il contourne vos sites défendus.** Quand un site où l'essaim a perdu des drones est sur sa route, il passe à la
+  tangente, à bonne distance, sans allonger sa route de plus de 30 %.
+- **Il esquive vos tirs air.** Visé par une roquette, il manœuvre jusqu'à l'impact : le Pk du tir baisse de 30 %, au
+  prix d'une avance ralentie.
+
+Le tableau de bord compte réaffectations, détours et tirs esquivés ; le journal (famille « Réactions de l'essaim »)
+regroupe les décisions ; cliquez un drone : l'inspecteur dit **pourquoi il a changé de route**.
+
+![Raid dispersé réactif à 18:00 : le journal montre les détours et les reports de C3 vers C9 et C10 ; l'inspecteur explique les deux décisions du drone 27](docs/images/essaim_reactif_inspecteur.png)
+
+Même raid, même graine, avec et sans réaction (duel apparié sur 10 graines du scénario de référence, IC 95 %) :
+
+| Tactique | Frappes, essaim inerte | Avec réaction |
+|---|---|---|
+| Fourmi | 362 | **+147 ± 80** (+41 %) |
+| Directs | 486 | **+90 ± 68** (+18 %) |
+| Dispersés | 182 | **+115 ± 14** (+63 %) |
+
+Le dispersé, la tactique la plus facile à défendre, gagne le plus : ses départs étalés laissent aux derniers drones le
+temps d'apprendre des premiers. Les réglages (délai du réseau, rayon d'un site défendu, seuils, esquive) sont des
+clés `rouge.reaction_*` du scénario ; modèle et hypothèses : [docs/MODELE.md § 22](docs/MODELE.md).
 
 ### Régler le scénario
 
@@ -447,7 +484,7 @@ schemas/                                  schémas JSON des fichiers (générés
 
 - **Unités** : un fichier ne dit que ce qui change par rapport à son parent (`herite_de`) ; les valeurs s'écrivent
   dans les unités du métier (`vitesse_kmh`, `portee_km`, `acquisition_s`…) et sont converties en SI à la lecture.
-- **Algorithmes** : chaque décision (comportement, mouvement, détection, pistage, allocation, tir, tir sol) est un
+- **Algorithmes** : chaque décision (comportement, réaction, mouvement, détection, pistage, allocation, tir, tir sol) est un
   module interchangeable, choisi par une unité, un groupe, un centre ou le scénario. Il exporte sa fiche `meta` et les
   fonctions de son rôle, n'importe rien et reçoit géodésie et hasard à graine : il est pur et reproductible.
   `algos/global/allocation/plus_proche.js` sert d'exemple commenté.
@@ -503,6 +540,10 @@ une radio au sol ne porte qu'à l'horizon des mâts ; ajoutez le fil ou le satel
 
 **« Choisissez une zone » dans Auto.** Les frontières des pays se téléchargent une fois avec
 `node outils/frontieres.js` ; sinon, dessinez une zone avec l'outil Zone de l'éditeur.
+
+**L'essaim réactif ne change pas de cible en début de raid.** C'est voulu : il ne se reporte que sur une cible déjà
+frappée, une brèche avérée. Tant qu'aucun drone n'est passé, il contourne vos sites mais garde ses cibles ; se reporter
+à l'aveugle vers des cibles aussi défendues que les autres lui faisait perdre des frappes (MODELE § 22.2).
 
 ## 14 · Ce que montre le scénario de référence
 

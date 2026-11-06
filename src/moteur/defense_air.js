@@ -5,6 +5,7 @@ import {algo} from "./algos.js";
 import {direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
 import {parcourir_voisins} from "./grille.js";
 import {OUTILS} from "./outils.js";
+import {effet_esquive} from "./reaction.js";
 import {acces_avion, connu_du_centre} from "./reseau.js";
 import {est_actif, journaliser, plus_proche, resoudre_tir} from "./tir.js";
 // Un drone qui se rapproche à moins de 3 portées d'arme fait passer l'avion de la mise à poste à l'engagement.
@@ -191,8 +192,9 @@ export function brouiller(monde, dt) {
   }
 }
 
-/** Résoudre les tirs air dont la roquette arrive à cet instant. */
+/** Résoudre les tirs air dont la roquette arrive à cet instant ; un drone réactif l'a esquivé (MODELE § 22.4). */
 export function resoudre_tirs_en_vol(monde) {
+  const {reduction} = effet_esquive(monde);
   const restants = [];
   for (const tir of monde.tirs_en_vol) {
     if (tir.impact > monde.t) {
@@ -200,7 +202,9 @@ export function resoudre_tirs_en_vol(monde) {
       continue;
     }
     tir.drone.vise = false;
-    resoudre_tir(monde, tir.drone, tir.pk, "air", tir.origine, tir.tireur);
+    if (monde.essaim && est_actif(tir.drone, monde.t)) monde.compteurs.esquives++;
+    const details = monde.essaim ? {esquive: reduction} : {};
+    resoudre_tir(monde, tir.drone, tir.pk * (1 - reduction), "air", tir.origine, tir.tireur, details);
   }
   monde.tirs_en_vol = restants;
 }

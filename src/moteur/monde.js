@@ -7,6 +7,7 @@ import {indexer_drones} from "./grille.js";
 import {creer_hasard} from "./hasard.js";
 import {avancer_drones, creer_drones, detecter_drones} from "./menace.js";
 import {OUTILS} from "./outils.js";
+import {compteurs_reaction, creer_essaim, faire_reagir} from "./reaction.js";
 import {acces_avion, preparer_reseau} from "./reseau.js";
 import {journaliser} from "./tir.js";
 import {compter_incursions, preparer_zone} from "./zones.js";
@@ -66,7 +67,9 @@ export function creer_monde(scenario, {registre, journal = true}) {
     tirs_en_vol: [],
     fuites: cibles.map(() => 0),
     // Les compteurs des drones défensifs n'apparaissent que s'il y en a : un bilan sans eux garde sa forme d'avant.
-    compteurs: {tirs_air: 0, tirs_sol: 0, detruits_air: 0, detruits_sol: 0, ...compteurs_defensifs(scenario)},
+    compteurs: {tirs_air: 0, tirs_sol: 0, detruits_air: 0, detruits_sol: 0, ...compteurs_defensifs(scenario), ...compteurs_reaction(scenario)},
+    // Connaissance de l'essaim réactif (MODELE § 22) ; null : l'essaim ne réagit pas.
+    essaim: creer_essaim(scenario, cibles.length),
     brouilleurs: scenario.avions.some((g) => g.nombre > 0 && g.arme.type === "brouillage"),
     evenements: journal ? [] : null,
     prochaine_decision: 0,
@@ -122,7 +125,10 @@ function appliquer_pannes(monde) {
   journaliser(monde, {type: "reseau", hs: [...hs]});
 }
 
-/** Faire avancer le monde d'un pas de temps. L'ordre compte : on bouge, on voit, on obéit, on décide, on tire. */
+/**
+ * Faire avancer le monde d'un pas de temps. L'ordre compte : on bouge, on voit, on obéit, on décide, on tire ;
+ * puis l'essaim apprend ses pertes du pas et réagit (MODELE § 22).
+ */
 export function avancer_monde(monde) {
   const {simulation, conduite} = monde.scenario;
   monde.t += simulation.pas;
@@ -142,6 +148,7 @@ export function avancer_monde(monde) {
   tirer_sol(monde);
   tirer_air(monde);
   if (monde.brouilleurs) brouiller(monde, simulation.pas);
+  if (monde.essaim) faire_reagir(monde);
 }
 
 /** Rendre vrai quand plus aucun drone ne vole et qu'aucun tir n'est en vol. */

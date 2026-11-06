@@ -14,6 +14,18 @@ export const TACTIQUES = {
   plan_de_vol: "global/comportement/plan_de_vol",
 };
 
+// Noms courts des réactions publiques de l'essaim (MODELE § 22) ; null : l'essaim ne réagit pas.
+export const REACTIONS = {adaptatif: "global/reaction/essaim_adaptatif"};
+// Réglages de réaction par défaut (clés de fichier) : un scénario écrit avant le jalon 16 peut basculer en réactif.
+export const DEFAUTS_REACTION = {
+  reaction: null, reaction_delai_s: 2, reaction_pas_s: 5, reaction_rayon_danger_km: 10, reaction_seuil_pertes: 3,
+  reaction_allongement_max: 0.3, reaction_seuil_gain: 0.2, reaction_reaffectations_max: 1, reaction_detours_max: 2,
+  reaction_esquive_reduction: 0.3, reaction_esquive_perte_vitesse: 0.3,
+};
+
+/** Rendre l'identifiant de l'algorithme de réaction (nom court ou identifiant complet), ou null. */
+export const algo_reaction = (reaction) => (reaction ? REACTIONS[reaction] ?? reaction : null);
+
 // Positions placées à la main ({lat_deg, lon_deg}) → positions géographiques en radians, à l'altitude donnée.
 const vers_geo = (points, alt) => (points ?? []).map((p) => geo_deg(p.lat_deg, p.lon_deg, alt));
 
@@ -62,10 +74,14 @@ export const en_v2 = (brut) => (brut.format === FORMAT ? completer_aide(brut) : 
  * un scénario enregistré avant reste éditable. Rendu tel quel s'il ne lui manque rien.
  */
 function completer_aide(brut) {
-  const sections = ["sol", "radar", "reseau"].filter((s) => brut.bleu?.[s]?._aide && Object.keys(AIDE[s]).some((k) => !(k in brut.bleu[s]._aide)));
-  if (!sections.length) return brut;
+  const manque = (bloc, aide) => bloc?._aide && Object.keys(aide).some((k) => !(k in bloc._aide));
+  const sections = ["sol", "radar", "reseau"].filter((s) => manque(brut.bleu?.[s], AIDE[s]));
+  // Réaction de l'essaim (MODELE § 22) : ses clés sont apparues au jalon 16.
+  const rouge = manque(brut.rouge, AIDE.rouge);
+  if (!sections.length && !rouge) return brut;
   const copie = structuredClone(brut);
   for (const s of sections) copie.bleu[s]._aide = {...AIDE[s], ...copie.bleu[s]._aide};
+  if (rouge) copie.rouge._aide = {...AIDE.rouge, ...copie.rouge._aide};
   return copie;
 }
 
@@ -165,6 +181,9 @@ export function resoudre_scenario(brutDonne, fichiers) {
   if (!(rouge.tactique in TACTIQUES) && !rouge.tactique.includes("/")) {
     throw new ScenarioInvalide(`tactique inconnue « ${rouge.tactique} » (${Object.keys(TACTIQUES).join(", ")}, ou identifiant d'algorithme)`);
   }
+  if (rouge.reaction && !(rouge.reaction in REACTIONS) && !rouge.reaction.includes("/")) {
+    throw new ScenarioInvalide(`réaction inconnue « ${rouge.reaction} » (${Object.keys(REACTIONS).join(", ")}, null, ou identifiant d'algorithme)`);
+  }
   try {
     const drone = unite_si(rouge.unite, fichiers, rouge.surcharges);
     const {unite: _u, surcharges: _s, plan_de_vol: plan, ...reglagesRouge} = rouge;
@@ -182,8 +201,9 @@ export function resoudre_scenario(brutDonne, fichiers) {
         terrain: terrain ? unite_si(terrain, fichiers) : null,
       },
       rouge: {
-        ...drone, altitude: drone.altitude_croisiere, ...convertir_objet(reglagesRouge),
+        ...drone, altitude: drone.altitude_croisiere, ...convertir_objet({...DEFAUTS_REACTION, ...reglagesRouge}),
         plan_de_vol: vers_geo(plan, drone.altitude_croisiere), comportement: algo_tactique(rouge.tactique),
+        reaction: algo_reaction(rouge.reaction),
       },
       avions: resoudre_avions(bleu.avions, fichiers),
       sol: resoudre_sol(bleu.sol, fichiers),

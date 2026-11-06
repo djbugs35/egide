@@ -32,6 +32,7 @@
       <label title="Chaque drone vient seul, de n'importe où, avec des départs étalés."><input type="radio" name="tactique" value="disperse">Dispersés</label>
       <label title="Tout l'essaim entre par un couloir compact puis éclate vers les cibles."><input type="radio" name="tactique" value="fourmi">Fourmi</label>
       <label title="L'essaim suit le plan de vol dessiné dans l'éditeur, puis rejoint ses cibles."><input type="radio" name="tactique" value="plan_de_vol">Plan de vol</label>
+      <label class="bascule-reaction" title="L'essaim apprend de ses pertes : il quitte les cibles qui tuent pour celles déjà frappées, contourne les sites défendus et esquive les tirs air (MODELE § 22). (R)"><input type="checkbox" name="essaim_reactif">Réactif</label>
     </fieldset>
     <button data-action="editer" aria-pressed="false" title="Au début du raid : placer cibles, radars, avions, plan de vol et zones. En pause pendant le raid : donner des ordres aux avions. (E)">Éditer</button>
     <button data-action="vue_pc" aria-pressed="false" title="Basculer entre la vérité terrain et ce que sait le centre de conduite : drones connus et pistes (V)">Vue du CDC</button>
@@ -189,6 +190,7 @@
         <p class="jauge ami"><span>Roquettes des avions</span><span class="piste"><i data-jauge="munitions_air"></i></span><b data-champ="munitions_air"></b></p>
         <p class="jauge sol"><span>Munitions sol</span><span class="piste"><i data-jauge="munitions_sol"></i></span><b data-champ="munitions_sol"></b></p>
         <p class="ligne-defensifs" data-zone="defensifs" hidden></p>
+        <p class="ligne-defensifs" data-zone="essaim" hidden></p>
         <h3>Flotte armée</h3>
         <dl class="flotte">
           <div><dt>Orbite</dt><dd data-champ="avions_orbite">0</dd></div>

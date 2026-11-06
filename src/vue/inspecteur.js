@@ -67,6 +67,16 @@ export function tirs_subis(monde, idDrone) {
   return {tirs, survie, detruit_par: tirs.find((tir) => tir.detruit) ?? null};
 }
 
+/** Rendre la section « Pourquoi a-t-il changé de route ? » d'un drone de l'essaim réactif (MODELE § 22). */
+function reactions_drone(drone, monde) {
+  const reactions = (monde.evenements ?? []).filter((e) => e.type === "reaction" && e.drone === drone.id);
+  const cible = (k) => (monde.cibles[k]?.conduite ? "le CDC" : `C${k + 1}`);
+  const lignes = reactions.map((e) => (e.nature === "reaffectation"
+    ? `<li>${format_duree(e.t)} : quitte ${cible(e.de)} pour ${cible(e.vers)} — l'essaim y perd moins de drones et y a déjà frappé (survie estimée (F + 1) / (F + P + 2)).</li>`
+    : `<li>${format_duree(e.t)} : contourne un site défendu où l'essaim a perdu ${e.foyer.pertes} drones (détour à ${position(e.point)}).</li>`));
+  return `<h4>Pourquoi a-t-il changé de route ?</h4>${lignes.length ? `<ul>${lignes.join("")}</ul>` : "<p>Il garde sa route : rien de ce que sait l'essaim ne vaut un détour ou une autre cible.</p>"}`;
+}
+
 function inspection_drone(drone, monde) {
   const {rouge} = monde.scenario;
   const {tirs, survie, detruit_par: fatal} = tirs_subis(monde, drone.id);
@@ -74,7 +84,7 @@ function inspection_drone(drone, monde) {
     : drone.arrive ? "a frappé sa cible" : monde.t < drone.depart ? `part à ${format_duree(drone.depart)}` : "en vol";
   const restant = drone.vivant && !drone.arrive
     ? drone.route.reduce((somme, point, i) => somme + inverse(i ? drone.route[i - 1].geo : drone.geo, point.geo).distance, 0) : 0;
-  const detail = tirs.map((tir) => `<li>${format_duree(tir.t)} : tir ${tir.couche === "air" ? "air" : "sol"}, Pk ${format_decimal(tir.pk)} — ${tir.detruit ? "<b>détruit</b>" : "manqué"}</li>`).join("");
+  const detail = tirs.map((tir) => `<li>${format_duree(tir.t)} : tir ${tir.couche === "air" ? "air" : "sol"}, Pk ${format_decimal(tir.pk)}${tir.esquive ? ` (esquive : Pk de l'arme × ${format_decimal(1 - tir.esquive)})` : ""} — ${tir.detruit ? "<b>détruit</b>" : "manqué"}</li>`).join("");
   return `<h3>Drone ${drone.id + 1}, vise C${drone.cible + 1}</h3>
     <p>${lien_fiche("unite", rouge.id, rouge.nom)} ${fidelite(rouge.fidelite)}</p>
     <table>${[
@@ -86,8 +96,10 @@ function inspection_drone(drone, monde) {
     <h4>Chaîne de l'information</h4><ol class="chaine">${chaine_drone(monde, drone.id).map((e) => `<li>${e.instant ? `<b>${e.instant}</b> ` : ""}${e.texte}</li>`).join("")}</ol>
     <h4>Tirs subis</h4>${tirs.length ? `<ul>${detail}</ul>
       <p>Probabilité de survivre à ces ${tirs.length} tirs : Π(1 − Pk) = <b>${pourcent(survie)}</b>.</p>` : "<p>Aucun pour l'instant.</p>"}
+    ${rouge.reaction ? reactions_drone(drone, monde) : ""}
     <h4>Modèles</h4><ul>
       <li>Comportement : ${lien_fiche("algo", rouge.comportement, rouge.comportement)}</li>
+      ${rouge.reaction ? `<li>Réaction : ${lien_fiche("algo", rouge.reaction, rouge.reaction)}</li>` : ""}
       <li>Mouvement : ${lien_fiche("algo", rouge.algos.mouvement, rouge.algos.mouvement)}</li>
       <li>Détection : ${lien_fiche("algo", monde.scenario.radar.algos.detection, monde.scenario.radar.algos.detection)}</li></ul>`;
 }

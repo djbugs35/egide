@@ -3,7 +3,7 @@
 import {format_decimal, format_duree} from "./format.js";
 
 /** Familles de lignes, pour les filtres du panneau. */
-export const FAMILLES = {detection: "Détections", mission: "Missions", contact: "Contacts", tir: "Tirs", autre: "Réseau et ordres"};
+export const FAMILLES = {detection: "Détections", mission: "Missions", contact: "Contacts", tir: "Tirs", essaim: "Réactions de l'essaim", autre: "Réseau et ordres"};
 
 const instant = (t) => `${format_duree(t)}${Number.isInteger(t) ? "" : ",5"}`;
 const radar = (i) => (i >= 0 ? `R${i + 1}` : "un radar");
@@ -55,7 +55,8 @@ function ligne(monde, e) {
       const tireur = nom_vecteur(monde, e.tireur);
       const qui = e.couche === "air" ? `${tireur[0].toUpperCase()}${tireur.slice(1)}` : poste;
       const verbe = e.couche === "air" && monde.avions[e.tireur]?.type === "kamikaze" ? "percute" : "tire sur";
-      return {famille: "tir", texte: `${qui} ${verbe} le drone ${e.drone + 1} (Pk ${format_decimal(e.pk)}) : ${e.detruit ? "détruit" : "manqué"}.`, cible: {type: "drone", id: e.drone}};
+      const esquive = e.esquive ? `, réduit par son esquive` : "";
+      return {famille: "tir", texte: `${qui} ${verbe} le drone ${e.drone + 1} (Pk ${format_decimal(e.pk)}${esquive}) : ${e.detruit ? "détruit" : "manqué"}.`, cible: {type: "drone", id: e.drone}};
     }
     case "impact": return {famille: "tir", texte: `Un drone frappe ${monde.cibles[e.cible]?.conduite ? "le CDC" : `C${e.cible + 1}`}.`, cible: {type: "cible", id: e.cible}};
     case "ordre": return {famille: "autre", texte: `Ordre de l'éditeur, parti du CDC : avion${e.avions.length > 1 ? "s" : ""} ${e.avions.map((a) => a + 1).join(", ") || "aucun joignable"}.`, cible: e.avions.length ? {type: "avion", id: e.avions[0]} : null};
@@ -65,14 +66,39 @@ function ligne(monde, e) {
   }
 }
 
+const nom_cible = (monde, k) => (monde.cibles[k]?.conduite ? "le CDC" : `C${k + 1}`);
+
+/**
+ * Rendre les réactions de l'essaim (MODELE § 22) groupées par fenêtre de 10 s et par décision : « 23 drones quittent
+ * C3 pour C5 », « 40 drones contournent le site défendu près de C2 ».
+ */
+function lignes_reactions(monde, evenements) {
+  const groupes = new Map();
+  for (const e of evenements.filter((x) => x.type === "reaction")) {
+    const quoi = e.nature === "reaffectation" ? `r|${e.de}|${e.vers}` : `d|${Math.round(e.foyer.geo.lat * 1e3)}|${Math.round(e.foyer.geo.lon * 1e3)}`;
+    const cle = `${Math.floor(e.t / FENETRE_DETECTIONS)}|${quoi}`;
+    const g = groupes.get(cle) ?? {t: e.t, e, drones: []};
+    g.drones.push(e.drone);
+    groupes.set(cle, g);
+  }
+  return [...groupes.values()].map(({t, e, drones}) => {
+    const qui = drones.length === 1 ? `Le drone ${drones[0] + 1}` : `${drones.length} drones`;
+    const pluriel = drones.length > 1 ? "nt" : "";
+    const texte = e.nature === "reaffectation"
+      ? `${qui} quitte${pluriel} ${nom_cible(monde, e.de)}, où l'essaim perd ses drones, pour ${nom_cible(monde, e.vers)}, déjà frappée.`
+      : `${qui} contourne${pluriel} un site défendu (${e.foyer.pertes} pertes connues).`;
+    return {t, famille: "essaim", texte, cible: {type: "drone", id: drones[0]}};
+  });
+}
+
 /** Rendre les lignes du journal jusqu'à l'instant du monde, dans l'ordre du temps : {t, famille, texte, cible}. */
 export function lignes_journal(monde) {
   const evenements = monde.evenements ?? [];
-  const autres = evenements.filter((e) => e.type !== "detection").map((e) => {
+  const autres = evenements.filter((e) => e.type !== "detection" && e.type !== "reaction").map((e) => {
     const l = ligne(monde, e);
     return l && {t: e.t, ...l};
   }).filter(Boolean);
-  return [...lignes_detections(evenements), ...autres].sort((a, b) => a.t - b.t);
+  return [...lignes_detections(evenements), ...lignes_reactions(monde, evenements), ...autres].sort((a, b) => a.t - b.t);
 }
 
 /** Rendre la chaîne de l'information d'un drone : vu, connu du CDC, accroché, tiré, avec les instants. */

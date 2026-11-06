@@ -66,20 +66,9 @@ def test_flotte_heterogene_en_portee_refusee_par_la_vue_plate():
         aplatir(resoudre_scenario(brut, FICHIERS))
 
 
-def test_resolution_du_reseau_identique_au_jumeau_javascript():
-    variante = json.loads((ICI / "resolution_reference.json").read_text(encoding="utf-8"))["variante_reseau"]
-    brut = json.loads(json.dumps(BRUT))
-    for chemin, valeur in variante["modifications"].items():
-        *parents, dernier = chemin.split(".")
-        noeud = brut
-        for cle in parents:
-            noeud = noeud[cle]
-        noeud[dernier] = valeur
-    assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), variante["resolu"])
-
-
-def test_resolution_du_deploiement_identique_au_jumeau_javascript():
-    variante = json.loads((ICI / "resolution_reference.json").read_text(encoding="utf-8"))["variante_deploiement"]
+def _variante(nom: str) -> tuple[dict, dict]:
+    """Rendre (scenario de reference modifie par chemin, resolution attendue) de la variante `nom` partagee avec JS."""
+    variante = json.loads((ICI / "resolution_reference.json").read_text(encoding="utf-8"))[nom]
     brut = json.loads(json.dumps(BRUT))
     for chemin, valeur in variante["modifications"].items():
         *parents, dernier = chemin.split(".")
@@ -87,7 +76,37 @@ def test_resolution_du_deploiement_identique_au_jumeau_javascript():
         for cle in parents:
             noeud = noeud[int(cle) if cle.isdigit() else cle]
         noeud[int(dernier) if dernier.isdigit() else dernier] = valeur
-    assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), variante["resolu"])
+    return brut, variante["resolu"]
+
+
+def test_resolution_du_reseau_identique_au_jumeau_javascript():
+    brut, attendu = _variante("variante_reseau")
+    assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), attendu)
+
+
+def test_resolution_du_deploiement_identique_au_jumeau_javascript():
+    brut, attendu = _variante("variante_deploiement")
+    assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), attendu)
+
+
+def test_resolution_de_l_essaim_reactif_identique_au_jumeau_javascript():
+    brut, attendu = _variante("variante_reaction")
+    assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), attendu)
+
+
+def test_scenario_sans_cles_de_reaction_resolu_avec_les_reglages_par_defaut():
+    brut = json.loads(json.dumps(BRUT))
+    brut["rouge"] = {cle: valeur for cle, valeur in brut["rouge"].items() if not cle.startswith("reaction")}
+    rouge = resoudre_scenario(brut, FICHIERS)["rouge"]
+    assert rouge["reaction"] is None
+    assert rouge["reaction_rayon_danger"] == 10_000
+
+
+def test_reaction_inconnue_refusee():
+    brut = json.loads(json.dumps(BRUT))
+    brut["rouge"]["reaction"] = "panique"
+    with pytest.raises(ScenarioInvalideError, match="reaction inconnue"):
+        resoudre_scenario(brut, FICHIERS)
 
 
 def test_arme_citee_par_la_seule_surcharge_d_un_groupe_chargee():

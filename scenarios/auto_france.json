@@ -2233,7 +2233,18 @@
       "plan_de_vol": "Tactique 'plan_de_vol' : points de passage de l'essaim, liste de {lat_deg, lon_deg} ; apres le dernier, chaque drone rejoint sa cible.",
       "plan_de_vol[].lat_deg": "Latitude du point de passage (WGS84).",
       "plan_de_vol[].lon_deg": "Longitude du point de passage (WGS84).",
-      "surcharges": "Valeurs qui remplacent celles de l'unite pour ce scenario (cles et unites du fichier d'unite)."
+      "surcharges": "Valeurs qui remplacent celles de l'unite pour ce scenario (cles et unites du fichier d'unite).",
+      "reaction": "Reaction de l'essaim a la defense (MODELE § 22) : null (aucune), 'adaptatif' (algos/global/reaction/essaim_adaptatif) ou l'identifiant complet d'un algorithme de reaction.",
+      "reaction_delai_s": "Reaction : delai de diffusion d'une perte ou d'une frappe dans le reseau maille de l'essaim.",
+      "reaction_pas_s": "Reaction : periode des decisions des drones.",
+      "reaction_rayon_danger_km": "Reaction : rayon d'un foyer de pertes ; un drone a moins de ce rayon de sa cible ne s'en detourne plus.",
+      "reaction_seuil_pertes": "Reaction : pertes a partir desquelles un foyer est contourne.",
+      "reaction_allongement_max": "Reaction : allongement relatif de route accepte pour une reaffectation ou un detour.",
+      "reaction_seuil_gain": "Reaction : gain de survie estimee (0 a 1) qui declenche une reaffectation de cible.",
+      "reaction_reaffectations_max": "Reaction : reaffectations de cible au plus par drone.",
+      "reaction_detours_max": "Reaction : detours au plus par drone.",
+      "reaction_esquive_reduction": "Reaction : fraction du Pk d'un tir air retiree par l'esquive (0 : pas d'esquive).",
+      "reaction_esquive_perte_vitesse": "Reaction : fraction de progression perdue tant qu'un tir air vise le drone."
     },
     "unite": "vecteurs/drones/drone_reaction_notionnel",
     "nombre": 1000,
@@ -2242,7 +2253,18 @@
     "etalement_s": 120,
     "fourmi_eclatement_rayon_km": 60,
     "fourmi_largeur_couloir_km": 6,
-    "surcharges": {}
+    "surcharges": {},
+    "reaction": null,
+    "reaction_delai_s": 2,
+    "reaction_pas_s": 5,
+    "reaction_rayon_danger_km": 10,
+    "reaction_seuil_pertes": 3,
+    "reaction_allongement_max": 0.3,
+    "reaction_seuil_gain": 0.2,
+    "reaction_reaffectations_max": 1,
+    "reaction_detours_max": 2,
+    "reaction_esquive_reduction": 0.3,
+    "reaction_esquive_perte_vitesse": 0.3
   },
   "bleu": {
     "_aide": {

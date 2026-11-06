@@ -49,4 +49,10 @@ export function mettre_a_jour_tableau(racine, monde) {
   const texte = [brouilles !== undefined ? `${format_entier(brouilles)} neutralisés par brouillage` : null,
     perdus !== undefined ? `${format_entier(perdus)} intercepteurs perdus` : null].filter(Boolean).join(" · ");
   if (zone && zone.textContent !== texte) [zone.textContent, zone.hidden] = [texte, !texte];
+  // Essaim réactif : ses compteurs n'existent que s'il réagit (MODELE § 22.5).
+  const {reaffectations, detours, esquives} = monde.compteurs;
+  const zoneEssaim = racine.querySelector("[data-zone='essaim']");
+  const texteEssaim = reaffectations === undefined ? ""
+    : `Essaim réactif : ${format_entier(reaffectations)} réaffectations · ${format_entier(detours)} détours · ${format_entier(esquives)} tirs esquivés`;
+  if (zoneEssaim && zoneEssaim.textContent !== texteEssaim) [zoneEssaim.textContent, zoneEssaim.hidden] = [texteEssaim, !texteEssaim];
 }

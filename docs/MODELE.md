@@ -89,7 +89,8 @@ et résume chaque grandeur par sa moyenne et son intervalle de confiance à 95 %
 
 ### 8.2 Menace
 Répartition sur les cibles : § 6.1 (G groupes de taille égale, cibles tirées au hasard). Les drones naissent
-20 km avant la couverture radar et volent à vitesse constante, sans réagir à la défense.
+20 km avant la couverture radar et volent à vitesse constante ; ils ne réagissent à la défense que si le scénario
+leur donne un algorithme de réaction (`rouge.reaction`, § 22).
 - `direct` : chaque groupe arrive d'un cap tiré au hasard, en vague serrée (±1 km), et va droit sur sa cible.
 - `disperse` : chaque drone a son propre cap et part à un instant tiré dans `drones_etalement_s`.
 - `fourmi` : tout l'essaim entre par un même cap, en colonne de 4 km sur `fourmi_largeur_couloir_km`, jusqu'au
@@ -554,3 +555,68 @@ glisse. Un moyen de communication ou un armement se dépose sur une unité déj�
 de la fiche (modèle, algorithmes par rôle, munitions, effectifs, moyens) est une modification par chemin du scénario.
 L'annulation, l'export, la bibliothèque et le rejeu valent donc d'office. Un groupe de vecteurs grossit à chaque dépôt :
 les orbites des avions déjà placés sont figées et les nouveaux orbitent au point déposé.
+
+## 22 · Essaim réactif (jalon 16)
+### 22.1 Principe et perception
+Par défaut l'essaim ne réagit pas (`rouge.reaction` null) : tout résultat antérieur est inchangé. Avec un algorithme
+de réaction (rôle `reaction`, `algos/global/reaction/…`), chaque drone remet en cause sa route et sa cible pendant le
+vol, à partir de ce que l'essaim sait de la défense. Modèle notionnel de décision, sans performances réelles.
+
+Hypothèses de perception, toutes simplificatrices :
+- **Réseau maillé connexe** : un drone perdu (abattu air ou sol, neutralisé par brouillage) est connu de tout
+  l'essaim Δ_m secondes plus tard (`reaction_delai_s`) avec sa dernière position et l'instant ; de même une frappe
+  sur une cible. L'essaim ne voit ni les radars, ni les avions, ni les postes : il n'apprend que par ses pertes.
+- **Foyers de pertes** : chaque perte connue rejoint le foyer le plus proche à moins de r_d (`reaction_rayon_danger_km`)
+  de son centre, sinon fonde un foyer centré sur elle. Un foyer de n ≥ n_s pertes (`reaction_seuil_pertes`) est
+  tenu pour défendu.
+- **Bilan par cible** : pour la cible k, P_k pertes connues à moins de r_d d'elle et F_k frappes connues. L'essaim
+  estime la survie au terminal par la règle de succession de Laplace : ŝ_k = (F_k + 1) / (F_k + P_k + 2).
+- Les décisions se prennent tous les Δ_r secondes (`reaction_pas_s`), et seulement quand la connaissance de
+  l'essaim a changé depuis la décision précédente. Aucun tirage aléatoire : la réaction ne change pas le déroulement
+  du générateur, et un duel A/B (§ 14.3) avec et sans réaction garde ses nombres aléatoires communs.
+
+### 22.2 Réaffectation de cible
+Un drone engagé (à moins de r_d de sa cible) n'en change plus. Sinon, il compare sa cible c aux cibles k dont la
+distance au sol d_k vérifie d_k ≤ (1 + a) d_c (a : `reaction_allongement_max`) et qui ont déjà été frappées
+(F_k ≥ 1 : brèche avérée), et passe à la meilleure si ŝ_k − ŝ_c ≥ g (`reaction_seuil_gain`), au plus m fois
+(`reaction_reaffectations_max`). Seul le dernier point de sa route change : un plan de vol ou un couloir déjà engagé
+est gardé. L'effet recherché : déporter l'effort des cibles dont les postes tuent vers celles qui laissent passer.
+La condition de brèche est mesurée : sans elle, les drones fuyaient vers des cibles jamais approchées, aussi
+défendues que les autres, et abandonnaient des cibles dont les postes allaient manquer de munitions (essaim dispersé
+du scénario de référence : 100 frappes au lieu de 163 sans réaction, graine 1).
+
+### 22.3 Contournement des foyers
+Pour la branche en cours (du drone au prochain point de route, distance d_w, azimut α_w), un foyer défendu de centre
+à la distance d_f et à l'azimut α_f est sur le chemin si 0 < x < d_w et |y| < r_d, avec, sur la sphère de rayon
+R = 6 371 km (approximation sphérique, réservée à la décision ; le mouvement reste géodésique, § 9.3) :
+- écart latéral y = R asin(sin(d_f / R) sin(α_f − α_w)),
+- abscisse x = R acos(cos(d_f / R) / cos(y / R)) si cos(α_f − α_w) > 0, sinon négative.
+
+Seuls les foyers qui contiennent une autre cible que la sienne (à moins de r_d) sont contournés : ce sont des sites
+défendus fixes. Les pertes dues aux avions suivent des avions qui bougent, et les contourner allongeait les routes
+sans gain (−1 % à −3 % de frappes mesurés sur le scénario de référence) ; on ne contourne pas non plus sa propre cible. Le drone insère alors
+un point de détour à la tangente du cercle de rayon ρ = 1,3 r_d, du côté où passe déjà la branche :
+azimut α_f ∓ asin(min(1, ρ / d_f)) (signe opposé à celui de y), distance √(max(d_f² − ρ², 0)) (plan tangent local,
+d_f ≪ R). Le détour est refusé s'il allonge la branche de plus de a d_w, ou si le drone a déjà fait
+`reaction_detours_max` détours. Le foyer le plus proche sur le chemin est traité d'abord ; les suivants le seront
+aux décisions d'après.
+
+### 22.4 Esquive
+Un drone visé par une roquette air en vol le sait (alerte d'approche notionnelle) et manœuvre jusqu'à l'impact : le
+Pk du tir est multiplié par (1 − e) (`reaction_esquive_reduction`) et la progression du drone le long de sa route par
+(1 − v_e) (`reaction_esquive_perte_vitesse`) tant qu'un tir le vise. Les tirs sol, résolus à l'instant (§ 8.5), et le
+brouillage n'ouvrent pas d'esquive. Effet agrégé, sans loi de guidage ni de manœuvre.
+
+### 22.5 Bilan et inspecteur
+Avec une réaction, le bilan ajoute `reaffectations`, `detours` et `esquives` (nombre de tirs air esquivés, qu'ils
+aient porté ou non). Le journal garde chaque réaction (`reaction` : drone, nature, cible ou point de détour, foyer),
+que l'inspecteur relit pour dire pourquoi un drone a changé de route.
+
+### 22.6 Effet mesuré
+Duel apparié (§ 14.3) sur le scénario de référence, graines 1 à 10, réglages par défaut : frappes moyennes sans
+réaction, puis écart avec réaction et son intervalle de confiance à 95 % (Student, 9 degrés de liberté).
+- `fourmi` : 362 frappes, +147 ± 80 (+41 %) ; la colonne compacte apprend peu à temps, l'esquive porte l'essentiel.
+- `direct` : 486 frappes, +90 ± 68 (+18 %).
+- `disperse` : 182 frappes, +115 ± 14 (+63 %) ; les départs étalés laissent aux derniers drones le temps d'apprendre
+  des premiers.
+

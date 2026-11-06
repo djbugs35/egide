@@ -1,9 +1,10 @@
 // Registre d'algorithmes : un module ES par algorithme sous algos/ (public) ou prive/algos/ (hors git), rangé par
 // rôle. Chaque module exporte `meta` (sa fiche) et les fonctions de son rôle (MODELE § 10).
 
-/** Fonctions exigées par rôle. Les sept premiers rôles sont branchés sur le moteur ; les autres sont des bibliothèques. */
+/** Fonctions exigées par rôle. Les huit premiers rôles sont branchés sur le moteur ; les autres sont des bibliothèques. */
 export const ROLES = {
   comportement: ["planifier_drone"],
+  reaction: ["reagir", "esquive"],
   mouvement: ["avancer"],
   detection: ["preparer", "detecte"],
   pistage: ["pister"],
@@ -14,7 +15,7 @@ export const ROLES = {
   filtrage: ["initialiser", "mettre_a_jour"],
   performance_radar: ["probabilite_detection"],
 };
-export const ROLES_BRANCHES = ["comportement", "mouvement", "detection", "pistage", "allocation", "tir", "tir_sol"];
+export const ROLES_BRANCHES = ["comportement", "reaction", "mouvement", "detection", "pistage", "allocation", "tir", "tir_sol"];
 // Rôles dont l'algorithme est porté par une unité, et donc tenu de trouver ses paramètres dans l'unité.
 export const ROLES_D_UNITE = ["mouvement", "detection", "tir", "tir_sol"];
 // Ce qu'un algorithme n'a pas le droit d'écrire : il reçoit tout en argument et ne dépend que de ses entrées.
@@ -72,6 +73,7 @@ export function ids_algos(scenario) {
   // Un brouilleur n'a pas d'algorithme de tir : on écarte les rôles vides.
   return [...new Set([
     scenario.rouge.comportement,
+    scenario.rouge.reaction,
     scenario.rouge.algos.mouvement,
     ...scenario.avions.flatMap((groupe) => [groupe.algos.mouvement, groupe.arme.algos.tir]),
     scenario.sol.algos.tir_sol,

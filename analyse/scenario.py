@@ -20,6 +20,22 @@ TACTIQUES = {
     "fourmi": "global/comportement/essaim_fourmi",
     "plan_de_vol": "global/comportement/plan_de_vol",
 }
+# Noms courts des reactions publiques de l'essaim (MODELE § 22) ; None : l'essaim ne reagit pas.
+REACTIONS = {"adaptatif": "global/reaction/essaim_adaptatif"}
+# Reglages de reaction par defaut (cles de fichier) : un scenario ecrit avant le jalon 16 peut basculer en reactif.
+DEFAUTS_REACTION = {
+    "reaction": None,
+    "reaction_delai_s": 2,
+    "reaction_pas_s": 5,
+    "reaction_rayon_danger_km": 10,
+    "reaction_seuil_pertes": 3,
+    "reaction_allongement_max": 0.3,
+    "reaction_seuil_gain": 0.2,
+    "reaction_reaffectations_max": 1,
+    "reaction_detours_max": 2,
+    "reaction_esquive_reduction": 0.3,
+    "reaction_esquive_perte_vitesse": 0.3,
+}
 
 
 def _vers_geo(points, altitude: float) -> list[dict]:
@@ -212,10 +228,14 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
     theatre, rouge, bleu = brut["theatre"], brut["rouge"], brut["bleu"]
     if rouge["tactique"] not in TACTIQUES and "/" not in rouge["tactique"]:
         raise ScenarioInvalideError(f"tactique inconnue « {rouge['tactique']} »")
+    reaction = rouge.get("reaction")
+    if reaction and reaction not in REACTIONS and "/" not in reaction:
+        raise ScenarioInvalideError(f"reaction inconnue « {reaction} »")
     try:
         drone = unite_si(rouge["unite"], fichiers, rouge.get("surcharges"))
         reglages_rouge = {
-            cle: valeur for cle, valeur in rouge.items() if cle not in {"unite", "surcharges", "plan_de_vol"}
+            **DEFAUTS_REACTION,
+            **{cle: valeur for cle, valeur in rouge.items() if cle not in {"unite", "surcharges", "plan_de_vol"}},
         }
         cibles_placees = _vers_geo(theatre.get("cibles_placees"), 0)
         return {
@@ -242,6 +262,7 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
                 **convertir_objet(reglages_rouge),
                 "plan_de_vol": _vers_geo(rouge.get("plan_de_vol"), drone["altitude_croisiere"]),
                 "comportement": TACTIQUES.get(rouge["tactique"], rouge["tactique"]),
+                "reaction": REACTIONS.get(reaction, reaction) if reaction else None,
             },
             "avions": _resoudre_avions(bleu["avions"], fichiers),
             "sol": _resoudre_sol(bleu["sol"], fichiers),

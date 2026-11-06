@@ -19,6 +19,7 @@
     "role": {
       "enum": [
         "comportement",
+        "reaction",
         "mouvement",
         "detection",
         "pistage",
@@ -29,7 +30,7 @@
         "filtrage",
         "performance_radar"
       ],
-      "description": "Rôle tenu ; fonctions exigées : comportement → planifier_drone ; mouvement → avancer ; detection → preparer, detecte ; pistage → pister ; allocation → allouer ; tir → planifier_tir ; tir_sol → cadence ; guidage → acceleration ; filtrage → initialiser, mettre_a_jour ; performance_radar → probabilite_detection."
+      "description": "Rôle tenu ; fonctions exigées : comportement → planifier_drone ; reaction → reagir, esquive ; mouvement → avancer ; detection → preparer, detecte ; pistage → pister ; allocation → allouer ; tir → planifier_tir ; tir_sol → cadence ; guidage → acceleration ; filtrage → initialiser, mettre_a_jour ; performance_radar → probabilite_detection."
     },
     "nom": {
       "type": "string",

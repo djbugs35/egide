@@ -60,6 +60,12 @@
     "fidelite": "notionnel"
   },
   {
+    "id": "global/reaction/essaim_adaptatif",
+    "nom": "Essaim adaptatif (pertes partagées)",
+    "role": "reaction",
+    "fidelite": "notionnel"
+  },
+  {
     "id": "global/tir/guidage_laser_semi_actif",
     "nom": "Guidage laser semi-actif",
     "role": "tir",

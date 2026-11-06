@@ -4,6 +4,7 @@ import {algo} from "./algos.js";
 import {vers_ecef} from "./geodesie.js";
 import {melanger} from "./hasard.js";
 import {OUTILS} from "./outils.js";
+import {effet_esquive} from "./reaction.js";
 import {connu_du_centre, radar_le_plus_proche, radars_voyants} from "./reseau.js";
 import {est_actif, journaliser} from "./tir.js";
 
@@ -43,14 +44,19 @@ export function creer_drones(scenario, registre, cibles, hasard, rayonApparition
   });
 }
 
-/** Faire avancer chaque drone actif de `dt` s par son algorithme de mouvement ; au bout de sa route, il frappe. */
+/**
+ * Faire avancer chaque drone actif de `dt` s par son algorithme de mouvement ; au bout de sa route, il frappe.
+ * Un drone réactif visé par un tir air esquive et progresse moins (MODELE § 22.4).
+ */
 export function avancer_drones(monde, dt) {
   const {rouge} = monde.scenario;
   const mouvement = algo(monde.registre, rouge.algos.mouvement, "mouvement");
+  const {perte_vitesse: perte} = effet_esquive(monde);
   for (const drone of monde.drones) {
     if (!est_actif(drone, monde.t)) continue;
     const avant = drone.ecef;
-    const suivant = mouvement.avancer(drone, drone.route, rouge.vitesse * dt, OUTILS);
+    const pas = rouge.vitesse * dt * (drone.vise ? 1 - perte : 1);
+    const suivant = mouvement.avancer(drone, drone.route, pas, OUTILS);
     drone.geo = suivant.geo;
     drone.ecef = suivant.ecef;
     if (suivant.atteints) drone.route.splice(0, suivant.atteints);

@@ -54,6 +54,8 @@ label:has(input:focus-visible) { outline: 2px solid var(--texte); outline-offset
 .tactiques label, .vitesses label { border-radius: 5px; padding: 3px 9px; cursor: pointer; font-size: 13px; }
 .tactiques input, .vitesses input { position: absolute; opacity: 0; pointer-events: none; }
 .tactiques label:has(input:checked) { background: var(--hostile); color: #1a0806; font-weight: 600; }
+/* La réaction se combine à toute tactique : un trait la sépare des choix exclusifs. */
+.tactiques .bascule-reaction { margin-inline-start: 4px; border-inline-start: 1px solid var(--trait); border-radius: 0 5px 5px 0; }
 .vitesses label:has(input:checked) { background: var(--trait); }
 .barre-haut [data-action="vue_pc"][aria-pressed="true"] { background: var(--hostile); color: #1a0806; border-color: var(--hostile); }
 .bandeau-pc { position: absolute; inset-block-end: 76px; inset-inline-start: 50%; translate: -50% 0; margin: 0; z-index: 3; padding: 4px 12px;
@@ -218,6 +220,7 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .journal .mission { border-color: var(--texte); }
 .journal .contact { border-color: #e8d36a; }
 .journal .tir { border-color: var(--sol); }
+.journal .essaim { border-color: var(--hostile); }
 .journal .autre { border-color: var(--hostile); }
 
 /* Auto-configuration. */

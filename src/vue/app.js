@@ -305,6 +305,7 @@ function brancher_transport() {
   $("[name='graine']").addEventListener("change", (e) => modifier({"simulation.graine": Number(e.target.value)}));
   $("[data-action='autre_graine']").addEventListener("click", () => modifier({"simulation.graine": Math.floor(Math.random() * 1e6)}));
   document.querySelectorAll("[name='tactique']").forEach((bouton) => bouton.addEventListener("change", () => modifier({"rouge.tactique": bouton.value})));
+  $("[name='essaim_reactif']").addEventListener("change", (e) => modifier({"rouge.reaction": e.target.checked ? "adaptatif" : null}));
   addEventListener("keydown", (e) => {
     if (e.target.closest("input, select, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
     const edition = etat.editeur?.est_actif();
@@ -312,6 +313,7 @@ function brancher_transport() {
     if (panneau && !edition) etat.panneaux.basculer(etat.panneaux.ids()[Number(panneau) - 1]);
     if (e.key.toLowerCase() === "e" && !edition) etat.editeur.activer(true);
     if (e.key.toLowerCase() === "v" && !edition) basculer_vue_pc();
+    if (e.key.toLowerCase() === "r" && !edition) $("[name='essaim_reactif']").click();
     if (e.key === "Escape" && !edition && !etat.inspection) etat.panneaux.fermer();
     if (e.code === "Space") (e.preventDefault(), basculer_lecture());
     if (e.code === "ArrowRight") sauter_a(etat.lecteur.monde.t + 30);
@@ -375,6 +377,7 @@ function rafraichir_reglages() {
   $("[name='conduite_ciblee']").checked = Boolean(brut_courant().bleu.reseau?.conduite_ciblee);
   $("[name='terrain']").value = brut_courant().theatre.terrain ?? "";
   document.querySelector(`[name='tactique'][value='${brut_courant().rouge.tactique}']`).checked = true;
+  $("[name='essaim_reactif']").checked = Boolean(brut_courant().rouge.reaction);
 }
 
 /** Faire du scénario `brut` la nouvelle base (bibliothèque, auto-configuration) : les modifications repartent de zéro. */
