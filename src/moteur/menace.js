@@ -1,7 +1,7 @@
 // L'essaim : répartition sur les cibles (MODELE § 6.1), puis comportement et mouvement délégués aux algorithmes
 // désignés par le scénario (rouge.tactique) et par l'unité de drone (algos.mouvement).
 import {algo} from "./algos.js";
-import {vers_ecef} from "./geodesie.js";
+import {cap_vers, vers_ecef} from "./geodesie.js";
 import {melanger} from "./hasard.js";
 import {OUTILS} from "./outils.js";
 import {effet_esquive} from "./reaction.js";
@@ -77,6 +77,9 @@ function noter_detection(monde, drone, radar, connu) {
   drone.radar ??= radar;
   journaliser(monde, {type: "detection", drone: drone.id, radar, connu: connu === null || !Number.isFinite(connu) ? null : connu});
 }
+
+/** Rendre le cap (rad, depuis le nord) d'un drone : vers le prochain point de sa route (MODELE § 23), 0 une fois arrivé. */
+export const cap_drone = (drone) => (drone.route.length ? cap_vers(drone.geo, drone.route[0].geo) : 0);
 
 /**
  * Marquer l'instant où chaque drone est détecté (`detection`) et celui où la conduite l'apprend (`connu`). En réseau

@@ -6,12 +6,23 @@ import {geo_vers_ecran, vers_monde} from "./camera.js";
 // Circonférence équatoriale WGS84 et taille de monde de MapLibre (tuiles de 512 px au zoom 0).
 const CIRCONFERENCE = 40_075_016.686;
 const TUILE_MONDE = 512;
+// Environ 1 km : assez pour que l'écart écran soit mesurable, assez peu pour que la route reste droite.
+const PAS_CAP_RAD = 1.6e-4;
 
 /** Rendre la position écran (px) d'une position géographique, pour une caméra de scope ou de carte. */
 export function ecran(camera, geo) {
   if (camera.type !== "carte") return geo_vers_ecran(camera, geo);
   const point = camera.carte.project([vers_degres(geo.lon), vers_degres(geo.lat)]);
   return {x: point.x, y: point.y};
+}
+
+/**
+ * Rendre la rotation (rad, sens horaire à l'écran) d'une silhouette dessinée le nez en haut, au cap `cap` (rad, depuis
+ * le nord) en `geo`. Mesurée sur l'écran : elle reste juste quand la carte est tournée, inclinée, ou loin du centre du scope.
+ */
+export function rotation_ecran(camera, geo, cap) {
+  const [depart, arrivee] = [ecran(camera, geo), ecran(camera, {lat: geo.lat + PAS_CAP_RAD * Math.cos(cap), lon: geo.lon + (PAS_CAP_RAD * Math.sin(cap)) / Math.cos(geo.lat)})];
+  return Math.atan2(arrivee.x - depart.x, depart.y - arrivee.y);
 }
 
 /** Rendre la position géographique (au sol) sous un point écran (px), pour une caméra de scope ou de carte. */

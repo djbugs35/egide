@@ -108,6 +108,27 @@ test("rejeu : un intercepteur kamikaze consommé apparaît perdu, et chaque impa
   for (const e of evenements.filter((ev) => ev.type === "impact")) assert.equal(typeof e.drone, "number");
 });
 
+test("rejeu : le cap de chaque drone et vecteur en mouvement est sa direction de déplacement", () => {
+  const ecart = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
+  const verifier = (avant, apres, largeur) => {
+    const suivants = new Map(apres.map((l) => [l[0], l]));
+    let mesures = 0;
+    for (const ligne of avant) {
+      const suivant = suivants.get(ligne[0]);
+      if (!suivant || Math.hypot(suivant[1] - ligne[1], suivant[2] - ligne[2]) < 20) continue;
+      const route = (Math.atan2(suivant[1] - ligne[1], suivant[2] - ligne[2]) * 180) / Math.PI;
+      // Le cap d'un vecteur est celui du pas qui s'achève : il regarde où il vient d'aller, d'où la comparaison à l'image suivante.
+      assert.ok(ecart(suivant[colonne(largeur, "cap_deg")], route) < 12, `${largeur} ${ligne[0]} : cap ${suivant[colonne(largeur, "cap_deg")]}, route ${route}`);
+      mesures++;
+    }
+    return mesures;
+  };
+  const rangs = [300, 500, 700].filter((r) => r + 1 < REJEU.images.length);
+  const drones = rangs.reduce((n, r) => n + verifier(REJEU.images[r].drones, REJEU.images[r + 1].drones, "drones"), 0);
+  const vecteurs = REJEU.images.slice(0, -1).reduce((n, im, r) => n + verifier(im.vecteurs, REJEU.images[r + 1].vecteurs, "vecteurs"), 0);
+  assert.ok(drones > 20 && vecteurs > 20, `${drones} drones, ${vecteurs} vecteurs mesurés`);
+});
+
 test("rejeu : les positions des évènements sont écrites comme des lieux, sans radian du moteur", () => {
   const tir = REJEU.evenements.find((e) => e.type === "tir");
   for (const point of [tir.de, tir.vers]) assert.deepEqual(Object.keys(point), ["lat_deg", "lon_deg", "alt_m", "e", "n", "u"]);

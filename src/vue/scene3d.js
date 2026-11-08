@@ -1,7 +1,8 @@
 // Contenu de la vue 3D (jalon 14, MODELE § 23) : ce que la scène montre à un instant, lu dans le monde comme la 2D, et
 // décodage du relief. Pur, sans Cesium ni DOM, testé : les positions sont celles du moteur, sans second calcul.
-import {cap_vers, direct, vers_degres} from "../moteur/geodesie.js";
+import {direct, vers_degres} from "../moteur/geodesie.js";
 import {horizon_radar} from "../moteur/geometrie.js";
+import {cap_drone} from "../moteur/menace.js";
 import {parametres_radar, portee_site, positions_radars} from "../moteur/radars.js";
 import {couverture_reelle} from "../moteur/terrain.js";
 import {position_noeud} from "./reseau_vue.js";
@@ -13,14 +14,14 @@ const position = ({lat, lon, alt}) => ({lat_deg: vers_degres(lat), lon_deg: vers
 function drones_scene(monde, calques, montre) {
   return monde.drones
     .filter((d) => d.vivant && !d.arrive && monde.t >= d.depart && calques[d.detection === null ? "drones_inconnus" : "drones_detectes"] && montre(d))
-    .map((d) => ({id: `d${d.id}`, ...position(d.geo), detecte: d.detection !== null, cap: d.route.length ? cap_vers(d.geo, d.route[0].geo) : 0}));
+    .map((d) => ({id: `d${d.id}`, ...position(d.geo), detecte: d.detection !== null, cap: cap_drone(d)}));
 }
 
-/** Rendre les avions et drones défensifs à montrer, à leur altitude ; `vide` : plus de munitions. */
+/** Rendre les avions et drones défensifs à montrer, à leur altitude ; `vide` : plus de munitions ; `cap` (rad) : leur dernier déplacement. */
 function vecteurs_scene(monde, calques) {
   return monde.avions
     .filter((avion) => !avion.perdu && calques[calque_vecteur(avion)])
-    .map((avion) => ({id: `v${avion.id}`, ...position(avion.geo), icone: avion.groupe.icone ?? "turbopropulseur", vide: avion.munitions === 0, camp: "ami", sol: false}));
+    .map((avion) => ({id: `v${avion.id}`, ...position(avion.geo), icone: avion.groupe.icone ?? "turbopropulseur", vide: avion.munitions === 0, camp: "ami", sol: false, cap: avion.cap}));
 }
 
 /** Rendre les unités au sol : radars sur leur mât, batteries, centres et cibles ; `alt` est la hauteur au-dessus du sol. */

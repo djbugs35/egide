@@ -1,7 +1,8 @@
 // Entités du scope en symbologie inspirée d'APP-6 : ami en dôme (plein = IR, creux = laser), hostile en
 // demi-losange, cibles en carré ; bulle de défense sol dont l'opacité suit les munitions restantes.
 import {ecrire_nom} from "./libelles.js";
-import {chemin_cercle, ecran as projeter_ecran} from "./ecran.js";
+import {cap_drone} from "../moteur/menace.js";
+import {chemin_cercle, ecran as projeter_ecran, rotation_ecran} from "./ecran.js";
 import {COULEURS} from "./couleurs.js";
 import {avancement} from "./effets.js";
 import {dessiner_icone, dessiner_silhouette} from "./icones.js";
@@ -120,14 +121,19 @@ export function dessiner_drones(ctx, camera, monde, traces, calques, montre = ()
     if (!calques[drone.detection === null ? "drones_inconnus" : "drones_detectes"] || !montre(drone)) continue;
     const ecran = projeter_ecran(camera, drone.geo);
     const couleur = drone.detection === null ? COULEURS.inconnu : COULEURS.hostile;
-    if (calques.icones && monde.scenario.rouge.icone && dessiner_silhouette(ctx, ecran.x, ecran.y, monde.scenario.rouge.icone, couleur)) continue;
+    const rotation = rotation_ecran(camera, drone.geo, cap_drone(drone));
+    if (calques.icones && monde.scenario.rouge.icone && dessiner_silhouette(ctx, ecran.x, ecran.y, monde.scenario.rouge.icone, couleur, undefined, rotation)) continue;
     ctx.fillStyle = couleur;
+    ctx.save();
+    ctx.translate(ecran.x, ecran.y);
+    ctx.rotate(rotation);
     ctx.beginPath();
-    ctx.moveTo(ecran.x, ecran.y - TAILLE * 0.8);
-    ctx.lineTo(ecran.x + TAILLE * 0.8, ecran.y);
-    ctx.lineTo(ecran.x - TAILLE * 0.8, ecran.y);
+    ctx.moveTo(0, -TAILLE * 0.8);
+    ctx.lineTo(TAILLE * 0.8, 0);
+    ctx.lineTo(-TAILLE * 0.8, 0);
     ctx.closePath();
     ctx.fill();
+    ctx.restore();
   }
 }
 
@@ -188,7 +194,7 @@ export function dessiner_avions(ctx, camera, monde, calques) {
       ctx.stroke();
       ctx.setLineDash([]);
     }
-    if (calques.icones && avion.groupe.icone && dessiner_icone(ctx, ecran.x, ecran.y, {icone: avion.groupe.icone, pays: avion.groupe.pays, taille: avion.type && avion.type !== "avion" ? 18 : 22})) {
+    if (calques.icones && avion.groupe.icone && dessiner_icone(ctx, ecran.x, ecran.y, {icone: avion.groupe.icone, pays: avion.groupe.pays, taille: avion.type && avion.type !== "avion" ? 18 : 22, rotation: rotation_ecran(camera, avion.geo, avion.cap)})) {
       ctx.globalAlpha = 1;
       continue;
     }

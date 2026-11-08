@@ -1,7 +1,8 @@
 // Rejeu d'un raid pour un moteur de jeu (jalon 15.1, MODELE § 24, docs/FORMATS.md § 6) : le raid simulé, échantillonné
 // et mis en lignes JSON. Égide reste l'autorité : un client relit ces positions, il ne simule rien. Node et navigateur.
 import {unite_si} from "./catalogue.js";
-import {cap_vers, soustraire, vers_degres, vers_ecef, vers_enu} from "./geodesie.js";
+import {soustraire, vers_degres, vers_ecef, vers_enu} from "./geodesie.js";
+import {cap_drone} from "./menace.js";
 import {bilan, simuler} from "./monde.js";
 import {empreinte} from "./preuve.js";
 import {parametres_radar, positions_radars} from "./radars.js";
@@ -59,20 +60,8 @@ function en_lieux(valeur, lieu) {
   return Object.fromEntries(Object.entries(valeur).map(([cle, v]) => [cle, en_lieux(v, lieu)]));
 }
 
-/**
- * Rendre la fonction qui donne le cap (degrés, 0 à 360, depuis le nord) d'une entité : son déplacement depuis
- * l'échantillon précédent, le dernier cap si elle n'a pas bougé, et au premier échantillon le début de sa route.
- */
-function creer_suivi_caps() {
-  const derniers = new Map();
-  return (cle, {geo, route}) => {
-    const avant = derniers.get(cle);
-    const bouge = avant && (avant.lat !== geo.lat || avant.lon !== geo.lon);
-    const cap = bouge ? cap_vers(avant, geo) : avant ? avant.cap : route?.length ? cap_vers(geo, route[0].geo) : 0;
-    derniers.set(cle, {lat: geo.lat, lon: geo.lon, cap});
-    return arrondi(((vers_degres(cap) % 360) + 360) % 360, DECIMALES_CAP);
-  };
-}
+/** Rendre un cap en radians écrit en degrés de 0 à 360, depuis le nord. */
+const cap_en_degres = (cap) => arrondi(((vers_degres(cap) % 360) + 360) % 360, DECIMALES_CAP);
 
 /** Rendre le rang de `etat` dans `liste` ; un état que le format ne connaît pas fait échouer l'export. */
 function rang_etat(liste, etat) {
@@ -90,10 +79,10 @@ function echantillon({geo, ecef}, repere, cap, etat) {
 }
 
 /** Rendre l'image du monde : drones en vol, vecteurs (perdus compris) et munitions de chaque poste, dans l'ordre du statique. */
-function image(monde, repere, cap_de) {
+function image(monde, repere) {
   const drones = monde.drones.filter((d) => est_actif(d, monde.t))
-    .map((d) => [d.id, ...echantillon(d, repere, cap_de(`d${d.id}`, d), rang_etat(ETATS.drones, d.detection === null ? "inconnu" : "detecte"))]);
-  const vecteurs = monde.avions.map((a) => [a.id, ...echantillon(a, repere, cap_de(`v${a.id}`, a), rang_etat(ETATS.vecteurs, a.perdu ? "perdu" : a.etat)), a.munitions]);
+    .map((d) => [d.id, ...echantillon(d, repere, cap_en_degres(cap_drone(d)), rang_etat(ETATS.drones, d.detection === null ? "inconnu" : "detecte"))]);
+  const vecteurs = monde.avions.map((a) => [a.id, ...echantillon(a, repere, cap_en_degres(a.cap), rang_etat(ETATS.vecteurs, a.perdu ? "perdu" : a.etat)), a.munitions]);
   return {genre: "image", t: arrondi(monde.t, DECIMALES_TEMPS), drones, vecteurs, postes: monde.postes.map((p) => p.munitions)};
 }
 
@@ -143,7 +132,6 @@ export async function creer_rejeu(brut, fichiers, registre, {pas_echantillon = P
   const trace = await empreinte(v2, fichiers, registre);
   const repere = creer_repere({...scenario.theatre.origine, alt: scenario.theatre.origine.alt ?? 0});
   const lieu = creer_lieu(repere);
-  const cap_de = creer_suivi_caps();
   const chronologie = [];
   let [fixes, derniere, journalises, rang] = [null, null, 0, 0];
 
@@ -153,7 +141,7 @@ export async function creer_rejeu(brut, fichiers, registre, {pas_echantillon = P
   };
   const prendre_image = (monde) => {
     vider_journal(monde);
-    chronologie.push(image(monde, repere, cap_de));
+    chronologie.push(image(monde, repere));
     derniere = monde.t;
   };
   const observer = (monde) => {

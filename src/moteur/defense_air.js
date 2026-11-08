@@ -2,7 +2,7 @@
 // mouvement, tir) sont déléguées aux algorithmes du scénario et des unités (MODELE § 8.3 à § 8.5, § 10).
 // Chaque avion porte les paramètres de son groupe (type d'avion, arme, altitude) : la flotte peut être hétérogène.
 import {algo} from "./algos.js";
-import {direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
+import {cap_vers, direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
 import {parcourir_voisins} from "./grille.js";
 import {OUTILS} from "./outils.js";
 import {effet_esquive} from "./reaction.js";
@@ -26,7 +26,7 @@ export function creer_avions(scenario, hasard) {
     for (let i = 0; i < groupe.nombre; i++) {
       const orbite = i < placees.length ? {...placees[i]} : orbite_aleatoire(scenario, groupe, hasard);
       avions.push({
-        id: avions.length, groupe, orbite, geo: {...orbite}, ecef: vers_ecef(orbite), etat: "orbite", point: null,
+        id: avions.length, groupe, orbite, geo: {...orbite}, ecef: vers_ecef(orbite), etat: "orbite", point: null, cap: 0,
         prochain_tir: 0, guidage: groupe.arme.guidage, munitions: groupe.emport_nombre, type: groupe.type_vecteur ?? "avion", perdu: false,
       });
     }
@@ -118,6 +118,7 @@ function deplacer(monde, avion, but, pas) {
   const mouvement = algo(monde.registre, avion.groupe.algos.mouvement, "mouvement");
   const route = [{geo: but, ecef: vers_ecef({...but, alt: avion.geo.alt})}];
   const suivant = mouvement.avancer(avion, route, pas, OUTILS);
+  if (suivant.geo.lat !== avion.geo.lat || suivant.geo.lon !== avion.geo.lon) avion.cap = cap_vers(avion.geo, suivant.geo);
   avion.geo = suivant.geo;
   avion.ecef = suivant.ecef;
   return suivant.atteints === 1;

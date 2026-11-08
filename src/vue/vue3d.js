@@ -191,6 +191,7 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
       const image = `icones/${u.icone}.svg`;
       if (panneau.icone !== image) Object.assign(panneau, {icone: image, image});
       panneau.color = u.vide ? couleurs[u.camp].withAlpha(0.35) : couleurs[u.camp];
+      if (!u.sol) panneau.rotation = viewer.camera.heading - u.cap;
     }
     masquer_absents(pool_unites, vus);
   }

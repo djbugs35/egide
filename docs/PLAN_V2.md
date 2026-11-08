@@ -146,7 +146,7 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Déploiement | **Sélection après dépôt** : l'unité déposée est sélectionnée et sa fiche s'ouvre | 12 | à faire |
 | Déploiement | **Algorithme de détection par site** : chaque radar choisit son algorithme, pas seulement son modèle | 12 | à faire |
 | Catalogue | **Catalogue par pays et icônes de jeu** : unités fictives inspirées de classes de différents pays (noms de plantes, valeurs de classe arrondies), silhouettes SVG sur pastille de pays, filtre de la palette par pays | 12 | **fait** |
-| Catalogue | **Icônes orientées** : les silhouettes de vecteurs tournées selon leur cap | 12 | à faire |
+| Catalogue | **Icônes orientées** : les silhouettes de vecteurs tournées selon leur cap | 12 | fait |
 | Catalogue | **Icônes des C2 et des sites** sur la carte (la palette les montre déjà) | 12 | à faire |
 | Catalogue | **Formats d'échange** : spécification (docs/FORMATS.md), schémas JSON générés depuis le catalogue, validateur `node outils/valider.js` (rapport `--json`) pour les outils externes | 12 | **fait** |
 | Catalogue | **Import du catalogue privé** : page Catalogue, choix Public seul / Fusionner / Remplacer, retenu dans le navigateur et appliqué à la palette ; index `prive/unites/index.json` par `node outils/indexer.js` | 12 | **fait** (`src/vue/catalogue_prive.js`) |

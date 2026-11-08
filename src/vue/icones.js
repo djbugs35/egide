@@ -39,9 +39,9 @@ export const icone_prete = (icone) => Boolean(icone) && source(icone).complete &
 
 /**
  * Dessiner l'icône d'une unité amie ou neutre en (x, y) : pastille du pays (couleur du camp pour une unité générique),
- * liseré du camp, silhouette blanche. `camp` : couleur du liseré.
+ * liseré du camp, silhouette blanche. `camp` : couleur du liseré ; `rotation` : voir rotation_ecran (la pastille ne tourne pas).
  */
-export function dessiner_icone(ctx, x, y, {icone, pays, camp = COULEURS.ami, taille = 22}) {
+export function dessiner_icone(ctx, x, y, {icone, pays, camp = COULEURS.ami, taille = 22, rotation = 0}) {
   const silhouette = teinte(icone, "#ffffff", taille * 0.62);
   if (!silhouette) return false;
   ctx.beginPath();
@@ -51,15 +51,23 @@ export function dessiner_icone(ctx, x, y, {icone, pays, camp = COULEURS.ami, tai
   ctx.lineWidth = 2;
   ctx.strokeStyle = camp;
   ctx.stroke();
-  const cote = taille * 0.62;
-  ctx.drawImage(silhouette, x - cote / 2, y - cote / 2, cote, cote);
+  poser_tournee(ctx, silhouette, x, y, taille * 0.62, rotation);
   return true;
 }
 
-/** Dessiner une silhouette seule, teintée (essaim adverse : des centaines à la fois, sans pastille). */
-export function dessiner_silhouette(ctx, x, y, icone, couleur, taille = 12) {
+/** Dessiner une silhouette seule, teintée (essaim adverse : des centaines à la fois, sans pastille), tournée de `rotation`. */
+export function dessiner_silhouette(ctx, x, y, icone, couleur, taille = 12, rotation = 0) {
   const silhouette = teinte(icone, couleur, taille);
   if (!silhouette) return false;
-  ctx.drawImage(silhouette, x - taille / 2, y - taille / 2, taille, taille);
+  poser_tournee(ctx, silhouette, x, y, taille, rotation);
   return true;
+}
+
+/** Poser `image` centrée en (x, y), carrée de `cote` px, tournée de `rotation` rad (sens horaire à l'écran). */
+function poser_tournee(ctx, image, x, y, cote, rotation) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  ctx.drawImage(image, -cote / 2, -cote / 2, cote, cote);
+  ctx.restore();
 }

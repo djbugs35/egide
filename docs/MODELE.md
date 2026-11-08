@@ -648,6 +648,9 @@ calcul, selon les mêmes calques que la 2D. Hypothèses d'affichage :
   au-dessus du relief, batteries, centres et sites posés au sol.
 - **Silhouettes** : un drone à moins de 80 km de la caméra est dessiné en silhouette orientée selon son cap vers le
   prochain point de sa route, sinon en point ; au plus 150 tiges de drones, au-delà un nuage de traits ne se lit plus.
+- **Orientation** : toutes les vues (2D, 3D, rejeu) lisent le même cap. Celui d'un drone vise le prochain point de sa
+  route. Un vecteur défensif garde l'azimut sphérique de son dernier déplacement ; immobile en orbite, il garde ce cap,
+  et regarde le nord tant qu'il n'a pas bougé. Le cap n'entre dans aucun calcul de la simulation. Unités au sol non orientées.
 - **Relief** : tuiles « terrarium », `h = 256 R + G + B / 256 − 32768` (m), au plus proche voisin sur une grille de
   65 × 65, sans correction du géoïde (environ 50 m en France), sans effet puisque tout est dessiné au-dessus de ce même
   sol. Les symboles restent visibles à travers le terrain, pour ne pas perdre une unité derrière une crête. Le relief du moteur (§ 16) reste celui du scénario ; celui de cette vue ne sert qu'à l'image.
@@ -672,7 +675,6 @@ Hypothèses de restitution, sans effet sur le calcul :
   simulation. Entre deux images, le client interpole : à 800 km/h, un drone parcourt 111 m en 0,5 s en ligne quasi droite.
 - **Repère.** ENU rigide, tangent à l'origine du théâtre : rotation et translation de l'ECEF, sans déformation ni
   projection. Il redonne la position du moteur à l'arrondi près (10 cm).
-- **Cap.** Azimut sphérique du déplacement entre deux images (l'écart à l'ellipsoïde ne se voit pas sur une silhouette).
-  Pour une image très espacée, c'est un cap moyen ; une entité immobile garde le dernier.
+- **Cap.** Celui du moteur (§ 23).
 - **Terrain exporté.** Le maillage relie les nœuds de la grille du moteur par des triangles, sans recalcul d'altitude :
   entre deux nœuds, il peut s'écarter de l'interpolation bilinéaire du moteur (§ 16), d'autant plus que `--pas-km` est grand.

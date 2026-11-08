@@ -22,7 +22,7 @@ genre et mécaniques du jeu de stratégie, avec ses propres noms, graphismes et 
 | Étape | Contenu | État |
 |---|---|---|
 | 1 | Installation automatique et vérification (`installer.command`, `installer.bat`, `outils/verifier_installation.js`) | fait |
-| 2 | Orientation des objets selon leur déplacement, dans toutes les vues | en cours |
+| 2 | Orientation des objets selon leur déplacement, dans toutes les vues | fait |
 | 3 | Couvertures calculées une seule fois dans le moteur : détection, conduite de tir, interception selon l'objet, couverture de chaque C2 comme résultante des objets connectés ; affichées dans le navigateur, Cesium et Godot | à faire |
 | 4 | Icônes des objets privés, ressemblantes, sous `prive/icones/` | à faire |
 | 5 | Liaison en direct entre Godot et le moteur (remplace le lot 15.4) | à faire |

@@ -246,7 +246,7 @@ même hors de la grille d'échantillonnage.
 `tir` avec `detruit`) ou a frappé (évènement `impact`). `vecteurs` les liste tous, les perdus compris. `postes` donne
 les munitions de chaque poste, dans l'ordre de `statique.postes`. L'ordre des colonnes fait foi dans `entete.colonnes`.
 
-Le cap est mesuré sur le déplacement depuis l'image précédente : une entité immobile garde son dernier cap.
+Le cap d'un drone vise le prochain point de sa route. Celui d'un vecteur est son dernier déplacement : immobile, il le garde (0 au départ).
 
 ### 6.3 Repère
 
