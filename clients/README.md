@@ -61,10 +61,25 @@ Le moteur tourne dans le serveur, Godot affiche et commande (docs/FORMATS.md § 
 | M, H | couper le son, afficher l'aide |
 | N | nouvelle partie |
 
+| F5 | éditer le scénario (la partie revient à l'instant initial) |
+| F6 | éditer le relief |
+
 Sélectionner un objet trace ses enveloppes de détection, de conduite de tir et d'interception, jusqu'à huit vecteurs à la fois.
 Le brouillard masque les drones qu'aucun radar n'a encore vus et assombrit le sol hors de la portée de détection, tracée en
 disques sans le masque du relief. Sons et effets sont synthétisés au lancement. Un terrain dont l'origine n'est pas celle du
 scénario est ignoré.
+
+### Éditer
+
+**Scénario (F5).** Choisir une unité dans la palette, puis cliquer sur le sol pour la poser : sa portée suit le curseur. Clic droit
+ou Échap pour arrêter. Touches 1 à 5 : sélection (glisser pour déplacer), liaison (deux clics), plan de vol, zone (Entrée pour fermer),
+gomme. Suppr efface la sélection. Ctrl+Z, Ctrl+Y annulent et rétablissent. La barre enregistre sous `prive/scenarios/` et charge un
+scénario. Chaque geste passe par les mêmes calculs que l'éditeur du navigateur.
+
+**Relief (F6).** Touches 1 à 4 : élever, abaisser, aplanir, lisser ; maintenir le clic gauche pour peindre. `[` et `]` changent le rayon.
+Ctrl+Z annule un trait entier. La barre ouvre un relief du catalogue ou un relief plat. Enregistrer écrit sous `prive/unites/terrains/`
+et l'applique au scénario : le moteur calcule alors masques radar et vues directes sur ce relief. Revenir en jeu sans enregistrer
+abandonne les retouches.
 
 ### Vérifier le client
 

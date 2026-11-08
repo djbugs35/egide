@@ -7,7 +7,8 @@ const COULEUR_PANNEAU := Color(0.05, 0.09, 0.12, 0.88)
 const COULEUR_BORD := Color(0.3, 0.55, 0.65)
 const COULEUR_CADRE := Color(0.4, 1.0, 0.6)
 const COTE_ICONE := 96
-const AIDE := "Clic gauche ou cadre : sélectionner   Maj : ajouter\nDouble-clic : tout le type à l'écran   Échap : désélectionner   Ctrl+A : tous\nClic droit : ordre   Ctrl+1 à 9 : mémoriser   1 à 9 : rappeler (deux fois : centrer)\nWASD, flèches, bord d'écran : défiler   molette : zoom   bouton du milieu : pivoter\nF1 à F4 : caméras   Espace : lancer, pause   + et - : vitesse   N : nouvelle partie\nC : couvertures   B : brouillard   M : son   H : cette aide"
+const ECHELLE_PANNEAU := 4.0
+const AIDE := "Clic gauche ou cadre : sélectionner   Maj : ajouter\nDouble-clic : tout le type à l'écran   Échap : désélectionner   Ctrl+A : tous\nClic droit : ordre   Ctrl+1 à 9 : mémoriser   1 à 9 : rappeler (deux fois : centrer)\nWASD, flèches, bord d'écran : défiler   molette : zoom   bouton du milieu : pivoter\nF1 à F4 : caméras   F5 : éditer le scénario   F6 : éditer le relief\nEspace : lancer, pause   + et - : vitesse   N : nouvelle partie\nC : couvertures   B : brouillard   M : son   H : cette aide"
 
 
 class Cadre extends Control:
@@ -30,6 +31,7 @@ var _aide := Label.new()
 var _fin := PanelContainer.new()
 var _fin_texte := Label.new()
 var _cadre := Cadre.new()
+var racine := Control.new()
 var _icones: Dictionary = {}
 var _racine_depot := ""
 var _attente_alerte := 0.0
@@ -37,7 +39,6 @@ var _attente_alerte := 0.0
 
 func _ready() -> void:
 	_racine_depot = ProjectSettings.globalize_path("res://").path_join("../..").simplify_path()
-	var racine := Control.new()
 	racine.set_anchors_preset(Control.PRESET_FULL_RECT)
 	racine.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(racine)
@@ -50,7 +51,7 @@ func _ready() -> void:
 	racine.add_child(_bloc_aide())
 	racine.add_child(_bloc_fin())
 	_alerte.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	_alerte.position = Vector2(-300.0, 46.0)
+	_alerte.position = Vector2(-300.0, 108.0)
 	_alerte.custom_minimum_size = Vector2(600.0, 0.0)
 	_alerte.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_alerte.add_theme_font_size_override("font_size", 20)
@@ -61,7 +62,8 @@ func _ready() -> void:
 	racine.add_child(_alerte)
 
 
-static func _style() -> StyleBoxFlat:
+## Rendre le fond commun des panneaux.
+static func style_panneau() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = COULEUR_PANNEAU
 	style.border_color = COULEUR_BORD
@@ -72,7 +74,7 @@ static func _style() -> StyleBoxFlat:
 
 func _barre_haute() -> Control:
 	var barre := PanelContainer.new()
-	barre.add_theme_stylebox_override("panel", _style())
+	barre.add_theme_stylebox_override("panel", style_panneau())
 	barre.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	barre.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_haut.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -88,7 +90,7 @@ func _cartouche_carte() -> Control:
 
 
 func _panneau_selection() -> Control:
-	_panneau.add_theme_stylebox_override("panel", _style())
+	_panneau.add_theme_stylebox_override("panel", style_panneau())
 	_panneau.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_panneau.offset_left = -260.0
 	_panneau.offset_right = 260.0
@@ -131,7 +133,7 @@ func _bloc_aide() -> Control:
 
 
 func _bloc_fin() -> Control:
-	_fin.add_theme_stylebox_override("panel", _style())
+	_fin.add_theme_stylebox_override("panel", style_panneau())
 	_fin.set_anchors_preset(Control.PRESET_CENTER)
 	_fin.position = Vector2(-220.0, -130.0)
 	_fin.custom_minimum_size = Vector2(440.0, 0.0)
@@ -173,27 +175,28 @@ func montrer_selection(nom: String, detail: String, icone: Variant) -> void:
 	_panneau.visible = nom != ""
 	_nom.text = nom
 	_detail.text = detail
-	_icone.texture = _texture_icone(icone)
+	_icone.texture = texture_icone(icone, ECHELLE_PANNEAU)
 
 
-## Rendre la texture de l'icône `icone`, lue une fois ; null si elle manque ou est illisible.
-func _texture_icone(icone: Variant) -> Texture2D:
+## Rendre la texture de l'icône `icone` à l'`echelle` donnée (1 : 64 px), lue une fois ; null si elle manque ou est illisible.
+func texture_icone(icone: Variant, echelle: float) -> Texture2D:
 	if icone == null:
 		return null
-	if not _icones.has(icone):
-		_icones[icone] = _lire_icone(icone)
-	return _icones[icone]
+	var cle := "%s@%.1f" % [icone, echelle]
+	if not _icones.has(cle):
+		_icones[cle] = _lire_icone(icone, echelle)
+	return _icones[cle]
 
 
 # Même règle que chemin_icone de src/moteur/catalogue.js.
-func _lire_icone(icone: String) -> Texture2D:
+func _lire_icone(icone: String, echelle: float) -> Texture2D:
 	var relatif := "prive/icones/%s.svg" % icone.trim_prefix("prive/") if icone.begins_with("prive/") else "icones/%s.svg" % icone
 	var chemin := _racine_depot.path_join(relatif)
 	if not FileAccess.file_exists(chemin):
 		return null
 	var svg := FileAccess.get_file_as_string(chemin)
 	var image := Image.new()
-	if image.load_svg_from_string(svg, 4.0) != OK:
+	if image.load_svg_from_string(svg, echelle) != OK:
 		return null
 	return ImageTexture.create_from_image(image)
 

@@ -5,17 +5,21 @@
 //
 // La partie démarre en pause. N'écoute que sur 127.0.0.1. À la fin d'un raid, le scénario joué, ordres compris, va dans
 // resultats/parties/ : `node src/rejeu.js --scenario <ce fichier>` en refait le rejeu.
-import {mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
+import {existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
 import {createServer} from "node:http";
 import {join} from "node:path";
 import {performance} from "node:perf_hooks";
 import {pathToFileURL} from "node:url";
 import {lire_arguments} from "./arguments.js";
-import {charger_tous_algos, charger_unites_scenario, RACINE} from "./moteur/catalogue_node.js";
+import {index_unites, index_unites_prive} from "../outils/indexer.js";
+import {charger_unites, chemin_unite} from "./moteur/catalogue.js";
+import {charger_tous_algos, charger_unites_scenario, ids_unites_disque, lire_fichier, RACINE} from "./moteur/catalogue_node.js";
 import {creer_partie} from "./moteur/partie.js";
 import {empreinte} from "./moteur/preuve.js";
 import {en_v2, modifier_scenario} from "./moteur/scenario.js";
-import {creer_salle} from "./serveur/salle.js";
+import {creer_atelier_scenario} from "./serveur/atelier_scenario.js";
+import {creer_atelier_terrain, message_terrain} from "./serveur/atelier_terrain.js";
+import {CommandeInvalide, creer_salle} from "./serveur/salle.js";
 import {cle_acceptation, creer_lecteur, OPCODES, origine_admise, trame, TrameInvalide} from "./serveur/websocket.js";
 
 const ADRESSE = "127.0.0.1";
@@ -24,6 +28,7 @@ const PERIODE_TIC_MS = 100;
 // Client qui ne suit pas (mesuré : une image de référence fait environ 50 ko) : on saute ses images, jamais ses évènements.
 const ATTENTE_MAX_OCTETS = 1 << 22;
 const FERMETURE_PROTOCOLE = 1002;
+const NOM_VALIDE = /^[\p{L}\p{N}_-]{1,64}$/u;
 
 /** Écrire `scenario_joue` sous resultats/parties/, de façon atomique ; rendre {chemin, empreinte}. */
 async function archiver(scenario_joue, registre) {
@@ -36,6 +41,65 @@ async function archiver(scenario_joue, registre) {
   renameSync(`${chemin}.tmp`, chemin);
   console.log(`Partie enregistrée : ${chemin}`);
   return {chemin, empreinte: trace.empreinte};
+}
+
+/** Écrire `contenu` en JSON dans `chemin`, de façon atomique. */
+function ecrire_json(chemin, contenu) {
+  writeFileSync(`${chemin}.tmp`, `${JSON.stringify(contenu, null, 2)}\n`);
+  renameSync(`${chemin}.tmp`, chemin);
+}
+
+/** Rendre la bibliothèque des scénarios : ceux du dépôt, lisibles, et ceux du joueur, sous prive/, jamais publiés. */
+function creer_bibliotheque() {
+  const dossier_joueur = join(RACINE, "prive", "scenarios");
+  const sous = (dossier, prefixe) => (existsSync(join(RACINE, dossier)) ? readdirSync(join(RACINE, dossier)).filter((f) => f.endsWith(".json") && f !== "index.json").map((f) => ({id: `${dossier}/${f}`, nom: `${prefixe}${f.replace(/\.json$/, "")}`})) : []);
+  const lister = () => [...sous("scenarios", ""), ...sous("prive/scenarios", "moi : ")];
+  return {
+    lister,
+    lire(id) {
+      if (!lister().some((s) => s.id === id)) throw new CommandeInvalide(`scénario inconnu : ${id}`);
+      return JSON.parse(readFileSync(join(RACINE, id), "utf-8"));
+    },
+    ecrire(nom, brut) {
+      if (typeof nom !== "string" || !NOM_VALIDE.test(nom)) throw new CommandeInvalide("nom invalide : lettres, chiffres, - et _ seulement");
+      mkdirSync(dossier_joueur, {recursive: true});
+      ecrire_json(join(dossier_joueur, `${nom}.json`), brut);
+      return `prive/scenarios/${nom}.json`;
+    },
+  };
+}
+
+/** Enregistrer un terrain édité sous prive/, tenir à jour l'index privé et la palette ; rendre son identifiant. */
+function ecrire_terrain(nom, unite, index, fichiers) {
+  const id = `prive/terrains/${nom}`;
+  mkdirSync(join(RACINE, "prive", "unites", "terrains"), {recursive: true});
+  ecrire_json(join(RACINE, chemin_unite(id)), unite);
+  const prive = index_unites_prive();
+  ecrire_json(join(RACINE, "prive", "unites", "index.json"), prive);
+  fichiers[id] = unite;
+  if (!index.some((u) => u.id === id)) index.push(prive.find((u) => u.id === id));
+  return id;
+}
+
+/** Rendre les extensions de la salle : édition du scénario, du relief, et grille de terrain à chaque ouverture. */
+function extensions_salle(index, fichiers) {
+  const scenario = creer_atelier_scenario({index, fichiers, bibliotheque: creer_bibliotheque()});
+  const terrain = creer_atelier_terrain({lire_unite: (id) => lire_fichier(chemin_unite(id)), ecrire_terrain: (nom, unite) => ecrire_terrain(nom, unite, index, fichiers)});
+  return (acces) => {
+    const [a, b] = [scenario(acces), terrain(acces)];
+    return {
+      arrivee: a.arrivee,
+      ouverture: () => [message_terrain(acces.partie()), ...a.ouverture()],
+      commandes: {
+        ...a.commandes, ...b.commandes,
+        // Le relief enregistré doit apparaître aussitôt dans les listes du client.
+        terrain_enregistrer: async (message) => {
+          await b.commandes.terrain_enregistrer(message);
+          acces.diffuser(a.arrivee()[0]);
+        },
+      },
+    };
+  };
 }
 
 /** Brancher le client de la connexion `socket` sur la salle ; `clients` : l'ensemble de ceux à qui diffuser. */
@@ -84,6 +148,8 @@ async function principal() {
   const {options, modifications} = lire_arguments(process.argv.slice(2), {scenario: "scenarios/reference.json", port: PORT_DEFAUT});
   const brut = modifier_scenario(en_v2(JSON.parse(readFileSync(options.scenario, "utf-8"))), modifications);
   const registre = await charger_tous_algos();
+  const catalogue = await charger_unites(ids_unites_disque(), lire_fichier);
+  const index = [...index_unites(), ...index_unites_prive()];
   const clients = new Set();
   const salle = creer_salle({
     brut,
@@ -91,6 +157,7 @@ async function principal() {
     diffuser: (enregistrement) => clients.forEach((client) => client.envoyer(enregistrement)),
     archiver: (scenario_joue) => archiver(scenario_joue, registre),
     maintenant: () => performance.now(),
+    extensions: extensions_salle(index, catalogue),
   });
   await salle.demarrer();
   const serveur = createServer((_, reponse) => reponse.writeHead(426, {"Content-Type": "text/plain; charset=utf-8"}).end("Serveur de partie Égide : connexion WebSocket attendue.\n"));

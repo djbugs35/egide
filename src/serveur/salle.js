@@ -17,17 +17,24 @@ const modifications_valides = (modifications) => modifications !== null && typeo
  * Rendre la salle de la partie de scénario `brut` : {demarrer(), tic(dt_s), commander(message), arrivee(envoyer)}.
  * `preparer(brut)` (async) rend une partie (voir creer_partie) ; `diffuser(enregistrement)` l'envoie à tous les clients ;
  * `archiver(scenario_joue)` (async) rend ce qu'il faut annoncer à la fin d'un raid ; `maintenant()` donne des ms.
+ * `extensions(acces)` rend {commandes, arrivee(), ouverture()} : commandes en plus, enregistrements pour un nouveau client,
+ * et enregistrements de chaque ouverture, envoyés juste après l'en-tête. `acces` : {partie(), relancer(brut), diffuser}.
  */
-export function creer_salle({brut, preparer, diffuser, archiver, maintenant}) {
+export function creer_salle({brut, preparer, diffuser, archiver, maintenant, extensions = () => ({})}) {
   let [partie, pause, vitesse, reserve, obtenue, occupee] = [null, true, 1, 0, 0, false];
+
+  // Après l'en-tête et avant le statique : un client place les objets fixes sur le terrain qu'il vient de recevoir.
+  function ouverture_complete(arrivee) {
+    const [tete, ...reste] = partie.ouverture();
+    return [tete, ...arrivee, ...(ajouts.ouverture?.() ?? []), ...reste, etat()];
+  }
 
   const etat = () => ({genre: "etat", t: partie.instant(), pause, vitesse, vitesse_obtenue: obtenue, termine: partie.termine(), bilan: partie.bilan()});
 
   /** Mettre en place `nouvelle`, en pause à son instant initial, et l'annoncer à tous. */
   function installer(nouvelle) {
     [partie, pause, reserve, obtenue] = [nouvelle, true, 0, 0];
-    nouvelle.ouverture().forEach(diffuser);
-    diffuser(etat());
+    ouverture_complete([]).forEach(diffuser);
   }
 
   /** Préparer le scénario `voulu` ; la partie en cours continue si cela échoue, ou tant que ce n'est pas prêt. */
@@ -70,6 +77,9 @@ export function creer_salle({brut, preparer, diffuser, archiver, maintenant}) {
     },
   };
 
+  const ajouts = extensions({partie: () => partie, relancer, diffuser});
+  Object.assign(COMMANDES, ajouts.commandes);
+
   return {
     demarrer: () => relancer(brut),
     /** Avancer la partie du temps écoulé `dt_s` (s) sans dépasser le budget : un retard non rattrapable est abandonné. */
@@ -102,9 +112,7 @@ export function creer_salle({brut, preparer, diffuser, archiver, maintenant}) {
     },
     /** Envoyer à un nouveau client de quoi rejoindre la partie en cours. */
     arrivee(envoyer) {
-      if (!partie) return;
-      partie.ouverture().forEach(envoyer);
-      envoyer(etat());
+      if (partie) ouverture_complete(ajouts.arrivee?.() ?? []).forEach(envoyer);
     },
   };
 }

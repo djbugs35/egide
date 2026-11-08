@@ -5,7 +5,8 @@ import {horizon_radar} from "./geometrie.js";
 import {parametres_radar, portee_site, positions_radars} from "./radars.js";
 import {altitude_sol, grille_terrain, masque_horizon, vu_par, vue_directe} from "./terrain.js";
 
-const masques = new Map();
+// Par grille et non par identifiant de terrain : un terrain retouché garde son identifiant, mais pas ses masques.
+const masques = new WeakMap();
 
 /** Rendre la grille du terrain du scénario, ou null sur Terre lisse. */
 export const grille_scenario = (scenario) => (scenario.theatre.terrain ? grille_terrain(scenario.theatre.terrain) : null);
@@ -19,12 +20,14 @@ export function masques_radars(scenario) {
   if (!grille) return null;
   const radars = positions_radars(scenario);
   const reglages = radars.map((_, i) => ({h: parametres_radar(scenario, i).hauteur_antenne, portee: portee_site(scenario, i)}));
-  const cle = `${scenario.theatre.terrain.id}|${radars.map((r, i) => `${r.lat},${r.lon},${reglages[i].h},${reglages[i].portee}`).join(";")}`;
-  if (!masques.has(cle)) {
-    if (masques.size > 32) masques.clear();
-    masques.set(cle, radars.map((site, i) => masque_horizon(grille, site, reglages[i].h, reglages[i].portee)));
+  const cle = radars.map((r, i) => `${r.lat},${r.lon},${reglages[i].h},${reglages[i].portee}`).join(";");
+  if (!masques.has(grille)) masques.set(grille, new Map());
+  const memoire = masques.get(grille);
+  if (!memoire.has(cle)) {
+    if (memoire.size > 32) memoire.clear();
+    memoire.set(cle, radars.map((site, i) => masque_horizon(grille, site, reglages[i].h, reglages[i].portee)));
   }
-  return masques.get(cle);
+  return memoire.get(cle);
 }
 
 /** Rendre vrai si deux extrémités au sol (mât de `hauteur`) ou en l'air se voient au-dessus du relief. */

@@ -21,13 +21,14 @@ function octets_base64(texte) {
  * radians, altitudes en m (Int16, lignes du sud au nord). Décodée une fois par terrain.
  */
 export function grille_terrain(terrain) {
-  const cle = `${terrain.id}:${terrain.altitudes_b64.length}`;
-  if (!grilles.has(cle)) {
+  const cle = terrain.id;
+  // Comparer le texte, pas sa longueur : un terrain retouché garde son identifiant et la taille de sa grille.
+  if (grilles.get(cle)?.source !== terrain.altitudes_b64) {
     const octets = octets_base64(terrain.altitudes_b64);
     const z = new Int16Array(octets.buffer, octets.byteOffset, octets.byteLength / 2);
     if (z.length !== terrain.lignes * terrain.colonnes) throw new Error(`terrain ${terrain.id} : ${z.length} altitudes pour ${terrain.lignes} × ${terrain.colonnes}`);
     grilles.set(cle, {lat_sud: terrain.lat_sud, lon_ouest: terrain.lon_ouest, pas_lat: terrain.pas_lat, pas_lon: terrain.pas_lon,
-      lignes: terrain.lignes, colonnes: terrain.colonnes, pas_m: terrain.pas, z});
+      lignes: terrain.lignes, colonnes: terrain.colonnes, pas_m: terrain.pas, z, source: terrain.altitudes_b64});
   }
   return grilles.get(cle);
 }

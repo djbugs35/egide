@@ -745,3 +745,7 @@ des ordres du § 12.4 : aucune autre règle.
   puisqu'un ordre de ralliement ne porte que sur la position horizontale.
 - **Horloge.** Le temps réel décide seulement combien de pas jouer. Si le calcul ne suit pas la vitesse demandée, le retard
   est abandonné et la vitesse obtenue s'affiche ; les pas joués restent les mêmes, la partie va seulement moins vite.
+
+Les éditeurs du client (FORMATS § 10.4 et 10.5) ne changent aucune règle de simulation. Le pinceau de relief calcule ses distances en
+plan local, à titre d'outil de dessin ; seules les altitudes enregistrées entrent dans le moteur, comme celles d'un terrain importé (§ 16).
+Un terrain retouché garde son identifiant : le moteur compare son contenu, et non son nom, pour décider de refaire grille et masques.

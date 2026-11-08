@@ -412,3 +412,41 @@ Chaque message porte son `type` :
 À la fin d'un raid, le scénario de départ et ses ordres vont dans `resultats/parties/`. `node src/rejeu.js --scenario <ce
 fichier>` en refait le rejeu, identique à la partie jouée (MODELE § 26). `clients/godot/scripts/verifier_direct.gd` joue une
 partie et écrit le dump à passer à `outils/verifier_client.js --scenario <ce fichier>` (§ 8).
+
+### 10.4 Édition du scénario
+
+Le client décrit des gestes ; le serveur les traduit par les fonctions de l'éditeur du navigateur (`src/vue/edition.js`,
+`src/vue/deploiement.js`), puis relance la partie à l'instant initial, en pause. Une édition est refusée une fois le raid commencé.
+
+| `type` | Champs | Effet |
+|---|---|---|
+| `editer`, `geste: "deposer"` | `id` (catalogue ou `special/cible`, `special/centre`), `e`, `n`, facultatifs `sous` (clé d'élément), `quantite` | pose une unité de la palette |
+| `editer`, `geste: "deplacer"` | `cles`, `de` et `vers` (`{e, n}`) | déplace les éléments |
+| `editer`, `geste: "supprimer"` | `cles` | efface les éléments |
+| `editer`, `geste: "relier"` | `de`, `vers` (clés), facultatif `moyen` | crée une liaison |
+| `editer`, `geste: "passage"` | `e`, `n` | ajoute un point au plan de vol |
+| `editer`, `geste: "zone"` | `points` (`[{e, n}…]`, au moins 3) | ajoute une zone protégée |
+| `annuler`, `retablir` | | parcourt l'historique des éditions |
+| `enregistrer_scenario` | `nom` (lettres, chiffres, `-`, `_`) | écrit `prive/scenarios/<nom>.json`, hors du dépôt public |
+| `charger_scenario` | `id` (de la liste `scenarios`) | remplace le scénario |
+
+En plus du § 10.1 : `palette` (`familles` du catalogue, chaque élément avec `rayon_m`, sa portée d'aperçu ou `null`) et `scenarios` à
+l'arrivée d'un client, `elements` (`liste` `{cle, type, indice, e, n}`, `liaisons`, `zones`) à chaque ouverture à l'instant initial,
+`terrain` (la grille du § 2.5, ou `id: null`) à chaque ouverture, entre l'en-tête et le statique, et `enregistre` (`chemin`).
+
+### 10.5 Édition du relief
+
+Le serveur tient une grille d'altitudes au format du § 2.5, distincte du scénario tant qu'elle n'est pas enregistrée.
+
+| `type` | Champs | Effet |
+|---|---|---|
+| `terrain_ouvrir` | `id` | ouvre un terrain du catalogue |
+| `terrain_nouveau` | facultatifs `rayon_km` (320), `pas_km` (2) | grille plate autour de l'origine du scénario |
+| `terrain_debut` | `e`, `n` | commence un trait : un seul retour en arrière pour tout le trait ; fixe la hauteur d'« aplanir » |
+| `terrain_pinceau` | `outil` (`elever`, `abaisser`, `aplanir`, `lisser`), `rayon_m`, `force_m`, `e`, `n` | retouche la grille |
+| `terrain_annuler`, `terrain_retablir` | | parcourt les traits |
+| `terrain_enregistrer` | `nom` | écrit `prive/unites/terrains/<nom>.json`, le fait citer par le scénario et relance la partie |
+
+Réponses : `atelier_terrain` (toute la grille, à l'ouverture et après un retour en arrière) et `terrain_retouche` (`i0`, `j0`, `lignes`,
+`colonnes`, `altitudes_b64` du rectangle changé). Un terrain enregistré est un terrain comme un autre : le moteur en tire masques
+d'horizon et vues directes (MODELE § 16).

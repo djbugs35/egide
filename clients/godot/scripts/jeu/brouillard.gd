@@ -41,6 +41,7 @@ void fragment() {
 
 var matiere := ShaderMaterial.new()
 var actif := true
+var _matieres: Array[ShaderMaterial] = [matiere]
 var _zones := PackedVector3Array()
 
 
@@ -50,6 +51,13 @@ func _init() -> void:
 	matiere.shader = code
 	matiere.set_shader_parameter("sombre", LUMINOSITE_HORS_COUVERTURE)
 	matiere.set_shader_parameter("teinte", TEINTE_SANS_IMAGERIE)
+
+
+## Faire suivre aussi le brouillard à la matière `autre`, celle d'un autre sol.
+func suivre(autre: ShaderMaterial) -> void:
+	_matieres.append(autre)
+	autre.set_shader_parameter("sombre", LUMINOSITE_HORS_COUVERTURE if actif else 1.0)
+	_transmettre()
 
 
 ## Habiller le sol de l'imagerie `texture`, ou d'une teinte unie si elle est nulle.
@@ -78,7 +86,8 @@ func poser(objets: Array) -> void:
 ## Lever ou rétablir le brouillard.
 func basculer() -> void:
 	actif = not actif
-	matiere.set_shader_parameter("sombre", LUMINOSITE_HORS_COUVERTURE if actif else 1.0)
+	for une in _matieres:
+		une.set_shader_parameter("sombre", LUMINOSITE_HORS_COUVERTURE if actif else 1.0)
 
 
 ## Rendre les zones vues : la mini-carte les dessine aussi.
@@ -89,5 +98,6 @@ func zones() -> PackedVector3Array:
 func _transmettre() -> void:
 	var complet := _zones.duplicate()
 	complet.resize(ZONES_MAX)
-	matiere.set_shader_parameter("zones", complet)
-	matiere.set_shader_parameter("nombre", _zones.size())
+	for une in _matieres:
+		une.set_shader_parameter("zones", complet)
+		une.set_shader_parameter("nombre", _zones.size())

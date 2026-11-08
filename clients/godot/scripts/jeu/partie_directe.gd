@@ -10,7 +10,11 @@ const Effets := preload("res://scripts/jeu/effets.gd")
 const Ihm := preload("res://scripts/jeu/ihm.gd")
 const Rejeu := preload("res://scripts/rejeu.gd")
 const PiloteCamera := preload("res://scripts/pilote_camera.gd")
-const MiniCarte := preload("res://scripts/jeu/mini_carte.gd")
+const SolGrille := preload("res://scripts/jeu/sol_grille.gd")
+const EditeurScenario := preload("res://scripts/jeu/editeur_scenario.gd")
+const EditeurTerrain := preload("res://scripts/jeu/editeur_terrain.gd")
+
+enum Mode { JEU, SCENARIO, TERRAIN }
 
 const GLISSEMENT_MAX_PX := 6.0
 const RAYON_CLIC_PX := 18.0
@@ -45,7 +49,15 @@ var _appui := Vector2.INF
 var _appui_droit := Vector2.INF
 var _cadre_ouvert := false
 var _dernier_rappel := {"numero": 0, "instant": -100.0}
-var _sol_installe := false
+var _export: Variant = null
+var _export_lu := false
+var _sol := SolGrille.new()
+var _plan: MeshInstance3D = null
+var _terrain_scenario: Variant = null
+var _camera_placee := false
+var _mode := Mode.JEU
+var _editeur := EditeurScenario.new()
+var _atelier := EditeurTerrain.new()
 var _couvertures_vues: Dictionary = {}
 var _premiere_detection := true
 var _bilan_fini: Dictionary = {}
@@ -58,6 +70,13 @@ func brancher(h: Node3D, options: Dictionary) -> void:
 	add_child(_sons)
 	add_child(_effets)
 	add_child(_ihm)
+	_ihm.racine.add_child(_editeur)
+	_ihm.racine.add_child(_atelier)
+	_editeur.brancher(self)
+	_atelier.brancher(self)
+	_brouillard.suivre(_sol.matiere)
+	hote.add_child(_sol.noeud)
+	_sol.noeud.visible = false
 	_ihm.mini_carte.centrage_demande.connect(_centrer_sur)
 	_ihm.mini_carte.ordre_demande.connect(_ordonner_au_point)
 	hote.pilote.mode = PiloteCamera.Mode.STRATEGIE
@@ -81,6 +100,22 @@ func recevoir(delta: float) -> void:
 				push_warning(message["message"])
 			"archive":
 				_ihm.annoncer("Partie enregistrée : %s" % str(message["chemin"]).get_file())
+			"enregistre":
+				_ihm.annoncer("Enregistré : %s" % str(message["chemin"]))
+			"elements":
+				_editeur.poser_elements(message)
+			"palette":
+				_editeur.poser_palette(message["familles"])
+				_atelier.poser_palette(message["familles"])
+			"scenarios":
+				_editeur.poser_scenarios(message["liste"])
+			"terrain":
+				_terrain_scenario = message
+				_choisir_sol(message)
+			"atelier_terrain":
+				_montrer_grille(message)
+			"terrain_retouche":
+				_sol.retoucher(message)
 			_:
 				_ranger(message)
 	if hote.rejeu.instants.size() > IMAGES_AVANT_OUBLI:
@@ -99,8 +134,6 @@ func _ouvrir_partie(tete: Dictionary) -> void:
 	var erreur: String = hote.rejeu.lire_entete(tete)
 	if erreur == "":
 		erreur = hote.modeles.charger(ProjectSettings.globalize_path("res://").path_join("../modeles.json").simplify_path(), tete["catalogue"])
-	if erreur == "" and hote.terrain == null and _chemin_terrain != "":
-		erreur = hote.charger_terrain(_chemin_terrain)
 	if erreur != "":
 		hote.texte.text = erreur
 		push_error(erreur)
@@ -109,26 +142,56 @@ func _ouvrir_partie(tete: Dictionary) -> void:
 	for fiche: Dictionary in tete["catalogue"]:
 		_noms[fiche["id"]] = fiche["nom"]
 		_icones[fiche["id"]] = fiche["icone"]
-	_installer_sol()
 
 
-## Poser le sol à brouillard une fois pour toutes : le maillage du terrain s'il y en a un, sinon un grand plan.
-func _installer_sol() -> void:
-	if _sol_installe:
+func _charger_export() -> void:
+	if _export_lu or _chemin_terrain == "":
 		return
-	_sol_installe = true
-	if hote.scene_terrain != null:
-		_brouillard.habiller(hote.terrain.imagerie_texture)
-		for maille in hote.scene_terrain.find_children("*", "MeshInstance3D", true, false):
-			maille.material_override = _brouillard.matiere
+	_export_lu = true
+	if hote.charger_terrain(_chemin_terrain) != "" or hote.terrain == null:
 		return
-	_brouillard.habiller(null)
-	var plan := PlaneMesh.new()
-	plan.size = Vector2.ONE * COTE_PLAN_SANS_TERRAIN
-	var sol := MeshInstance3D.new()
-	sol.mesh = plan
-	sol.material_override = _brouillard.matiere
-	hote.add_child(sol)
+	_export = hote.terrain
+	_brouillard.habiller(_export.imagerie_texture)
+	for maille in hote.scene_terrain.find_children("*", "MeshInstance3D", true, false):
+		maille.material_override = _brouillard.matiere
+
+
+## Choisir le sol du scénario : l'export de ce terrain s'il existe (il porte l'imagerie), sinon la grille reçue, sinon un plan.
+func _choisir_sol(message: Dictionary) -> void:
+	_charger_export()
+	var id: Variant = message["id"]
+	if _export != null and (id == null or _export.description["terrain"]["id"] == id) and hote._meme_origine(_export.description["origine"], hote.rejeu.entete["origine"]):
+		hote.terrain = _export
+		_montrer_sol(hote.scene_terrain)
+	elif id != null:
+		_montrer_grille(message)
+	else:
+		hote.terrain = null
+		_montrer_sol(_plan_sans_terrain())
+
+
+func _montrer_grille(message: Dictionary) -> void:
+	_sol.poser(message, hote.rejeu.entete["origine"])
+	hote.terrain = _sol
+	_montrer_sol(_sol.noeud)
+
+
+func _montrer_sol(voulu: Node3D) -> void:
+	for sol: Node3D in [hote.scene_terrain, _plan, _sol.noeud]:
+		if sol != null:
+			sol.visible = sol == voulu
+
+
+func _plan_sans_terrain() -> MeshInstance3D:
+	if _plan == null:
+		var maille := PlaneMesh.new()
+		maille.size = Vector2.ONE * COTE_PLAN_SANS_TERRAIN
+		_plan = MeshInstance3D.new()
+		_plan.mesh = maille
+		_plan.material_override = _brouillard.matiere
+		_brouillard.habiller(null if _export == null else _export.imagerie_texture)
+		hote.add_child(_plan)
+	return _plan
 
 
 func _ranger(message: Dictionary) -> void:
@@ -152,6 +215,10 @@ func _commencer() -> void:
 	hote.instant = hote.rejeu.instants[-1]
 	hote.pret = true
 	_cadrer_carte()
+	# Une édition relance la partie : la caméra doit rester où le joueur l'a mise.
+	if _camera_placee:
+		return
+	_camera_placee = true
 	var sites: Array = hote.rejeu.statique["sites"]
 	var somme := Vector3.ZERO
 	for site: Dictionary in sites:
@@ -198,7 +265,14 @@ func mettre_a_jour(delta: float, drones: PackedFloat32Array, vecteurs: PackedFlo
 	_ihm.vieillir(delta)
 	_nourrir_carte(drones)
 	_ihm.ecrire_haut(_texte_haut(drones))
-	_ecrire_selection()
+	if _mode == Mode.JEU:
+		_ecrire_selection()
+	elif _mode == Mode.SCENARIO:
+		_editeur.avancer(delta)
+		_ihm.montrer_selection("", "", null)
+	else:
+		_atelier.avancer(delta)
+		_ihm.montrer_selection("", "", null)
 	if not _bilan_fini.is_empty():
 		_ihm.montrer_fin(_texte_fin())
 
@@ -370,6 +444,12 @@ func _texte_fin() -> String:
 
 func _unhandled_input(evenement: InputEvent) -> void:
 	if not hote.pret:
+		return
+	if evenement is InputEventKey and evenement.pressed and not evenement.echo and evenement.keycode in [KEY_F5, KEY_F6]:
+		_changer_mode(Mode.SCENARIO if evenement.keycode == KEY_F5 else Mode.TERRAIN)
+		return
+	if _mode != Mode.JEU:
+		(_editeur if _mode == Mode.SCENARIO else _atelier).traiter(evenement)
 		return
 	if evenement is InputEventMouseButton:
 		_traiter_bouton(evenement)
@@ -545,6 +625,8 @@ func _ordonner_vers(ecran: Vector2) -> void:
 
 
 func _ordonner_au_point(e: float, n: float) -> void:
+	if _mode != Mode.JEU:
+		return
 	var ids: Array[int] = []
 	for id in _selection.ids:
 		if not _est_perdu(id):
@@ -559,6 +641,55 @@ func _ordonner_au_point(e: float, n: float) -> void:
 	for id in ids:
 		departs.append(_point_vecteur(id))
 	_effets.marquer_ordre(Vector3(e, _hauteur_scene_sol(e, n), -n), departs)
+
+
+## Passer au mode `voulu`, ou revenir au jeu si l'on y est déjà. Éditer se fait à l'instant initial : la partie y revient.
+func _changer_mode(voulu: Mode) -> void:
+	var quitte := _mode
+	_mode = Mode.JEU if _mode == voulu else voulu
+	_selection.vider()
+	_editeur.activer(_mode == Mode.SCENARIO)
+	_atelier.activer(_mode == Mode.TERRAIN, _terrain_scenario)
+	_ihm.mini_carte.visible = _mode != Mode.TERRAIN
+	# Le brouillard masquerait le relief qu'on est en train de façonner.
+	if (_mode == Mode.TERRAIN) == _brouillard.actif:
+		_brouillard.basculer()
+	hote.montrer_inconnus = not _brouillard.actif
+	if _mode != Mode.JEU and float(_etat.get("t", 0.0)) > 0.0 or quitte == Mode.TERRAIN:
+		# En quittant le relief, la nouvelle ouverture remet le sol du scénario.
+		_liaison.envoyer({"type": "recommencer"})
+	_ihm.annoncer({Mode.JEU: "Mode jeu", Mode.SCENARIO: "Édition du scénario", Mode.TERRAIN: "Édition du relief"}[_mode])
+
+
+## Envoyer une commande au serveur ; rendre faux si la liaison est coupée.
+func envoyer(commande: Dictionary) -> bool:
+	return _liaison.envoyer(commande)
+
+
+## Rendre le point de scène du sol en (`e`, `n`).
+func point_sol(e: float, n: float) -> Vector3:
+	return Vector3(e, _hauteur_scene_sol(e, n), -n)
+
+
+## Rendre le point (e, n) du sol visé par le pixel `ecran`, ou null.
+func vise(ecran: Vector2) -> Variant:
+	var point: Variant = _point_vise(ecran)
+	return null if point == null else Vector2(point.x, -point.z)
+
+
+## Rendre la caméra de la scène.
+func camera() -> Camera3D:
+	return hote.camera
+
+
+## Rendre l'interface à l'écran.
+func ihm() -> Ihm:
+	return _ihm
+
+
+## Rendre le sol en grille, pour le pinceau de l'éditeur de relief.
+func sol() -> SolGrille:
+	return _sol
 
 
 ## Rendre le point du sol sous le pixel `ecran`, ou null si le rayon ne descend pas vers le sol.

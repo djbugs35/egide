@@ -27,7 +27,7 @@ genre et mécaniques du jeu de stratégie, avec ses propres noms, graphismes et 
 | 4 | Icônes des objets privés, ressemblantes, sous `prive/icones/` | fait |
 | 5 | Liaison en direct entre Godot et le moteur (remplace le lot 15.4) : `node src/direct.js`, `jouer.command` | fait |
 | 6 | Gameplay dans Godot : sélection au rectangle, groupes, ordres, mini-carte, brouillard, sons, effets | fait |
-| 7 | Éditeurs dans Godot : scénario, puis terrain | à faire |
+| 7 | Éditeurs dans Godot : scénario, puis terrain | fait |
 
 L'étape 3 ne change les bilans que là où la conduite de tir borne vraiment un objet (portée déclarée plus courte, horizon, relief) ; elle est passée par `docs/MODELE.md`, `src/moteur/scenario.js`, `analyse/scenario.py` et
 `tests/resolution_reference.json`. Le catalogue public garde une conduite proportionnelle à l'arme, sans chiffre inventé.

@@ -70,6 +70,13 @@ export async function creer_partie(donne, fichiers, registre) {
   return {
     brut,
     pas,
+    monde,
+    repere,
+    terrain: scenario.theatre.terrain,
+    origine,
+    /** Rendre le point au sol (rad) situé à (`e`, `n`) m de l'origine. */
+    point: (e, n) => point_au_sol(origine, e, n),
+    origine_deg: () => ({lat_deg: vers_degres(origine.lat), lon_deg: vers_degres(origine.lon)}),
     instant: () => monde.t,
     termine: () => est_termine(monde),
     bilan: () => bilan(monde),
