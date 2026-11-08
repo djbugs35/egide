@@ -1,6 +1,6 @@
 # Plan : déployer en 2D, observer en 3D, sortie vers un moteur de jeu
 
-Plan détaillé des jalons 13 à 15, décidé le 5 novembre 2026. Les jalons 13 et 14 sont faits (v0.10.0) ; pour le 13, le rendu par couches MapLibre a été écarté (voir docs/PLAN_V2.md). Reste le jalon 15.
+Plan détaillé des jalons 13 à 15, décidé le 5 novembre 2026. Les jalons 13 et 14 sont faits (v0.10.0) ; pour le 13, le rendu par couches MapLibre a été écarté (voir docs/PLAN_V2.md). Le jalon 15 est fait pour ses lots 1 à 3 ; le lot 15.4 a été remplacé par la liaison en direct de docs/PLAN_JEU.md (étape 5).
 
 ## Constat
 
@@ -159,6 +159,8 @@ bilan de la simulation.
 - Notes de portage pour Unity et Unreal : même format, même repère, mêmes correspondances.
 
 ### Lot 15.4 · Flux en direct (facultatif)
+
+Remplacé par docs/PLAN_JEU.md, étape 5 : le moteur tourne dans un serveur et Godot le commande. Plan d'origine :
 
 - Diffusion de l'état pendant qu'un raid se joue dans le navigateur, par WebSocket, via un petit relais local
   (`node outils/relais.js`) : même contenu que le rejeu, envoyé au fil de l'eau.

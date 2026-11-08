@@ -34,6 +34,9 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
   défaut (contribution de cagoffin, PR #3).
 - **v0.10.0** : déploiement de dessus avec règle, aimantation et aperçus avant pose (jalon 13) ; vue Observer en 3D sur le
   globe, avec volumes, caméras et mode hors ligne (jalon 14).
+- **v0.11.0** : Godot devient une interface de jeu (jalons 15 et 17) : rejeu et export du terrain, partie en direct contre le
+  moteur, sélection, groupes, ordres, mini-carte, brouillard, éditeurs de scénario et de relief ; couvertures par objet et
+  résultante des C2, conduite de tir comme contrainte du moteur ; objets orientés ; installation automatique ; icônes privées.
 
 ## Arborescence cible
 ```
@@ -64,10 +67,10 @@ scenarios/                                  placements, plans de vol, zones, mé
 | 12 | Éditeur de déploiement : palette du catalogue, dépôt de chaque unité sur la carte (radars de modèles différents, batteries, C2, sites, avions, drones défensifs), moyens de communication par unité et liaisons sur moyen commun, réseau automatique, fiche de l'unité (modèle, algorithmes par rôle, effectifs), sauvegarde et import | Sans dépôt, bilans identiques ; résolution du déploiement identique en JavaScript et en Python | **fait** (MODELE § 21) |
 | 13 | Mode Déployer en 2D stricte : vue de dessus verrouillée en édition, unités dessinées par la carte (couches MapLibre), regroupement et niveaux de détail, aperçus avant pose ([PLAN_3D.md](PLAN_3D.md)) | Une unité posée reste à sa position à toute échelle ; image identique à l'ancien rendu | **fait** : vue de dessus verrouillée, règle, aimantation, aperçus avant pose, regroupement (MODELE § 21.6) ; noms d'unités sans chevauchement ; le rendu par couches MapLibre est écarté (décision du 8 novembre 2026 : le verrouillage supprime déjà le décalage, la 3D aura son propre rendu) |
 | 14 | Mode Observer en 3D (CesiumJS) : entités à leur altitude, couvertures radar en volumes masqués par le relief, liaisons et traînées en 3D, caméras, inspection, hors ligne ([PLAN_3D.md](PLAN_3D.md)) | Mêmes positions qu'en 2D à 1 m près ; volumes calculés par le moteur ; ≥ 30 images/s hors ligne | **fait** : globe, relief, unités à leur altitude, couvertures, bulles, liaisons, tirs, caméras, inspection, hors ligne (`outils/hors_ligne.js`) ; MODELE § 23 |
-| 15 | Sortie vers un moteur de jeu, en plus des vues du navigateur : format de rejeu, export du terrain, client de référence Godot, flux en direct ([PLAN_3D.md](PLAN_3D.md)) | Rejeu relu par le client aux mêmes positions et au même bilan | **en cours** : format de rejeu (`node src/rejeu.js`, « Exporter le rejeu », FORMATS § 6) et terrain (`node outils/export_terrain.js`, FORMATS § 7) faits, MODELE § 24 ; client Godot fait (`clients/godot/`, écart de 0,09 m au moteur) ; reste flux en direct, facultatif |
+| 15 | Sortie vers un moteur de jeu, en plus des vues du navigateur : format de rejeu, export du terrain, client de référence Godot, flux en direct ([PLAN_3D.md](PLAN_3D.md)) | Rejeu relu par le client aux mêmes positions et au même bilan | **en cours** : format de rejeu (`node src/rejeu.js`, « Exporter le rejeu », FORMATS § 6) et terrain (`node outils/export_terrain.js`, FORMATS § 7) faits, MODELE § 24 ; client Godot fait (`clients/godot/`, écart de 0,09 m au moteur) ; flux en direct remplacé par le jalon 17 |
 | 16 | Essaim réactif : l'essaim apprend de ses pertes (réseau maillé), contourne les foyers défendus, se réaffecte vers les cibles qui laissent passer, esquive les tirs air (MODELE § 22) | Sans réaction, bilans identiques ; effet mesuré en duel apparié | **fait** : algorithme `global/reaction/essaim_adaptatif`, bascule « Réactif » (R), journal et inspecteur ; +18 % à +63 % de frappes sur la référence (duel apparié, 10 graines, MODELE § 22.6) |
 | 11 | Auto-configuration : menaces à considérer, moyens disponibles du catalogue (quantités), zone dessinée ou pays (Natural Earth, domaine public), répartition des radars, CDC, batteries et avions qui minimise les frappes, vérifiée par simulation, enregistrée dans une bibliothèque de scénarios | La répartition proposée fait au moins aussi bien qu'une répartition uniforme, à IC 95 % | **fait** (MODELE § 20) : recherche locale sur trois paramètres ; reste : répartition des postes par cible, nombre de radars optimisé, recherche globale |
-| 17 | Égide comme jeu de stratégie en temps réel : Godot en interface à part entière, couvertures par objet et résultante des C2, icônes privées ressemblantes, installation automatique ([PLAN_JEU.md](PLAN_JEU.md)) | Selon l'étape | **en cours** |
+| 17 | Égide comme jeu de stratégie en temps réel : Godot en interface à part entière, couvertures par objet et résultante des C2, icônes privées ressemblantes, installation automatique ([PLAN_JEU.md](PLAN_JEU.md)) | Selon l'étape | fait (v0.11.0) |
 
 ## Idées retenues
 
@@ -156,3 +159,7 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Essaim réactif | **Rôles dans l'essaim** : éclaireurs sacrifiés pour sonder la défense, leurres qui attirent les tirs, frappeurs qui attendent la brèche | 16 | à faire |
 | Essaim réactif | **Couper le maillage de l'essaim** : brouillage de ses liaisons, l'essaim n'apprend plus ses pertes (ou plus tard) | 16 | à faire |
 | Essaim réactif | **Meilleure réponse rouge** : l'auto-configuration cherche les réglages de réaction qui maximisent les frappes contre un dispositif donné, pour éprouver la défense au pire cas | 16 | à faire |
+| Jeu | **Silhouettes 3D des unités** dans Godot, selon leur classe, au lieu de formes génériques | 17 | à faire |
+| Jeu | **Camp rouge jouable**, dans un mode séparé qui ne fausse pas les analyses | 17 | à faire |
+| Jeu | **Confirmation avant d'abandonner un relief** non enregistré | 17 | à faire |
+| Jeu | **Brouillard masqué par le relief**, comme le calcule déjà le moteur | 17 | à faire |

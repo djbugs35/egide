@@ -265,6 +265,9 @@ prive/algos/allocation/mon_allocation.js        → identifiant « prive/allocat
 - Pour être jouable, une unité privée se range dans une famille du moteur (§ 2.6) et hérite de sa base publique,
   qui apporte ses algorithmes ; ailleurs (par exemple `prive/menace/hypersonique/`), elle reste une fiche consultable
   dans le catalogue mais absente de la palette.
+- Une unité privée peut avoir son icône : `"icone": "prive/<nom>"` lit `prive/icones/<nom>.svg`.
+- Le jeu Godot range sous `prive/` ce que le joueur enregistre : scénarios dans `prive/scenarios/`, reliefs dans
+  `prive/unites/terrains/`.
 
 ### 5.1 Importer le catalogue privé dans l'interface
 

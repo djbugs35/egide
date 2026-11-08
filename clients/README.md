@@ -1,7 +1,7 @@
-# Clients de rejeu
+# Clients
 
-Égide reste l'autorité : un client relit un raid déjà simulé et l'affiche, il ne simule rien. Le format est décrit dans
-[docs/FORMATS.md](../docs/FORMATS.md) (§ 6 pour le rejeu, § 7 pour le terrain).
+Égide reste l'autorité : un client relit un raid déjà simulé, ou commande une partie que le serveur fait tourner ; il ne simule rien.
+Les formats sont décrits dans [docs/FORMATS.md](../docs/FORMATS.md) (§ 6 pour le rejeu, § 7 pour le terrain, § 10 pour le direct).
 
 ## Client Godot
 
@@ -60,7 +60,6 @@ Le moteur tourne dans le serveur, Godot affiche et commande (docs/FORMATS.md § 
 | B | lever ou rétablir le brouillard |
 | M, H | couper le son, afficher l'aide |
 | N | nouvelle partie |
-
 | F5 | éditer le scénario (la partie revient à l'instant initial) |
 | F6 | éditer le relief |
 
@@ -71,7 +70,9 @@ scénario est ignoré.
 
 ### Éditer
 
-**Scénario (F5).** Choisir une unité dans la palette, puis cliquer sur le sol pour la poser : sa portée suit le curseur. Clic droit
+![Éditeur de scénario : palette du catalogue à droite, radars posés](../docs/images/godot_scenario.png)
+
+**Scénario (F5).** Choisir une unité dans la palette, à droite, puis cliquer sur le sol pour la poser : sa portée suit le curseur. Clic droit
 ou Échap pour arrêter. Touches 1 à 5 : sélection (glisser pour déplacer), liaison (deux clics), plan de vol, zone (Entrée pour fermer),
 gomme. Suppr efface la sélection. Ctrl+Z, Ctrl+Y annulent et rétablissent. La barre enregistre sous `prive/scenarios/` et charge un
 scénario. Chaque geste passe par les mêmes calculs que l'éditeur du navigateur.
@@ -80,6 +81,8 @@ scénario. Chaque geste passe par les mêmes calculs que l'éditeur du navigateu
 Ctrl+Z annule un trait entier. La barre ouvre un relief du catalogue ou un relief plat. Enregistrer écrit sous `prive/unites/terrains/`
 et l'applique au scénario : le moteur calcule alors masques radar et vues directes sur ce relief. Revenir en jeu sans enregistrer
 abandonne les retouches.
+
+![Éditeur de relief : une crête peinte au pinceau](../docs/images/godot_relief.png)
 
 ### Vérifier le client
 

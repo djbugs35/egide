@@ -7,6 +7,9 @@ satellite, fil ou optique ; l'essaim attaque selon la tactique choisie ou le pla
 **réagir** : il apprend de ses pertes, se reporte sur les cibles qui cèdent, contourne vos sites et esquive vos tirs.
 Égide compte les frappes, raconte qui a vu quoi, et dit pourquoi chaque unité a agi.
 
+Deux façons de s'en servir, sur le même moteur : le **navigateur** pour analyser et prouver, **Godot** pour jouer la défense en
+temps réel, à la manière d'un jeu de stratégie, et pour y éditer scénarios et relief.
+
 ![L'interface en lecture : attaque « fourmi », les avions convergent sur l'essaim, le bilan évolue en direct](docs/images/interface.gif)
 
 > Scénario notionnel : ordres de grandeur publics, aucune performance réelle de système identifié. Le dépôt public
@@ -19,27 +22,31 @@ satellite, fil ou optique ; l'essaim attaque selon la tactique choisie ou le pla
 2. [Prise en main en cinq minutes](#2--prise-en-main-en-cinq-minutes)
 3. [L'écran](#3--lécran)
 4. [Jouer un raid](#4--jouer-un-raid)
-5. [Déployer ses forces](#5--déployer-ses-forces)
-6. [Le réseau d'information](#6--le-réseau-dinformation)
-7. [Drones défensifs](#7--drones-défensifs)
-8. [Relief](#8--relief)
-9. [Configuration automatique](#9--configuration-automatique)
-10. [Comprendre : inspecteur et catalogue](#10--comprendre--inspecteur-et-catalogue)
-11. [Analyser et prouver](#11--analyser-et-prouver)
-12. [Étendre : unités, algorithmes, cartes](#12--étendre--unités-algorithmes-cartes)
-13. [Questions fréquentes](#13--questions-fréquentes)
-14. [Ce que montre le scénario de référence](#14--ce-que-montre-le-scénario-de-référence)
+5. [Jouer dans Godot](#5--jouer-dans-godot)
+6. [Déployer ses forces](#6--déployer-ses-forces)
+7. [Le réseau d'information](#7--le-réseau-dinformation)
+8. [Drones défensifs](#8--drones-défensifs)
+9. [Relief](#9--relief)
+10. [Configuration automatique](#10--configuration-automatique)
+11. [Comprendre : inspecteur et catalogue](#11--comprendre--inspecteur-et-catalogue)
+12. [Analyser et prouver](#12--analyser-et-prouver)
+13. [Étendre : unités, algorithmes, cartes](#13--étendre--unités-algorithmes-cartes)
+14. [Questions fréquentes](#14--questions-fréquentes)
+15. [Ce que montre le scénario de référence](#15--ce-que-montre-le-scénario-de-référence)
 
 ## 1 · Installer et lancer
 
-Il faut Python 3 (présent sur macOS et la plupart des Linux) et un navigateur récent. Rien d'autre à installer :
-JavaScript sans compilation, bibliothèques embarquées dans `vendor/`.
+Pour l'interface du navigateur, il faut Python 3 (présent sur macOS et la plupart des Linux) et un navigateur récent :
+JavaScript sans compilation, bibliothèques embarquées dans `vendor/`. Les campagnes en ligne de commande et le jeu demandent
+aussi Node, et le jeu demande Godot 4 : `installer.command` (macOS) ou `installer.bat` (Windows) installe ce qui manque,
+puis vérifie le poste ; on peut le relancer sans risque.
 
 | Système | Lancer |
 |---|---|
 | macOS | double-clic sur `lancer.command` |
 | Windows | double-clic sur `lancer.bat` |
 | Linux, ou tout terminal | `python3 -m http.server 8766 --bind 127.0.0.1`, puis ouvrir http://127.0.0.1:8766 |
+| Jouer dans Godot | `jouer.command` (macOS), `jouer.bat` (Windows) ; voir [§ 5](#5--jouer-dans-godot) |
 
 La page s'ouvre sur http://127.0.0.1:8766 avec le scénario de référence : 1 000 drones à 800 km/h contre 10 sites,
 200 postes sol, 50 avions et une couronne de radars. Le fond de carte vient d'Internet ; sans réseau, la simulation
@@ -88,7 +95,7 @@ Symbologie inspirée d'APP-6 :
 Par défaut, chaque unité est dessinée en **icône de jeu** : une silhouette vue de dessus (radar sur pylône ou mobile,
 batterie, canon, turbopropulseur, chasseur, hélicoptère, drone armé, intercepteur, brouilleur…) sur une pastille à la
 couleur de son pays, cerclée de bleu pour les unités amies et d'ocre pour les batteries. L'essaim apparaît en petites
-silhouettes rouges, grises tant qu'il n'est pas détecté. Le calque « Icônes de jeu » ramène les symboles APP-6.
+silhouettes rouges, grises tant qu'il n'est pas détecté. Tout ce qui se déplace est orienté selon sa route, dans toutes les vues. Le calque « Icônes de jeu » ramène les symboles APP-6.
 
 Le catalogue compte 35 unités fictives inspirées de classes de 14 pays : radars, batteries à missiles ou à canons,
 avions et hélicoptères, drones défensifs, drones d'attaque. Leurs noms sont des noms de plantes (Ajonc 300, Genêt 35,
@@ -218,7 +225,43 @@ node outils/hors_ligne.js --lat 47 --lon 2.5 --rayon-km 300 --zoom-max 10   # da
 Tant que ce dossier existe, la vue 3D lit ses tuiles plutôt que le fond choisi. Respectez les conditions de chaque
 source : ces tuiles ne se redistribuent pas forcément.
 
-## 5 · Déployer ses forces
+## 5 · Jouer dans Godot
+
+Godot est une interface à part entière, au même titre que le navigateur. La simulation reste unique : un serveur Node local la
+fait tourner, Godot lui envoie les ordres et reçoit l'état en direct. Une partie jouée s'enregistre avec ses ordres et se
+rejoue à l'identique (MODELE § 26).
+
+![Une partie dans Godot : cadre de sélection, 46 avions envoyés au devant de l'essaim, puis combat et frappes vus de plus près](docs/images/godot_partie.gif)
+
+`./jouer.command` (ou `jouer.bat`) lance le serveur et le client. La partie démarre en pause : Espace pour lancer.
+
+| Commande | Effet |
+|---|---|
+| Clic gauche, cadre | Sélectionner des vecteurs ; sur un radar ou un poste, l'inspecter |
+| Clic droit | Envoyer la sélection au point visé, aussi sur la mini-carte |
+| Ctrl+1 à 9, 1 à 9 | Mémoriser un groupe, le rappeler |
+| WASD, flèches, bord d'écran ; molette | Défiler ; zoomer |
+| + et − | Vitesse, de ×1 à ×60 |
+| C, B | Couverture affichée ; brouillard |
+| F5, F6 | Éditeur de scénario ; éditeur de relief |
+| H | Toutes les commandes |
+
+Sur Mac, les touches F peuvent demander la touche `fn`.
+
+**Éditer le scénario (F5).** La partie revient à l'instant initial. On choisit une unité dans la palette et on la pose sur le sol ;
+liaisons, plans de vol, zones, gomme et annulation sont à la barre du haut. Chaque geste passe par les mêmes calculs que l'éditeur du
+navigateur, et le scénario se relance à chaque geste.
+
+![L'éditeur de scénario dans Godot : quatre radars posés depuis la palette, puis le relief peint au pinceau](docs/images/godot_edition.gif)
+
+**Éditer le relief (F6).** Quatre pinceaux : élever, abaisser, aplanir, lisser. Enregistrer applique le relief au scénario, et le
+moteur calcule alors masques radar et vues directes dessus. Sans enregistrer, retourner au jeu abandonne les retouches.
+
+Scénarios et reliefs édités s'enregistrent sous `prive/`, jamais dans le dépôt. Les touches, la vérification du client et le portage vers
+un autre moteur sont dans [clients/README.md](clients/README.md). Limites : unités 3D encore génériques, relief édité sans
+imagerie (teintes d'altitude), brouillard tracé en disques sans masque du relief.
+
+## 6 · Déployer ses forces
 
 « Éditer » au début du raid ouvre l'**éditeur de déploiement** : la palette du catalogue à gauche, la fiche de
 l'unité sélectionnée à droite, la barre d'outils en bas.
@@ -311,7 +354,7 @@ En haut de la palette, donnez un nom au déploiement :
 Chaque geste et chaque réglage de fiche est une modification du scénario, comme un curseur : l'annulation, l'export,
 la bibliothèque et la reproductibilité par la graine valent pour tout ce que vous déployez.
 
-## 6 · Le réseau d'information
+## 7 · Le réseau d'information
 
 Par défaut, tout le monde parle avec tout le monde, sans délai. Dès la première liaison tracée, le réseau devient
 explicite, et l'information prend du temps et peut se perdre :
@@ -355,7 +398,17 @@ par son algorithme de pistage. La vérité terrain revient au même bouton.
 
 ![Vue du CDC : les pistes de la conduite, avec leur effectif](docs/images/vue_pc.png)
 
-## 7 · Drones défensifs
+### Couvertures : détecter, conduire le tir, intercepter
+
+Chaque objet porte jusqu'à trois enveloppes, calculées une seule fois par le moteur et lues par toutes les interfaces (MODELE § 25) :
+la **détection** d'un radar, la **conduite de tir** (distance à laquelle un effecteur suit assez bien sa cible pour tirer) et
+l'**interception**. La conduite de tir est une vraie contrainte : un effecteur ne tire pas au-delà. La **résultante** d'un C2 réunit
+les enveloppes des objets qui lui sont reliés. Le panneau Calques affiche conduite de tir et résultante ; l'objet inspecté montre
+toujours les siennes.
+
+![Scénario de référence avec le calque « Couverture des C2 » : en violet, la réunion des enveloppes des objets reliés au CDC](docs/images/couvertures.png)
+
+## 8 · Drones défensifs
 
 Trois familles notionnelles, soumises aux mêmes règles que les avions (mission du centre, mise à poste, accroche,
 engagement) : **drones armés** (deux charges de courte portée), **intercepteurs à usage unique** (ils percutent leur
@@ -371,7 +424,7 @@ depuis la palette, ou réglez leur nombre dans le panneau Scénario.
 | + 200 intercepteurs | 364 ± 51 |
 | + 30 brouilleurs | 134 ± 98 (paramètre de brouillage notionnel, à calibrer) |
 
-## 8 · Relief
+## 9 · Relief
 
 Un terrain du catalogue, choisi dans le panneau Scénario ou déposé depuis la palette, donne au moteur le relief du
 théâtre : chaque radar a son masque d'horizon, un drone qui vole bas derrière une crête n'est pas vu, et les liaisons
@@ -388,7 +441,7 @@ node outils/indexer.js
 
 Le terrain est ensuite un fichier : le moteur travaille hors ligne.
 
-## 9 · Configuration automatique
+## 10 · Configuration automatique
 
 Le panneau **Auto** propose un déploiement complet à partir de trois questions :
 
@@ -415,7 +468,7 @@ node src/autoconfig.js --pays FRA --menaces fourmi:1000,direct:1000 --radars 30 
   --postes 400 --munitions 2000 --avions 20,30,40,0,10 --tirages 3     # écrit scenarios/auto_france.json
 ```
 
-## 10 · Comprendre : inspecteur et catalogue
+## 11 · Comprendre : inspecteur et catalogue
 
 Un clic sur une entité ouvre l'**inspecteur**, mis à jour en direct : pour un avion, pourquoi le centre l'a envoyé là
 (piste retenue, score, délai, alternatives écartées) et par quelle liaison il le joint ; pour un drone, chaque tir
@@ -441,7 +494,7 @@ de la simulation (voir [§ 12](#12--étendre--unités-algorithmes-cartes)).
 
 ![Catalogue : public seul, puis fusion avec un catalogue privé de démonstration (fiche de « Mon radar », lignée et fichier privé), puis remplacement des radars publics](docs/images/catalogue_prive.gif)
 
-## 11 · Analyser et prouver
+## 12 · Analyser et prouver
 
 Un raid est un tirage : seule une série de raids dit si un déploiement fait mieux qu'un autre.
 
@@ -495,7 +548,7 @@ node src/preuve.js empreinte
 - **Morris** : classement des réglages par influence (μ*, μ, σ) et seuil de bruit ; il a révélé, par exemple, que
   l'étalement des départs n'a aucun effet hors tactique dispersée.
 
-## 12 · Étendre : unités, algorithmes, cartes
+## 13 · Étendre : unités, algorithmes, cartes
 
 Tout ce que la palette propose vient de fichiers ; en ajouter un suffit pour qu'il apparaisse.
 
@@ -507,6 +560,9 @@ unites/terrains/<terrain>.json            reliefs : grilles d'altitudes (node ou
 algos/global/<rôle>/<algo>.js             un algorithme par module : fiche « meta » + fonctions du rôle, sans import
 cartes/fonds|relief|batiments/<source>.json   une source de carte par fichier, attribution obligatoire
 prive/unites/…  prive/algos/…             votre catalogue privé (ignoré par git), identifiants préfixés « prive/ »
+prive/icones/<nom>.svg                    icônes de vos unités privées, citées par « icone »: « prive/<nom> »
+prive/scenarios/                          scénarios enregistrés depuis Godot (ignoré par git)
+clients/godot/                            le client de jeu (Godot 4, GDScript)
 scenarios/                                scénarios JSON, chaque clé documentée
 schemas/                                  schémas JSON des fichiers (générés par node outils/indexer.js)
 hors_ligne/                               tuiles préparées pour la vue 3D sans réseau (ignoré par git)
@@ -545,7 +601,7 @@ node outils/valider.js --json …     # rapport machine, code de sortie 0 ou 1
 surcharges, rôles et contrat des algorithmes, exemple pas à pas, catalogue privé, conformité, cartes, reliefs,
 liaisons, clés du déploiement, et preuve d'un changement.
 
-## 13 · Questions fréquentes
+## 14 · Questions fréquentes
 
 **La page reste blanche, ou affiche une erreur de module.** Elle doit être servie par `lancer.command`, `lancer.bat`
 ou `python3 -m http.server` : un fichier ouvert directement (`file://`) ne charge pas les modules JavaScript.
@@ -555,6 +611,8 @@ simulation n'en dépend pas.
 
 **« Scénario refusé : … ».** Le message nomme la clé fautive (unité inconnue, surcharge d'une clé que l'unité n'a pas,
 liaison vers un nœud qui n'existe plus). Ctrl+Z annule le dernier geste ; « Revenir à la référence » repart de zéro.
+
+**F5 ou F6 ne fait rien dans Godot.** Sur Mac, ces touches peuvent commander le système : essayez avec `fn`.
 
 **Mon déploiement a disparu.** Les déploiements enregistrés vivent dans la mémoire de ce navigateur : un autre
 navigateur, une navigation privée ou un effacement des données ne les voit pas. Exportez ce qui compte.
@@ -575,7 +633,7 @@ une radio au sol ne porte qu'à l'horizon des mâts ; ajoutez le fil ou le satel
 frappée, une brèche avérée. Tant qu'aucun drone n'est passé, il contourne vos sites mais garde ses cibles ; se reporter
 à l'aveugle vers des cibles aussi défendues que les autres lui faisait perdre des frappes (MODELE § 22.2).
 
-## 14 · Ce que montre le scénario de référence
+## 15 · Ce que montre le scénario de référence
 
 1 000 drones à 800 km/h, 10 sites, 200 postes sol, 50 avions à 500 km/h ; 30 raids par tactique, moyenne et
 intervalle de confiance à 95 % :
@@ -613,15 +671,18 @@ pas de temps de 0,5 s a convergé alors que celui de 1 s ne l'a pas.
 - [docs/CATALOGUE.md](docs/CATALOGUE.md) : étendre Égide — unités, algorithmes, catalogue privé, preuve d'un changement.
 - [docs/FORMATS.md](docs/FORMATS.md) : formats d'échange pour les outils externes (unités, liaisons, terrains, algorithmes, scénarios).
 - [docs/PLAN_V2.md](docs/PLAN_V2.md) : feuille de route, jalons, idées et suggestions retenues.
-- [docs/PLAN_3D.md](docs/PLAN_3D.md) : plan des prochains jalons — déployer en 2D stricte, observer en 3D, sortie vers un moteur de jeu.
+- [docs/PLAN_3D.md](docs/PLAN_3D.md) : déployer en 2D stricte, observer en 3D, sortie vers un moteur de jeu.
+- [docs/PLAN_JEU.md](docs/PLAN_JEU.md) : Égide comme jeu de stratégie en temps réel, décisions et étapes.
+- [clients/README.md](clients/README.md) : le client Godot, ses commandes, sa vérification, le portage vers un autre moteur.
 
 ## Tests
 
 ```sh
-npm test                 # rapide (plus de 200 tests, dont la conformité de tout le catalogue)
+npm test                 # rapide (plus de 600 tests, dont la conformité de tout le catalogue)
 npm run test:complet     # ajoute l'équivalence avec la v0.1 (~2 min)
 pytest -q tests
 ruff check analyse tests
+godot --headless --path clients/godot --script res://scripts/jeu/verifier_jeu.gd   # règles du jeu
 ```
 
 <img src="docs/images/mobile.png" alt="L'interface sur un écran de téléphone" width="280">
