@@ -33,7 +33,8 @@ var _boutons: Dictionary = {}
 ## Relier l'éditeur à la partie et construire sa barre.
 func brancher(partie: Node) -> void:
 	_partie = partie
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Déjà dans l'arbre : set_anchors_preset garderait la position actuelle, et l'éditeur resterait de taille nulle.
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_barre.add_theme_stylebox_override("panel", Ihm.style_panneau())
 	_barre.set_anchors_preset(Control.PRESET_TOP_LEFT)

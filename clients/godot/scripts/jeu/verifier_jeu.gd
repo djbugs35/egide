@@ -6,6 +6,7 @@ extends SceneTree
 const Selection := preload("res://scripts/jeu/selection.gd")
 const MiniCarte := preload("res://scripts/jeu/mini_carte.gd")
 const Brouillard := preload("res://scripts/jeu/brouillard.gd")
+const EditeurScenario := preload("res://scripts/jeu/editeur_scenario.gd")
 
 var _echecs := 0
 
@@ -21,6 +22,7 @@ func _initialize() -> void:
 	_groupes()
 	_carte()
 	_zones()
+	await _palette_visible()
 	print("Règles du jeu : %s" % ("toutes vérifiées" if _echecs == 0 else "%d échecs" % _echecs))
 	quit(0 if _echecs == 0 else 1)
 
@@ -69,3 +71,20 @@ func _zones() -> void:
 	]
 	var zones := Brouillard.disques(objets)
 	_verifier(zones.size() == 2 and zones[0] == Vector3(4.0, 5.0, 9_000.0), "seuls les objets qui détectent, les plus grands d'abord")
+
+
+## L'éditeur, ajouté à l'arbre avant d'être ancré, restait de taille nulle : sa palette, ancrée à droite, sortait de l'écran.
+func _palette_visible() -> void:
+	var fenetre := Control.new()
+	fenetre.size = Vector2(1600.0, 900.0)
+	root.add_child(fenetre)
+	# Le défaut ne se montre qu'une fois les tailles propagées, comme dans le jeu.
+	await process_frame
+	var editeur := EditeurScenario.new()
+	fenetre.add_child(editeur)
+	editeur.brancher(null)
+	await process_frame
+	_verifier(editeur.size == fenetre.size, "l'éditeur couvre son parent")
+	var palette: Rect2 = editeur._palette.get_global_rect()
+	_verifier(palette.position.x > 1200.0 and palette.end.x == 1590.0, "la palette est dans l'écran, à droite")
+	fenetre.free()
