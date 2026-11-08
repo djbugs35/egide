@@ -1,3 +1,4 @@
+import {chemin_icone} from "../src/moteur/catalogue.js";
 // Import du catalogue privé dans l'interface (src/vue/catalogue_prive.js) : fusion ou remplacement de l'index public,
 // et unités privées rangées dans la palette comme leurs homologues publiques. Index privés fictifs : prive/ est hors git.
 import assert from "node:assert/strict";
@@ -50,4 +51,9 @@ test("catalogue privé : avec son index, compte les unités importées hors clas
   const {privees, erreur} = await charger_index(lire, "remplacement");
   assert.equal(privees, 1);
   assert.equal(erreur, null);
+});
+
+test("icône : une icône privée vit dans prive/icones/, une icône publique dans icones/", () => {
+  assert.equal(chemin_icone("prive/modele"), "prive/icones/modele.svg");
+  assert.equal(chemin_icone("chasseur"), "icones/chasseur.svg");
 });

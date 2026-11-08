@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {join} from "node:path";
 import {chemin_algo, INTERDITS, ROLES, ROLES_BRANCHES, ROLES_D_UNITE} from "../src/moteur/algos.js";
-import {charger_unites, unite_brute, unite_si} from "../src/moteur/catalogue.js";
+import {charger_unites, chemin_icone, unite_brute, unite_si} from "../src/moteur/catalogue.js";
 import {RACINE, ids_unites_disque, lire_fichier} from "../src/moteur/catalogue_node.js";
 import {OUTILS} from "../src/moteur/outils.js";
 import {creer_hasard} from "../src/moteur/hasard.js";
@@ -42,7 +42,7 @@ for (const id of ids_unites_disque()) {
       }
     }
     // Icône de jeu : un fichier de icones/ ; pays : un code ISO 3166 à trois lettres connu de l'interface.
-    if (valeurs.icone) assert.doesNotThrow(() => readFileSync(join(RACINE, "icones", `${valeurs.icone}.svg`)), `${id} : icône absente icones/${valeurs.icone}.svg`);
+    if (valeurs.icone) assert.doesNotThrow(() => readFileSync(join(RACINE, chemin_icone(valeurs.icone))), `${id} : icône absente icones/${valeurs.icone}.svg`);
     if (valeurs.pays) assert.ok(valeurs.pays in PAYS, `${id} : pays inconnu « ${valeurs.pays} » (src/vue/pays.js)`);
   });
 }

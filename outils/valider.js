@@ -10,7 +10,7 @@ import {readFileSync} from "node:fs";
 import {relative, resolve} from "node:path";
 import {pathToFileURL} from "node:url";
 import {charger_algos, chemin_algo, ids_algos, INTERDITS, ROLES_D_UNITE} from "../src/moteur/algos.js";
-import {charger_unites, unite_brute, unite_si} from "../src/moteur/catalogue.js";
+import {charger_unites, chemin_icone, unite_brute, unite_si} from "../src/moteur/catalogue.js";
 import {importer_module, lire_fichier, RACINE} from "../src/moteur/catalogue_node.js";
 import {ids_unites, resoudre_scenario} from "../src/moteur/scenario.js";
 import {PAYS} from "../src/vue/pays.js";
@@ -34,9 +34,9 @@ function defauts_famille(id, valeurs) {
   const famille = id.replace(/^prive\//, "");
   if (valeurs.icone) {
     try {
-      readFileSync(resolve(RACINE, "icones", `${valeurs.icone}.svg`));
+      readFileSync(resolve(RACINE, chemin_icone(valeurs.icone)));
     } catch {
-      defauts.push(`icône absente : icones/${valeurs.icone}.svg`);
+      defauts.push(`icône absente : ${chemin_icone(valeurs.icone)}`);
     }
   }
   if (valeurs.pays && !(valeurs.pays in PAYS)) defauts.push(`pays inconnu « ${valeurs.pays} » (codes connus : ${Object.keys(PAYS).join(", ")})`);

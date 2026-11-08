@@ -1,5 +1,6 @@
 // Icônes de jeu (clé « icone » des unités, fichiers icones/*.svg) : silhouette blanche vue de dessus sur une pastille
 // aux couleurs du pays, cerclée de la couleur du camp. Chaque silhouette est teintée une fois puis gardée en mémoire.
+import {chemin_icone} from "../moteur/catalogue.js";
 import {COULEURS} from "./couleurs.js";
 import {couleur_pays} from "./pays.js";
 
@@ -11,7 +12,7 @@ const SURECHANTILLON = 2;
 function source(icone) {
   if (!sources.has(icone)) {
     const image = new Image();
-    image.src = new URL(`../../icones/${icone}.svg`, import.meta.url).href;
+    image.src = new URL(`../../${chemin_icone(icone)}`, import.meta.url).href;
     sources.set(icone, image);
   }
   return sources.get(icone);

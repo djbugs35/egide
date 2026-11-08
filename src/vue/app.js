@@ -1,6 +1,6 @@
 // Point d'entrée de l'interface : charge le scénario, branche réglages, scope, lecture, tableau et balayage.
 import {AlgoInvalide, charger_algos, ids_algos} from "../moteur/algos.js";
-import {CatalogueInvalide, charger_unites} from "../moteur/catalogue.js";
+import {CatalogueInvalide, charger_unites, chemin_icone} from "../moteur/catalogue.js";
 import {positions_radars} from "../moteur/radars.js";
 import {en_v2, ids_unites, modifier_scenario, resoudre_scenario, ScenarioInvalide} from "../moteur/scenario.js";
 import {brancher_balayage, montrer} from "./balayage.js";
@@ -698,7 +698,7 @@ const nom_court = (nom) => nom.replace(/ \((?:[A-Z]{3}, )?notionnel(le)?\)$/, ""
 /** Rendre le bouton d'une unité de la palette : son icône de jeu sur la pastille de son pays, son nom, son pays. */
 function bouton_palette(e, famille) {
   const fond = couleur_pays(e.pays, PASTILLES_PALETTE[famille]);
-  const vignette = e.icone ? `<i class="vignette" style="background: ${fond}"><img src="icones/${echapper_html(e.icone)}.svg" alt=""></i>` : `<i style="--pastille: ${PASTILLES_PALETTE[famille]}"></i>`;
+  const vignette = e.icone ? `<i class="vignette" style="background: ${fond}"><img src="${echapper_html(chemin_icone(e.icone).replace(/\.svg$/, ""))}.svg" alt=""></i>` : `<i style="--pastille: ${PASTILLES_PALETTE[famille]}"></i>`;
   const pays = e.pays ? `<small title="${echapper_html(PAYS[e.pays]?.nom ?? e.pays)}">${e.pays}</small>` : "";
   return `<button class="unite-palette" draggable="true" data-unite="${echapper_html(e.id)}" aria-pressed="false" title="${echapper_html(e.nom)}">${vignette}<span>${echapper_html(nom_court(e.nom))}</span>${pays}</button>`;
 }

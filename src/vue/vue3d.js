@@ -2,6 +2,7 @@
 // Cette vue n'affiche que ce que rend scene3d.js. CesiumJS (12 Mo) n'est chargé qu'à la première ouverture.
 import {inverse, vers_degres} from "../moteur/geodesie.js";
 import {consigne_camera} from "./cameras3d.js";
+import {chemin_icone} from "../moteur/catalogue.js";
 import {creer_couches3d} from "./couches3d.js";
 import {COULEURS} from "./couleurs.js";
 import {entites_scene, fenetre_tuile, grille_hauteurs} from "./scene3d.js";
@@ -160,7 +161,7 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
         vus_silhouettes.add(d.id);
         const silhouette = obtenir(pool_silhouettes, d.id, () => silhouettes.add({width: TAILLE_SILHOUETTE, height: TAILLE_SILHOUETTE, disableDepthTestDistance: SANS_TEST_PROFONDEUR}));
         Object.assign(silhouette, {show: true, position, color: teinte, scale: choisi ? 1.5 : 1, rotation: viewer.camera.heading - d.cap});
-        if (silhouette.icone !== icone) Object.assign(silhouette, {icone, image: `icones/${icone}.svg`});
+        if (silhouette.icone !== icone) Object.assign(silhouette, {icone, image: chemin_icone(icone)});
         if (tiges_drones++ < TIGES_DRONES_MAX) poser_tige(d.lat_deg, d.lon_deg, sol, position);
       } else {
         vus_points.add(d.id);
@@ -188,7 +189,7 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
         panneau.position = Cesium.Cartesian3.fromDegrees(u.lon_deg, u.lat_deg, sol + u.alt * exageration);
         poser_tige(u.lat_deg, u.lon_deg, sol, panneau.position);
       }
-      const image = `icones/${u.icone}.svg`;
+      const image = chemin_icone(u.icone);
       if (panneau.icone !== image) Object.assign(panneau, {icone: image, image});
       panneau.color = u.vide ? couleurs[u.camp].withAlpha(0.35) : couleurs[u.camp];
       if (!u.sol) panneau.rotation = viewer.camera.heading - u.cap;

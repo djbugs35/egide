@@ -79,3 +79,6 @@ export function origine_des_cles(id, fichiers) {
   }
   return origines;
 }
+
+/** Rendre le chemin, relatif à la racine du dépôt, de l'icône `icone` : « prive/x » vit dans prive/icones/, hors du dépôt public. */
+export const chemin_icone = (icone) => (icone.startsWith("prive/") ? `prive/icones/${icone.slice("prive/".length)}.svg` : `icones/${icone}.svg`);
