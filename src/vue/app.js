@@ -6,6 +6,8 @@ import {en_v2, ids_unites, modifier_scenario, resoudre_scenario, ScenarioInvalid
 import {brancher_balayage, montrer} from "./balayage.js";
 import {creer_camera, deplacer, zoomer} from "./camera.js";
 import {cadrer_carte, creer_carte, deverrouiller_vue, verrouiller_vue} from "./carte.js";
+import {entite_depuis_id, id_depuis_inspection} from "./scene3d.js";
+import {creer_vue3d} from "./vue3d.js";
 import {charger_index} from "./catalogue_prive.js";
 import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./carte_style.js";
 import {aide_chemin, valeur_effective} from "./chemins.js";
@@ -15,7 +17,7 @@ import {choisir_moyen, modifications_reseau_auto, palette} from "./deploiement.j
 import {fiches} from "./fiche.js";
 import {couleur_pays, PAYS} from "./pays.js";
 import {libelle_noeud, MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
-import {resume_situation} from "./situation.js";
+import {connu_du_pc, resume_situation} from "./situation.js";
 import {FAMILLES, lignes_journal} from "./journal.js";
 import {brancher_autoconfig} from "./autoconfig_panneau.js";
 import {enregistrer_dans_bibliotheque, lire_bibliotheque_locale} from "./bibliotheque.js";
@@ -144,13 +146,19 @@ function image(maintenant, precedent) {
     const fini = avancer_temps_reel(lecteur, (maintenant - precedent) / 1000, (monde) => echantillonner(etat.traces, monde));
     if (lecteur.enLecture) etat.angle = (lecteur.monde.t * VITESSE_BALAYAGE) % (2 * Math.PI);
     absorber(etat.effets, lecteur.monde, maintenant);
-    const ctx = $("#scope").getContext("2d");
-    ctx.setTransform(devicePixelRatio || 1, 0, 0, devicePixelRatio || 1, 0, 0);
-    dessiner_scope(ctx, etat.camera, {monde: lecteur.monde, traces: etat.traces, effets: etat.effets, maintenant,
-      angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol, calques: etat.calques, percue: etat.vue_pc});
-    etat.editeur?.dessiner(ctx, etat.camera, lecteur.monde);
-    rafraichir_fiche();
-    dessiner_inspection(ctx, etat.camera, etat.inspection, lecteur.monde);
+    if (etat.en_3d) {
+      const {monde} = lecteur;
+      etat.vue3d.rendre({monde, calques: etat.calques, montre: etat.vue_pc ? (drone) => connu_du_pc(monde, drone) : () => true,
+        selection: id_depuis_inspection(etat.inspection), exageration: Number($("[name='exageration_3d']").value)});
+    } else {
+      const ctx = $("#scope").getContext("2d");
+      ctx.setTransform(devicePixelRatio || 1, 0, 0, devicePixelRatio || 1, 0, 0);
+      dessiner_scope(ctx, etat.camera, {monde: lecteur.monde, traces: etat.traces, effets: etat.effets, maintenant,
+        angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol, calques: etat.calques, percue: etat.vue_pc});
+      etat.editeur?.dessiner(ctx, etat.camera, lecteur.monde);
+      rafraichir_fiche();
+      dessiner_inspection(ctx, etat.camera, etat.inspection, lecteur.monde);
+    }
     if (fini || maintenant - etat.dernierTableau > 100) rafraichir_commandes(maintenant);
   }
 }
@@ -294,6 +302,7 @@ function basculer_vue_pc() {
 
 function brancher_transport() {
   $("[data-action='vue_pc']").addEventListener("click", basculer_vue_pc);
+  $("[data-action='observer']").addEventListener("click", () => basculer_3d());
   $("[name='terrain']").addEventListener("change", (e) => modifier({"theatre.terrain": e.target.value || null}));
   $("[name='conduite_ciblee']").addEventListener("change", (e) => modifier({"bleu.reseau.conduite_ciblee": e.target.checked}));
   $("[data-action='lire']").addEventListener("click", basculer_lecture);
@@ -313,6 +322,7 @@ function brancher_transport() {
     if (panneau && !edition) etat.panneaux.basculer(etat.panneaux.ids()[Number(panneau) - 1]);
     if (e.key.toLowerCase() === "e" && !edition) etat.editeur.activer(true);
     if (e.key.toLowerCase() === "v" && !edition) basculer_vue_pc();
+    if (e.key.toLowerCase() === "o" && !edition) basculer_3d();
     if (e.key.toLowerCase() === "r" && !edition) $("[name='essaim_reactif']").click();
     if (e.key === "Escape" && !edition && !etat.inspection) etat.panneaux.fermer();
     if (e.code === "Space") (e.preventDefault(), basculer_lecture());
@@ -329,7 +339,7 @@ function brancher_scope() {
   // Zoom et déplacement propres au scope ; en édition, c'est l'éditeur qui reçoit la souris.
   const scope_libre = () => etat.camera?.type === "scope" && !etat.editeur?.est_actif();
   // Les panneaux flottent dans la vue : seuls les gestes faits sur la carte ou le scope la concernent.
-  const sur_la_vue = (e) => e.target === toile || Boolean(e.target.closest("#carte"));
+  const sur_la_vue = (e) => e.target === toile || Boolean(e.target.closest("#carte, #globe"));
   toile.addEventListener("wheel", (e) => {
     if (!scope_libre()) return;
     e.preventDefault();
@@ -352,6 +362,7 @@ function brancher_scope() {
   vue.addEventListener("pointermove", (e) => {
     if (glisse || !etat.camera || !etat.lecteur) return;
     if (!sur_la_vue(e)) return void (etat.survol = null, montrer(infobulle, null));
+    if (etat.en_3d) return survoler_3d(e, infobulle);
     const cadre = vue.getBoundingClientRect();
     etat.survol = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top}, etat.calques, etat.vue_pc);
     montrer(infobulle, etat.survol && decrire(etat.survol, etat.lecteur.monde), e.clientX, e.clientY);
@@ -364,7 +375,8 @@ function brancher_scope() {
     if (etat.editeur?.est_actif() || !sur_la_vue(e)) return;
     if (appui && Math.hypot(e.clientX - appui.x, e.clientY - appui.y) > 4) return;
     const cadre = vue.getBoundingClientRect();
-    const touche = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top}, etat.calques, etat.vue_pc);
+    const point = {x: e.clientX - cadre.left, y: e.clientY - cadre.top};
+    const touche = etat.en_3d ? entite_depuis_id(etat.lecteur.monde, etat.vue3d.sous_curseur(point.x, point.y)) : trouver_sous_curseur(etat.camera, etat.lecteur.monde, point, etat.calques, etat.vue_pc);
     if (touche) inspecter({type: touche.type, id: touche.type === "conduite" ? 0 : ["cible", "radar", "centre"].includes(touche.type) ? touche.indice : touche.objet.id});
   });
   $("[data-action='fermer_inspecteur']").addEventListener("click", () => inspecter(null));
@@ -457,6 +469,7 @@ function brancher_reglages_carte() {
     memoriser_reglages_carte(etat.reglages_carte);
     if (cle === "scope_seul") preparer_carte();
     else if (etat.carte) etat.carte.setStyle(style_carte(etat.sources_carte, reglages_affiches()));
+    if (cle === "fond") etat.vue3d?.appliquer_fond(source_fond());
     synchroniser_verrou();
     cadrer(cle === "scope_seul");
   });
@@ -477,6 +490,46 @@ function synchroniser_verrou() {
     etat.vue_avant = null;
   }
   if (etat.reglages_carte.relief_3d || etat.reglages_carte.globe) etat.carte.setStyle(style_carte(etat.sources_carte, reglages_affiches()));
+}
+
+/** Rendre la source du fond de carte choisi, ou null s'il n'y en a pas. */
+const source_fond = () => etat.sources_carte[etat.reglages_carte.fond] ?? null;
+
+/** Passer en vue 3D ou en revenir (MODELE § 23) : même raid, même instant, mêmes calques ; on n'édite qu'en 2D. */
+async function basculer_3d(voulu = !etat.en_3d) {
+  const bouton = $("[data-action='observer']");
+  if (voulu && !etat.vue3d) {
+    bouton.disabled = true;
+    try {
+      etat.vue3d = await creer_vue3d($("#globe"), etat.sources_carte, source_fond());
+    } catch (erreur) {
+      console.warn(`Vue 3D indisponible : ${erreur.message}`);
+      $("[data-champ='message']").textContent = "Vue 3D indisponible sur ce navigateur (WebGL).";
+      return;
+    } finally {
+      bouton.disabled = false;
+    }
+  }
+  if (voulu && etat.editeur.est_actif()) etat.editeur.activer(false);
+  etat.en_3d = voulu;
+  bouton.setAttribute("aria-pressed", String(voulu));
+  $("#vue").classList.toggle("observer-3d", voulu);
+  if (!voulu) cadrer();
+}
+
+// Interroger la scène 3D à chaque mouvement de souris coûte une image : on se limite à quinze fois par seconde.
+const PERIODE_SURVOL_3D = 66;
+let dernier_survol_3d = 0;
+
+/** Montrer l'infobulle de l'unité survolée en 3D, avec son altitude au-dessus du sol pour une unité en vol. */
+function survoler_3d(e, infobulle) {
+  if (e.timeStamp - dernier_survol_3d < PERIODE_SURVOL_3D) return;
+  dernier_survol_3d = e.timeStamp;
+  const cadre = $("#vue").getBoundingClientRect();
+  const {monde} = etat.lecteur;
+  const entite = entite_depuis_id(monde, etat.vue3d.sous_curseur(e.clientX - cadre.left, e.clientY - cadre.top));
+  const altitude = entite && ["drone", "avion"].includes(entite.type) ? `\naltitude : ${Math.round(entite.objet.geo.alt)} m` : "";
+  montrer(infobulle, entite && `${decrire(entite, monde)}${altitude}`, e.clientX, e.clientY);
 }
 
 /** Charger au besoin le fichier de l'unité `id`, pour en montrer l'aperçu avant de la poser. */
@@ -577,6 +630,7 @@ function brancher_editeur() {
     sur_activation: (actif, mode) => {
       bouton.setAttribute("aria-pressed", String(actif));
       $(".palette").hidden = !(actif && mode === "edition");
+      if (actif && etat.en_3d) basculer_3d(false);
       synchroniser_verrou();
       if (!actif) return;
       // Pour éditer, on dégage la vue : les panneaux se replient.

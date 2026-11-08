@@ -34,6 +34,12 @@ label:has(input:focus-visible) { outline: 2px solid var(--texte); outline-offset
 /* Sur la carte, le scope est un calque : souris et clavier vont à MapLibre (déplacer, zoomer, incliner). */
 .vue.avec-carte #scope { pointer-events: none; }
 .vue:not(.avec-carte) #carte { display: none; }
+/* Vue 3D : carte et canevas cachés sans perdre leur taille, pour revenir à la 2D sans rien recaler. */
+#globe { position: absolute; inset: 0; display: none; }
+.vue:not(.observer-3d) [name="exageration_3d"] { display: none; }
+.vue.observer-3d #globe { display: block; }
+.vue.observer-3d :is(#carte, #scope) { visibility: hidden; }
+#globe .cesium-viewer-bottom { bottom: 96px !important; } /* Cesium le pose en style en ligne à chaque redimensionnement. */
 /* En édition, le canevas reprend la souris, même sur la carte : c'est lui qui sélectionne et déplace. */
 .vue.edition #scope { pointer-events: auto; cursor: default; }
 .vue.edition:is([data-outil="cible"], [data-outil="radar"], [data-outil="centre"], [data-outil="plan"], [data-outil="zone"]) #scope { cursor: crosshair; }
@@ -64,7 +70,7 @@ label:has(input:focus-visible) { outline: 2px solid var(--texte); outline-offset
 .bandeau-pc { position: absolute; inset-block-end: 76px; inset-inline-start: 50%; translate: -50% 0; margin: 0; z-index: 3; padding: 4px 12px;
   font-size: 13px; background: var(--verre); border: 1px solid var(--hostile); border-radius: 8px; }
 .bandeau-pc[hidden] { display: none; }
-.barre-haut [data-action="editer"][aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
+.barre-haut :is([data-action="editer"], [data-action="observer"])[aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
 .lien-catalogue { color: var(--ami); font-size: 13px; padding-inline: 4px; }
 
 /* Rail d'icônes, à gauche : un panneau à la fois. */

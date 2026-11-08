@@ -636,3 +636,18 @@ réaction, puis écart avec réaction et son intervalle de confiance à 95 % (St
 - `disperse` : 182 frappes, +115 ± 14 (+63 %) ; les départs étalés laissent aux derniers drones le temps d'apprendre
   des premiers.
 
+## 23 · Vue Observer en 3D (jalon 14)
+La vue 3D (CesiumJS) n'entre jamais dans le calcul : elle montre les positions géodésiques du moteur, sans second
+calcul, selon les mêmes calques que la 2D. Hypothèses d'affichage :
+
+- **Altitudes** : drones et vecteurs sont dessinés à leur altitude du moteur **au-dessus du sol affiché**, et non de
+  l'ellipsoïde. Le moteur fait voler l'essaim à altitude constante au-dessus de l'ellipsoïde : un drone à 100 m passerait
+  sinon sous un relief de 1 000 m. Cet écart ne concerne que l'image : la position horizontale est exactement celle du
+  moteur, l'altitude affichée dans l'infobulle aussi, et le calcul n'en dépend pas. Le facteur d'exagération éventuel,
+  affiché à l'écran, multiplie cette hauteur. Une tige relie chaque unité en vol au sol. Radars à la hauteur de leur mât
+  au-dessus du relief, batteries, centres et sites posés au sol.
+- **Silhouettes** : un drone à moins de 80 km de la caméra est dessiné en silhouette orientée selon son cap vers le
+  prochain point de sa route, sinon en point ; au plus 150 tiges de drones, au-delà un nuage de traits ne se lit plus.
+- **Relief** : tuiles « terrarium », `h = 256 R + G + B / 256 − 32768` (m), au plus proche voisin sur une grille de
+  65 × 65, sans correction du géoïde (environ 50 m en France), sans effet puisque tout est dessiné au-dessus de ce même
+  sol. Les symboles restent visibles à travers le terrain, pour ne pas perdre une unité derrière une crête. Le relief du moteur (§ 16) reste celui du scénario ; celui de cette vue ne sert qu'à l'image.
