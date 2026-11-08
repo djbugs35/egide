@@ -651,3 +651,9 @@ calcul, selon les mêmes calques que la 2D. Hypothèses d'affichage :
 - **Relief** : tuiles « terrarium », `h = 256 R + G + B / 256 − 32768` (m), au plus proche voisin sur une grille de
   65 × 65, sans correction du géoïde (environ 50 m en France), sans effet puisque tout est dessiné au-dessus de ce même
   sol. Les symboles restent visibles à travers le terrain, pour ne pas perdre une unité derrière une crête. Le relief du moteur (§ 16) reste celui du scénario ; celui de cette vue ne sert qu'à l'image.
+- **Couvertures** : un contour à la hauteur de l'essaim, puis à 1 500 et 5 000 m au-dessus du sol pour ceux qui sont
+  plus hauts que lui. Sur relief, chaque contour vient de `couverture_reelle` (§ 16.2) ; sans relief, de la portée du
+  moteur (§ 2), `min(horizon(h, z), portée instrumentée)`. Hypothèse d'image : un contour est tracé à niveau, au sol du
+  radar plus sa hauteur, sans épouser le relief point par point.
+- **Bulles** : demi-sphères de la portée du poste, dont l'opacité suit les munitions restantes.
+- **Satellite** : le sommet de l'arc (120 km) est figuratif, à l'échelle du théâtre, sans rapport avec l'orbite réelle.

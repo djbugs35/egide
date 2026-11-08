@@ -1,10 +1,12 @@
 // Contenu de la vue 3D (MODELE § 23) : mêmes positions que le moteur, mêmes calques que la 2D, relief décodé.
 import assert from "node:assert/strict";
 import test from "node:test";
-import {vers_degres} from "../src/moteur/geodesie.js";
+import {geo_deg, inverse, vers_degres} from "../src/moteur/geodesie.js";
+import {horizon_radar} from "../src/moteur/geometrie.js";
+import {portee_site} from "../src/moteur/radars.js";
 import {creer_monde} from "../src/moteur/monde.js";
 import {calques_par_defaut} from "../src/vue/calques.js";
-import {entite_depuis_id, entites_scene, fenetre_tuile, grille_hauteurs, hauteur_terrarium, id_depuis_inspection} from "../src/vue/scene3d.js";
+import {bulles_scene, couvertures_scene, liaisons_scene, entite_depuis_id, entites_scene, fenetre_tuile, grille_hauteurs, hauteur_terrarium, id_depuis_inspection} from "../src/vue/scene3d.js";
 import {REGISTRE, scenario} from "./aide_scenario.js";
 
 const monde_lance = () => {
@@ -81,4 +83,50 @@ test("inspection 3D : un identifiant de scène redonne l'entité, et l'inspectio
     assert.equal(id_depuis_inspection(inspection), id);
   }
   assert.equal(id_depuis_inspection(null), null);
+});
+
+const SITES = [{lat_deg: 48.2, lon_deg: 2.5}, {lat_deg: 46, lon_deg: 2.5}];
+
+test("couverture 3D : à la hauteur de l'essaim, chaque contour est à la portée du moteur ; plus haut, à l'horizon borné", () => {
+  const monde = creer_monde(scenario({"bleu.radar.disposition": "sites", "bleu.radar.sites": SITES}), {registre: REGISTRE, journal: false});
+  const volumes = couvertures_scene(monde);
+  assert.equal(volumes.length, 2);
+  const site = monde.couverture.sites[0];
+  const distance = (point) => inverse(site.geo, geo_deg(point.lat_deg, point.lon_deg, 0)).distance;
+  const [bas, haut] = volumes[0].niveaux;
+  assert.equal(bas.hauteur, monde.scenario.rouge.altitude);
+  assert.ok(Math.abs(distance(bas.contour[10]) - portee_site(monde.scenario, 0)) < 1);
+  const {hauteur_antenne: mat, portee_max: maximale} = monde.scenario.radar;
+  assert.ok(Math.abs(distance(haut.contour[10]) - Math.min(horizon_radar(mat, haut.hauteur), maximale)) < 1);
+  assert.equal(couvertures_scene(monde), volumes, "gardés pour un même scénario");
+});
+
+test("couverture 3D : en disposition frontière, un seul contour au rayon de détection", () => {
+  const monde = monde_lance();
+  const [volume, ...autres] = couvertures_scene(monde);
+  assert.equal(autres.length, 0);
+  assert.equal(volume.id, "frontiere");
+  const point = volume.niveaux[0].contour[0];
+  assert.ok(Math.abs(inverse(monde.scenario.theatre.origine, geo_deg(point.lat_deg, point.lon_deg, 0)).distance - monde.rayonDetection) < 1);
+});
+
+test("bulles 3D : une par cible défendue, de la portée du moteur, pleine au départ, et moins pleine sans munitions", () => {
+  const monde = monde_lance();
+  const bulles = bulles_scene(monde);
+  assert.equal(bulles[0].rayon, monde.scenario.sol.portee);
+  assert.ok(Math.abs(bulles[0].part - 1) < 0.05);
+  for (const p of monde.postes) p.munitions = 0;
+  assert.equal(bulles_scene(monde)[0].part, 0);
+});
+
+test("liaisons 3D : réseau complet, chaque radar relié au CDC à sa position ; un satellite monte et redescend", () => {
+  const monde = monde_lance();
+  const liaisons = liaisons_scene(monde);
+  assert.equal(liaisons.length, monde.reseau.radars.length + monde.reseau.centres.length - 1);
+  assert.equal(liaisons[0].points[0].lat_deg, vers_degres(monde.reseau.radars[0].lat));
+  assert.equal(liaisons[0].points.length, 2);
+  const avecSatellite = creer_monde(scenario({"bleu.reseau.mode": "liaisons", "bleu.reseau.liaisons": [{de: "radar:0", vers: "conduite", moyen: "liaisons/satellite_notionnelle"}]}), {registre: REGISTRE, journal: false});
+  const satellite = liaisons_scene(avecSatellite).find((l) => l.type === "satellite");
+  assert.equal(satellite.points.length, 3);
+  assert.ok(satellite.points[1].alt > 100_000);
 });

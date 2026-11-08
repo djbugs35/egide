@@ -149,7 +149,7 @@ function image(maintenant, precedent) {
     if (etat.en_3d) {
       const {monde} = lecteur;
       etat.vue3d.rendre({monde, calques: etat.calques, montre: etat.vue_pc ? (drone) => connu_du_pc(monde, drone) : () => true,
-        selection: id_depuis_inspection(etat.inspection), exageration: Number($("[name='exageration_3d']").value)});
+        selection: id_depuis_inspection(etat.inspection), exageration: Number($("[name='exageration_3d']").value), effets: etat.effets, traces: etat.traces, maintenant});
     } else {
       const ctx = $("#scope").getContext("2d");
       ctx.setTransform(devicePixelRatio || 1, 0, 0, devicePixelRatio || 1, 0, 0);

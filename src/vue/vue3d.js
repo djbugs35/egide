@@ -1,5 +1,6 @@
 // Vue Observer en 3D (jalon 14, MODELE § 23) : le raid sur le globe CesiumJS, à chaque unité sa vraie altitude.
 // Cette vue n'affiche que ce que rend scene3d.js. CesiumJS (12 Mo) n'est chargé qu'à la première ouverture.
+import {creer_couches3d} from "./couches3d.js";
 import {COULEURS} from "./couleurs.js";
 import {entites_scene, fenetre_tuile, grille_hauteurs} from "./scene3d.js";
 
@@ -61,7 +62,7 @@ function masquer_absents(pool, vus) {
 }
 
 /**
- * Rendre la vue 3D créée dans `conteneur` : {rendre({monde, calques, montre, selection, exageration}), appliquer_fond(fond),
+ * Rendre la vue 3D créée dans `conteneur` : {rendre({monde, calques, montre, selection, exageration, effets, traces, maintenant}), appliquer_fond(fond),
  * sous_curseur(x, y)}. `sources` : les sources de cartes/ ; `fond` : la source de fond choisie, ou null. Lève sans WebGL.
  */
 export async function creer_vue3d(conteneur, sources, fond) {
@@ -185,6 +186,7 @@ export async function creer_vue3d(conteneur, sources, fond) {
   }
 
   appliquer_fond(fond);
+  const couches = creer_couches3d(Cesium, viewer, hauteur_sol);
   return {
     appliquer_fond,
     /** Rendre l'identifiant de scène de l'unité sous le point écran (x, y), ou null. */
@@ -192,13 +194,14 @@ export async function creer_vue3d(conteneur, sources, fond) {
       const objet = viewer.scene.pick(new Cesium.Cartesian2(x, y));
       return typeof objet?.primitive?.id === "string" ? objet.primitive.id : null;
     },
-    rendre({monde, calques, montre, selection, exageration}) {
+    rendre({monde, calques, montre, selection, exageration, effets, traces, maintenant}) {
       cadrer(monde);
       if (++images % VIE_CACHE_SOL === 0) sols.clear();
       tiges_posees = 0;
       const {drones, unites, icone_drone: icone} = entites_scene(monde, calques, montre);
       placer_drones(drones, icone, selection, exageration);
       placer_unites(unites, selection, exageration);
+      couches.maj({monde, calques, montre, exageration, effets, traces, maintenant});
       for (let i = tiges_posees; i < pool_tiges.length; i++) pool_tiges[i].show = false;
       viewer.resize();
       viewer.render();
