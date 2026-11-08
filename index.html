@@ -38,14 +38,17 @@
     <button data-action="editer" aria-pressed="false" title="Au début du raid : placer cibles, radars, avions, plan de vol et zones. En pause pendant le raid : donner des ordres aux avions. (E)">Éditer</button>
     <button data-action="vue_pc" aria-pressed="false" title="Basculer entre la vérité terrain et ce que sait le centre de conduite : drones connus et pistes (V)">Vue du CDC</button>
     <button data-action="observer" aria-pressed="false" title="Observer le raid en 3D sur le globe, chaque unité à sa vraie altitude (O)">3D</button>
+    <a class="lien-catalogue" href="catalogue.html" title="Fiches des unités et des algorithmes : équations, hypothèses, sources, code">Catalogue</a>
+  </header>
+  <div class="commandes-3d" role="group" aria-label="Réglages de la vue 3D">
+    <select name="camera_3d" aria-label="Caméra de la vue 3D" title="Où placer l'observateur ; cliquez une unité pour choisir laquelle suivre ou le radar d'où regarder"></select>
     <select name="exageration_3d" aria-label="Exagération des altitudes en 3D" title="Étirer l'altitude des unités en vol pour la lire de loin : affichage seulement, le calcul n'en dépend pas">
       <option value="1">Altitudes réelles</option>
       <option value="5">Altitudes × 5</option>
       <option value="10">Altitudes × 10</option>
       <option value="25">Altitudes × 25</option>
     </select>
-    <a class="lien-catalogue" href="catalogue.html" title="Fiches des unités et des algorithmes : équations, hypothèses, sources, code">Catalogue</a>
-  </header>
+  </div>
 
   <nav class="rail" aria-label="Panneaux">
     <button data-panneau="scenario" aria-expanded="false" title="Réglages du scénario (1)"><svg><use href="#i-scenario"/></svg><span>Scénario</span></button>

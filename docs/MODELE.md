@@ -657,3 +657,6 @@ calcul, selon les mêmes calques que la 2D. Hypothèses d'affichage :
   radar plus sa hauteur, sans épouser le relief point par point.
 - **Bulles** : demi-sphères de la portée du poste, dont l'opacité suit les munitions restantes.
 - **Satellite** : le sommet de l'arc (120 km) est figuratif, à l'échelle du théâtre, sans rapport avec l'orbite réelle.
+- **Caméras** : une caméra posée sur un radar ou sur un site regarde le barycentre des drones en vol (moyenne de leurs
+  latitudes et longitudes, sans rôle dans le calcul) ; le site observé est la cible que visent le plus de drones en vol,
+  ou la plus frappée s'il n'y en a plus.

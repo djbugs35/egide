@@ -1,5 +1,7 @@
 // Vue Observer en 3D (jalon 14, MODELE § 23) : le raid sur le globe CesiumJS, à chaque unité sa vraie altitude.
 // Cette vue n'affiche que ce que rend scene3d.js. CesiumJS (12 Mo) n'est chargé qu'à la première ouverture.
+import {inverse, vers_degres} from "../moteur/geodesie.js";
+import {consigne_camera} from "./cameras3d.js";
 import {creer_couches3d} from "./couches3d.js";
 import {COULEURS} from "./couleurs.js";
 import {entites_scene, fenetre_tuile, grille_hauteurs} from "./scene3d.js";
@@ -16,6 +18,12 @@ const TIGES_DRONES_MAX = 150;
 // Maille (degrés) du cache d'altitude du sol, et son âge maximal en images : le relief s'affine en se chargeant.
 const MAILLE_SOL_DEG = 0.01;
 const VIE_CACHE_SOL = 180;
+// En pause, on ne recalcule la scène qu'une image sur tant, pour suivre le relief qui se charge.
+const PERIODE_SCENE_AU_REPOS = 30;
+const RECUL_SUIVI = 12_000;
+const INCLINAISON_SUIVI = -0.45;
+// Regard légèrement relevé depuis un poste au sol : on voit arriver l'essaim au-dessus de l'horizon.
+const INCLINAISON_POSTE = 0.08;
 // Toujours visibles, même derrière une crête : c'est une vue de situation, pas un rendu réaliste.
 const SANS_TEST_PROFONDEUR = Number.POSITIVE_INFINITY;
 
@@ -62,17 +70,18 @@ function masquer_absents(pool, vus) {
 }
 
 /**
- * Rendre la vue 3D créée dans `conteneur` : {rendre({monde, calques, montre, selection, exageration, effets, traces, maintenant}), appliquer_fond(fond),
- * sous_curseur(x, y)}. `sources` : les sources de cartes/ ; `fond` : la source de fond choisie, ou null. Lève sans WebGL.
+ * Rendre la vue 3D créée dans `conteneur` : {rendre({monde, calques, montre, percue, selection, exageration, camera, effets, traces, maintenant}), appliquer_fond(fond),
+ * sous_curseur(x, y)}. `sources` : les sources de cartes/ ; `fond` : la source de fond choisie, ou null ; `local` : {fond, relief}
+ * préparés par outils/hors_ligne.js, qui priment s'ils existent. Lève sans WebGL.
  */
-export async function creer_vue3d(conteneur, sources, fond) {
+export async function creer_vue3d(conteneur, sources, fond, local = null) {
   const Cesium = await charger_cesium();
   Cesium.Ion.defaultAccessToken = "";
-  const relief = Object.entries(sources).find(([id]) => id.startsWith("relief/"))?.[1];
+  const relief = local?.relief ?? Object.entries(sources).find(([id]) => id.startsWith("relief/"))?.[1];
   const viewer = new Cesium.Viewer(conteneur, {
     animation: false, timeline: false, baseLayerPicker: false, geocoder: false, homeButton: false, sceneModePicker: false,
     navigationHelpButton: false, fullscreenButton: false, infoBox: false, selectionIndicator: false, scene3DOnly: true,
-    useDefaultRenderLoop: false, baseLayer: false,
+    useDefaultRenderLoop: false, baseLayer: false, requestRenderMode: true, maximumRenderTimeChange: Number.POSITIVE_INFINITY,
     terrainProvider: relief ? fournisseur_relief(Cesium, relief) : new Cesium.EllipsoidTerrainProvider(),
   });
   viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString(COULEURS.fond);
@@ -86,7 +95,7 @@ export async function creer_vue3d(conteneur, sources, fond) {
   const couleurs = {ami: couleur("ami"), sol: couleur("sol"), hostile: couleur("hostile"), inconnu: couleur("inconnu")};
   const matiere_tige = Cesium.Material.fromType("Color", {color: Cesium.Color.WHITE.withAlpha(0.45)});
   const sols = new Map();
-  let [cadrage, images, tiges_posees] = [null, 0, 0];
+  let [cadrage, images, tiges_posees, mode_pose, vu, ms_image] = [null, 0, 0, null, {}, 0];
 
   function appliquer_fond(source) {
     viewer.imageryLayers.removeAll();
@@ -98,6 +107,7 @@ export async function creer_vue3d(conteneur, sources, fond) {
     const cle = `${origine.lat},${origine.lon},${monde.rayonDetection}`;
     if (cle === cadrage) return;
     cadrage = cle;
+    mode_pose = null;
     const cible = Cesium.Cartesian3.fromRadians(origine.lon, origine.lat, 0);
     viewer.camera.lookAt(cible, new Cesium.HeadingPitchRange(0, INCLINAISON_CAMERA, 3 * monde.rayonDetection));
     // lookAt fige la caméra sur la cible : on rend la main à la souris.
@@ -185,26 +195,66 @@ export async function creer_vue3d(conteneur, sources, fond) {
     masquer_absents(pool_unites, vus);
   }
 
-  appliquer_fond(fond);
+  /** Placer la caméra selon `mode` ; rendre vrai si elle doit être replacée à chaque image. */
+  function placer_camera(monde, mode, selection, exageration) {
+    const consigne = consigne_camera(mode, monde, selection);
+    viewer.scene.screenSpaceCameraController.enableInputs = !consigne || consigne.type === "fixe";
+    const nouveau = mode !== mode_pose;
+    mode_pose = mode;
+    if (!consigne) return false;
+    const {camera} = viewer;
+    if (consigne.type === "fixe") {
+      if (!nouveau) return false;
+      const {origine} = monde.scenario.theatre;
+      camera.lookAt(Cesium.Cartesian3.fromRadians(origine.lon, origine.lat, 0), new Cesium.HeadingPitchRange(0, consigne.inclinaison, consigne.recul * monde.rayonDetection));
+      camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+      return false;
+    }
+    const {geo} = consigne;
+    const sol = hauteur_sol(vers_degres(geo.lat), vers_degres(geo.lon));
+    if (consigne.type === "suivi") {
+      camera.lookAt(Cesium.Cartesian3.fromRadians(geo.lon, geo.lat, sol + (geo.alt ?? 0) * exageration), new Cesium.HeadingPitchRange(camera.heading, INCLINAISON_SUIVI, RECUL_SUIVI));
+      camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+    } else {
+      camera.setView({
+        destination: Cesium.Cartesian3.fromRadians(geo.lon, geo.lat, sol + consigne.hauteur),
+        orientation: {heading: inverse(geo, {...consigne.vers, alt: 0}).azimut_depart, pitch: INCLINAISON_POSTE, roll: 0},
+      });
+    }
+    return true;
+  }
+
+  appliquer_fond(local?.fond ?? fond);
   const couches = creer_couches3d(Cesium, viewer, hauteur_sol);
   return {
-    appliquer_fond,
+    appliquer_fond: (source) => appliquer_fond(local?.fond ?? source),
     /** Rendre l'identifiant de scène de l'unité sous le point écran (x, y), ou null. */
     sous_curseur(x, y) {
       const objet = viewer.scene.pick(new Cesium.Cartesian2(x, y));
       return typeof objet?.primitive?.id === "string" ? objet.primitive.id : null;
     },
-    rendre({monde, calques, montre, selection, exageration, effets, traces, maintenant}) {
+    rendre({monde, calques, montre, percue, selection, exageration, camera, effets, traces, maintenant}) {
+      const debut = performance.now();
       cadrer(monde);
       if (++images % VIE_CACHE_SOL === 0) sols.clear();
-      tiges_posees = 0;
-      const {drones, unites, icone_drone: icone} = entites_scene(monde, calques, montre);
-      placer_drones(drones, icone, selection, exageration);
-      placer_unites(unites, selection, exageration);
-      couches.maj({monde, calques, montre, exageration, effets, traces, maintenant});
-      for (let i = tiges_posees; i < pool_tiges.length; i++) pool_tiges[i].show = false;
+      const continu = placer_camera(monde, camera, selection, exageration);
+      // En pause, rien ne bouge : ni recalcul ni image, sauf pour suivre le relief qui se charge.
+      const change = monde !== vu.monde || monde.t !== vu.t || calques !== vu.calques || percue !== vu.percue || selection !== vu.selection || exageration !== vu.exageration;
+      if (change || continu || effets.liste.length > 0 || images % PERIODE_SCENE_AU_REPOS === 0) {
+        vu = {monde, t: monde.t, calques, percue, selection, exageration};
+        tiges_posees = 0;
+        const {drones, unites, icone_drone: icone} = entites_scene(monde, calques, montre);
+        placer_drones(drones, icone, selection, exageration);
+        placer_unites(unites, selection, exageration);
+        couches.maj({monde, calques, montre, exageration, effets, traces, maintenant});
+        for (let i = tiges_posees; i < pool_tiges.length; i++) pool_tiges[i].show = false;
+        viewer.scene.requestRender();
+      }
       viewer.resize();
       viewer.render();
+      // Temps moyen par image (ms), lisible dans le DOM pour mesurer les performances sur un scénario donné.
+      ms_image += (performance.now() - debut - ms_image) * 0.05;
+      conteneur.dataset.msImage = ms_image.toFixed(1);
     },
   };
 }

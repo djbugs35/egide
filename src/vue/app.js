@@ -6,6 +6,7 @@ import {en_v2, ids_unites, modifier_scenario, resoudre_scenario, ScenarioInvalid
 import {brancher_balayage, montrer} from "./balayage.js";
 import {creer_camera, deplacer, zoomer} from "./camera.js";
 import {cadrer_carte, creer_carte, deverrouiller_vue, verrouiller_vue} from "./carte.js";
+import {MODES_CAMERA} from "./cameras3d.js";
 import {entite_depuis_id, id_depuis_inspection} from "./scene3d.js";
 import {creer_vue3d} from "./vue3d.js";
 import {charger_index} from "./catalogue_prive.js";
@@ -148,7 +149,7 @@ function image(maintenant, precedent) {
     absorber(etat.effets, lecteur.monde, maintenant);
     if (etat.en_3d) {
       const {monde} = lecteur;
-      etat.vue3d.rendre({monde, calques: etat.calques, montre: etat.vue_pc ? (drone) => connu_du_pc(monde, drone) : () => true,
+      etat.vue3d.rendre({monde, calques: etat.calques, montre: etat.vue_pc ? (drone) => connu_du_pc(monde, drone) : () => true, percue: etat.vue_pc, camera: $("[name='camera_3d']").value,
         selection: id_depuis_inspection(etat.inspection), exageration: Number($("[name='exageration_3d']").value), effets: etat.effets, traces: etat.traces, maintenant});
     } else {
       const ctx = $("#scope").getContext("2d");
@@ -303,6 +304,7 @@ function basculer_vue_pc() {
 function brancher_transport() {
   $("[data-action='vue_pc']").addEventListener("click", basculer_vue_pc);
   $("[data-action='observer']").addEventListener("click", () => basculer_3d());
+  $("[name='camera_3d']").innerHTML = MODES_CAMERA.map((m) => `<option value="${m.id}">${m.libelle}</option>`).join("");
   $("[name='terrain']").addEventListener("change", (e) => modifier({"theatre.terrain": e.target.value || null}));
   $("[name='conduite_ciblee']").addEventListener("change", (e) => modifier({"bleu.reseau.conduite_ciblee": e.target.checked}));
   $("[data-action='lire']").addEventListener("click", basculer_lecture);
@@ -501,7 +503,9 @@ async function basculer_3d(voulu = !etat.en_3d) {
   if (voulu && !etat.vue3d) {
     bouton.disabled = true;
     try {
-      etat.vue3d = await creer_vue3d($("#globe"), etat.sources_carte, source_fond());
+      // Tuiles préparées par outils/hors_ligne.js : leur absence est le cas courant, pas une erreur.
+      const local = await lire_json("hors_ligne/index.json").catch(() => null);
+      etat.vue3d = await creer_vue3d($("#globe"), etat.sources_carte, source_fond(), local);
     } catch (erreur) {
       console.warn(`Vue 3D indisponible : ${erreur.message}`);
       $("[data-champ='message']").textContent = "Vue 3D indisponible sur ce navigateur (WebGL).";
