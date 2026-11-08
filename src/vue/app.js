@@ -168,12 +168,12 @@ function image(maintenant, precedent) {
     if (etat.en_3d) {
       const {monde} = lecteur;
       etat.vue3d.rendre({monde, calques: etat.calques, montre: etat.vue_pc ? (drone) => connu_du_pc(monde, drone) : () => true, percue: etat.vue_pc, camera: $("[name='camera_3d']").value,
-        selection: id_depuis_inspection(etat.inspection), exageration: Number($("[name='exageration_3d']").value), effets: etat.effets, traces: etat.traces, maintenant});
+        selection: id_depuis_inspection(etat.inspection), inspection: etat.inspection, exageration: Number($("[name='exageration_3d']").value), effets: etat.effets, traces: etat.traces, maintenant});
     } else {
       const ctx = $("#scope").getContext("2d");
       ctx.setTransform(devicePixelRatio || 1, 0, 0, devicePixelRatio || 1, 0, 0);
       dessiner_scope(ctx, etat.camera, {monde: lecteur.monde, traces: etat.traces, effets: etat.effets, maintenant,
-        angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol, calques: etat.calques, percue: etat.vue_pc});
+        angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol, calques: etat.calques, percue: etat.vue_pc, inspection: etat.inspection});
       etat.editeur?.dessiner(ctx, etat.camera, lecteur.monde);
       rafraichir_fiche();
       dessiner_inspection(ctx, etat.camera, etat.inspection, lecteur.monde);

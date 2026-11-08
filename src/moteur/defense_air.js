@@ -1,6 +1,7 @@
 // Avions en orbite : orchestration des mises à poste, déplacements et tirs ; les décisions (pistage, allocation,
 // mouvement, tir) sont déléguées aux algorithmes du scénario et des unités (MODELE § 8.3 à § 8.5, § 10).
 // Chaque avion porte les paramètres de son groupe (type d'avion, arme, altitude) : la flotte peut être hétérogène.
+import {conduite_vecteur, enveloppe_vecteur} from "./couvertures.js";
 import {algo} from "./algos.js";
 import {cap_vers, direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
 import {parcourir_voisins} from "./grille.js";
@@ -8,8 +9,6 @@ import {OUTILS} from "./outils.js";
 import {effet_esquive} from "./reaction.js";
 import {acces_avion, connu_du_centre} from "./reseau.js";
 import {est_actif, journaliser, plus_proche, resoudre_tir} from "./tir.js";
-// Un drone qui se rapproche à moins de 3 portées d'arme fait passer l'avion de la mise à poste à l'engagement.
-const PORTEES_ENGAGEMENT = 3;
 
 /** Rendre l'orbite tirée au hasard, uniformément sur le disque défendu. */
 function orbite_aleatoire(scenario, groupe, hasard) {
@@ -34,10 +33,10 @@ export function creer_avions(scenario, hasard) {
   return avions;
 }
 
-/** Rendre le drone actif le plus proche qui se rapproche de l'avion à moins de 3 portées d'arme, ou null. */
+/** Rendre le drone actif le plus proche qui se rapproche de l'avion à portée de son capteur de conduite (MODELE § 25.2), ou null. */
 export function drone_approchant(monde, avion) {
   let retenu = null;
-  let meilleure = PORTEES_ENGAGEMENT * avion.groupe.arme.portee;
+  let meilleure = conduite_vecteur(avion.groupe);
   parcourir_voisins(monde.index, avion.ecef, meilleure, (drone) => {
     if (!est_actif(drone, monde.t)) return;
     const versAvion = soustraire(avion.ecef, drone.ecef);
@@ -156,7 +155,7 @@ export function tirer_air(monde) {
     const {arme} = avion.groupe;
     // Un brouilleur ne tire pas : son effet de zone est résolu par brouiller() (MODELE § 19.3).
     if (avion.munitions === 0 || avion.perdu || arme.type === "brouillage" || monde.t < avion.prochain_tir) continue;
-    const drone = plus_proche(monde, avion.ecef, arme.portee, true);
+    const drone = plus_proche(monde, avion.ecef, enveloppe_vecteur(avion.groupe), true);
     if (!drone) continue;
     const tir = algo(monde.registre, arme.algos.tir, "tir");
     const {vol, occupation} = tir.planifier_tir(arme, distance_oblique(avion.ecef, drone.ecef));

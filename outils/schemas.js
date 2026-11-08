@@ -33,7 +33,7 @@ function type_de(cle, valeur) {
   if (cle === "algos") return {type: "object", propertyNames: {enum: Object.keys(ROLES)}, additionalProperties: {type: "string"}};
   if (Array.isArray(valeur)) return {type: "array"};
   if (valeur === null) return {};
-  if (typeof valeur === "number") return {type: Number.isInteger(valeur) && !/_(km|kmh|m|s|ms|g|deg)$/.test(cle) && cle !== "pk" ? "integer" : "number"};
+  if (typeof valeur === "number") return {type: Number.isInteger(valeur) && !/_(km|kmh|m|s|ms|g|deg)$/.test(cle) && !["pk", "facteur_conduite"].includes(cle) ? "integer" : "number"};
   return {type: typeof valeur};
 }
 
@@ -92,6 +92,7 @@ function schema_rejeu() {
       genre("statique", ["drones", "vecteurs", "sites", "radars", "postes", "centres", "liaisons", "zones"], {drones: {type: "object", required: ["unite", "nombre"]}, vecteurs: liste, sites: liste, radars: liste, postes: liste, centres: liste, liaisons: {type: "object", required: ["mode", "liste"]}, zones: liste}, "Deuxième ligne : ce qui ne bouge pas."),
       genre("image", ["t", "drones", "vecteurs", "postes"], {t: nombre, drones: lignes(COLONNES.drones), vecteurs: lignes(COLONNES.vecteurs), postes: {type: "array", items: {type: "integer"}, description: "Munitions de chaque poste, dans l'ordre du statique."}}, "État du monde à l'instant t (s)."),
       genre("evenement", ["t", "type"], {t: nombre, type: {type: "string"}}, "Évènement daté du journal ; ses positions sont écrites comme les lieux du statique."),
+      genre("couvertures", ["t", "objets", "c2"], {t: nombre, objets: {type: "array", items: {type: "object", required: ["noeud", "genre", "id", "unite", "lieu", "detection", "conduite", "interception", "profil"]}}, c2: {type: "array", items: {type: "object", required: ["noeud", "nom", "hs", "membres"]}}}, "Couvertures de chaque objet et résultante des C2 : à l'instant initial et à chaque changement du réseau."),
       genre("bilan", ["fuites", "fuites_max_cible", "duree"], {fuites: {type: "integer"}, fuites_max_cible: {type: "integer"}, duree: nombre}, "Dernière ligne : bilan de la simulation."),
     ],
   };

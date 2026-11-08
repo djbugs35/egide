@@ -132,16 +132,18 @@ export function preparer_reseau(scenario, hs = new Set(), cibles = []) {
 
 /**
  * Rendre l'accès par lequel un centre joint `avion` (le plus rapide à portée) : {centre, sol, latence…}, ou null s'il
- * est hors liaison. En réseau complet, le premier centre en état, sans délai.
+ * est hors liaison. En réseau complet, le premier centre en état, sans délai. `impose` : ne considérer que ce centre.
  */
-export function acces_avion(reseau, avion, indiceGroupe) {
+export function acces_avion(reseau, avion, indiceGroupe, impose = null) {
   if (reseau.aucun_centre) return null;
   if (reseau.mode === "complet") {
-    const centre = reseau.centres.findIndex((c) => !c.hs);
+    if (impose !== null && reseau.centres[impose].hs) return null;
+    const centre = impose ?? reseau.centres.findIndex((c) => !c.hs);
     return {centre, sol: reseau.centres[centre].id, latence: 0};
   }
   let retenu = null;
   for (const acces of reseau.acces[indiceGroupe] ?? []) {
+    if (impose !== null && acces.centre !== impose) continue;
     const {hauteur_antenne: h, visibilite_directe: vue} = acces.moyen;
     const portee = portee_liaison(acces.moyen, h, avion.geo.alt);
     const distance = inverse(acces.position, avion.geo).distance;

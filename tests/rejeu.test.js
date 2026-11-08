@@ -134,6 +134,18 @@ test("rejeu : les positions des évènements sont écrites comme des lieux, sans
   for (const point of [tir.de, tir.vers]) assert.deepEqual(Object.keys(point), ["lat_deg", "lon_deg", "alt_m", "e", "n", "u"]);
 });
 
+test("rejeu : les couvertures sont écrites au départ, puis seulement quand le réseau change", async () => {
+  assert.equal(REJEU.couvertures.length, 1);
+  const [depart] = REJEU.couvertures;
+  assert.equal(depart.t, 0);
+  assert.equal(depart.c2[0].noeud, "conduite");
+  assert.ok(depart.objets.find((o) => o.genre === "poste").interception > 0);
+  const panne = await rejeu({"bleu.reseau.pannes": [{t_s: 200, element: "radar:0", duree_s: null}]});
+  assert.equal(panne.couvertures.length, 2);
+  assert.equal(panne.couvertures[1].t, 200);
+  assert.ok(panne.couvertures[1].c2[0].membres.length < panne.couvertures[0].c2[0].membres.length);
+});
+
 test("rejeu : un autre fichier ou une autre version sont refusés", () => {
   assert.throws(() => lire_rejeu('{"format":"autre"}\n'), /pas un fichier de rejeu/);
   assert.throws(() => lire_rejeu('{"format":"egide-rejeu","version":99}\n'), /version de rejeu 99/);
@@ -142,7 +154,7 @@ test("rejeu : un autre fichier ou une autre version sont refusés", () => {
 test("rejeu : chaque ligne respecte le schéma généré (genre, clés requises, largeur des colonnes)", () => {
   const {oneOf} = schemas()["rejeu.schema.json"];
   const parGenre = Object.fromEntries(oneOf.map((s) => [s.properties.genre.const, s]));
-  for (const ligne of [REJEU.entete, REJEU.statique, REJEU.images[1], REJEU.evenements[0], REJEU.bilan]) {
+  for (const ligne of [REJEU.entete, REJEU.statique, REJEU.images[1], REJEU.evenements[0], REJEU.couvertures[0], REJEU.bilan]) {
     for (const cle of parGenre[ligne.genre].required) assert.ok(cle in ligne, `${ligne.genre} : ${cle}`);
   }
   assert.ok(REJEU.images[1].vecteurs.every((v) => v.length === COLONNES.vecteurs.length));

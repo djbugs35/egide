@@ -241,6 +241,53 @@
     },
     {
       "type": "object",
+      "description": "Couvertures de chaque objet et résultante des C2 : à l'instant initial et à chaque changement du réseau.",
+      "required": [
+        "genre",
+        "t",
+        "objets",
+        "c2"
+      ],
+      "properties": {
+        "genre": {
+          "const": "couvertures"
+        },
+        "t": {
+          "type": "number"
+        },
+        "objets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "noeud",
+              "genre",
+              "id",
+              "unite",
+              "lieu",
+              "detection",
+              "conduite",
+              "interception",
+              "profil"
+            ]
+          }
+        },
+        "c2": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "noeud",
+              "nom",
+              "hs",
+              "membres"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
       "description": "Dernière ligne : bilan de la simulation.",
       "required": [
         "genre",

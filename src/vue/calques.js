@@ -10,6 +10,9 @@ export const CALQUES = [
   {id: "radars", groupe: "Défense", libelle: "Radars"},
   {id: "reseau", groupe: "Défense", libelle: "Réseau et centre de conduite"},
   {id: "couverture", groupe: "Défense", libelle: "Couverture radar"},
+  {id: "conduite_tir", groupe: "Défense", libelle: "Conduite de tir (jaune)", defaut: false},
+  {id: "interception", groupe: "Défense", libelle: "Interception (vert)", defaut: false},
+  {id: "resultante_c2", groupe: "Défense", libelle: "Couverture des C2 (violet)", defaut: false},
   {id: "balayage", groupe: "Défense", libelle: "Faisceau radar"},
   {id: "postes", groupe: "Défense", libelle: "Bulles des postes sol"},
   {id: "drones_detectes", groupe: "Menace", libelle: "Drones détectés"},
@@ -27,7 +30,7 @@ export const CALQUES = [
 const CLE = "egide.calques";
 
 /** Rendre tous les calques visibles. */
-export const calques_par_defaut = () => Object.fromEntries(CALQUES.map((c) => [c.id, true]));
+export const calques_par_defaut = () => Object.fromEntries(CALQUES.map((c) => [c.id, c.defaut !== false]));
 
 /** Rendre les calques mémorisés, complétés par défaut (un calque nouveau est visible). */
 export function lire_calques(stockage = globalThis.localStorage) {

@@ -1,6 +1,7 @@
 // Entités du scope en symbologie inspirée d'APP-6 : ami en dôme (plein = IR, creux = laser), hostile en
 // demi-losange, cibles en carré ; bulle de défense sol dont l'opacité suit les munitions restantes.
 import {ecrire_nom} from "./libelles.js";
+import {enveloppe_poste} from "../moteur/couvertures.js";
 import {cap_drone} from "../moteur/menace.js";
 import {chemin_cercle, ecran as projeter_ecran, rotation_ecran} from "./ecran.js";
 import {COULEURS} from "./couleurs.js";
@@ -23,7 +24,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
       ctx.fillStyle = `rgba(184, 134, 11, ${0.05 + 0.13 * part})`;
       ctx.strokeStyle = COULEURS.sol;
       ctx.lineWidth = 1;
-      chemin_cercle(ctx, camera, cible.geo, sol.portee, 36);
+      chemin_cercle(ctx, camera, cible.geo, enveloppe_poste(sol, monde.scenario.rouge.altitude), 36);
       ctx.fill();
       ctx.stroke();
     }
@@ -64,7 +65,7 @@ function dessiner_batteries(ctx, camera, monde, calques) {
     ctx.fillStyle = `rgba(184, 134, 11, ${0.04 + 0.12 * part})`;
     ctx.strokeStyle = COULEURS.sol;
     ctx.lineWidth = 1;
-    chemin_cercle(ctx, camera, poste.geo, poste.unite.portee, 48);
+    chemin_cercle(ctx, camera, poste.geo, poste.enveloppe, 48);
     ctx.fill();
     ctx.stroke();
     const p = projeter_ecran(camera, poste.geo);

@@ -1,6 +1,7 @@
 // Le scope : assemble le fond et les entités dans l'ordre de lecture, et retrouve l'entité sous le curseur.
 import {ecran as projeter_ecran} from "./ecran.js";
 import {dessiner_anneaux, dessiner_balayage, dessiner_echelle} from "./cadre.js";
+import {dessiner_couvertures} from "./couvertures_vue.js";
 import {COULEURS} from "./couleurs.js";
 import {parametres_radar, positions_radars} from "../moteur/radars.js";
 import {pistes_connues, connu_du_pc} from "./situation.js";
@@ -12,7 +13,7 @@ import {dessiner_avions, dessiner_cibles, dessiner_drones, dessiner_messages, de
 /**
  * Dessiner une image du scope.
  * `etat` : {monde, traces, effets, maintenant (ms), angle (rad, balayage), balayage (bool), survol (entité ou null),
- * calques (voir calques.js ; tous visibles par défaut), percue (vue du CDC : ce que sait la conduite)}.
+ * calques (voir calques.js), percue (vue du CDC : ce que sait la conduite), inspection (objet inspecté : ses couvertures)}.
  */
 export function dessiner_scope(ctx, camera, etat) {
   const {monde, traces, effets, maintenant} = etat;
@@ -26,6 +27,7 @@ export function dessiner_scope(ctx, camera, etat) {
   }
   if (etat.balayage && calques.balayage) dessiner_balayage(ctx, camera, monde, etat.angle);
   dessiner_anneaux(ctx, camera, monde, calques);
+  dessiner_couvertures(ctx, camera, monde, calques, etat.inspection ?? null);
   dessiner_cibles(ctx, camera, monde, effets, maintenant, calques);
   if (calques.reseau) dessiner_reseau(ctx, camera, monde);
   if (calques.radars) dessiner_radars(ctx, camera, positions_radars(monde.scenario), (i) => icone_radar(monde.scenario, i, calques));

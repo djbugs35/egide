@@ -96,6 +96,21 @@
       "description": "Rayon de la bulle d'engagement du poste.",
       "default": 8
     },
+    "portee_conduite_km": {
+      "type": "number",
+      "description": "Portee du capteur de conduite de tir ; 0 : non declaree, on prend facteur_conduite x portee_km (MODELE § 25.2).",
+      "default": 0
+    },
+    "facteur_conduite": {
+      "type": "number",
+      "description": "Conduite de tir rapportee a la portee de l'arme, pour une unite qui ne declare pas portee_conduite_km.",
+      "default": 1.5
+    },
+    "hauteur_conduite_m": {
+      "type": "number",
+      "description": "Hauteur du capteur de conduite au-dessus du sol : son horizon borne la bulle de tir (MODELE § 25.2).",
+      "default": 10
+    },
     "pk": {
       "type": "number",
       "description": "Probabilite de destruction par tir.",

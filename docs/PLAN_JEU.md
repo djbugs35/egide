@@ -23,11 +23,11 @@ genre et mécaniques du jeu de stratégie, avec ses propres noms, graphismes et 
 |---|---|---|
 | 1 | Installation automatique et vérification (`installer.command`, `installer.bat`, `outils/verifier_installation.js`) | fait |
 | 2 | Orientation des objets selon leur déplacement, dans toutes les vues | fait |
-| 3 | Couvertures calculées une seule fois dans le moteur : détection, conduite de tir, interception selon l'objet, couverture de chaque C2 comme résultante des objets connectés ; affichées dans le navigateur, Cesium et Godot | à faire |
+| 3 | Couvertures calculées une seule fois dans le moteur : détection, conduite de tir, interception selon l'objet, couverture de chaque C2 comme résultante des objets connectés ; affichées dans le navigateur, Cesium et Godot | fait |
 | 4 | Icônes des objets privés, ressemblantes, sous `prive/icones/` | à faire |
 | 5 | Liaison en direct entre Godot et le moteur (remplace le lot 15.4) | à faire |
 | 6 | Gameplay dans Godot : sélection au rectangle, groupes, ordres, mini-carte, brouillard, sons, effets | à faire |
 | 7 | Éditeurs dans Godot : scénario, puis terrain | à faire |
 
-L'étape 3 change les bilans : elle passe par `docs/MODELE.md`, `src/moteur/scenario.js`, `analyse/scenario.py` et
-`tests/resolution_reference.json`, avec des valeurs notionnelles sourcées pour le catalogue public.
+L'étape 3 ne change les bilans que là où la conduite de tir borne vraiment un objet (portée déclarée plus courte, horizon, relief) ; elle est passée par `docs/MODELE.md`, `src/moteur/scenario.js`, `analyse/scenario.py` et
+`tests/resolution_reference.json`. Le catalogue public garde une conduite proportionnelle à l'arme, sans chiffre inventé.

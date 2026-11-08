@@ -278,7 +278,7 @@ test("éditeur : déplacer, ajouter ou supprimer un radar inscrit tous les radar
 });
 
 test("calques : tout visible par défaut, mémoire protégée, masqué = ni survolé ni sélectionné", () => {
-  assert.ok(CALQUES.every((c) => calques_par_defaut()[c.id]));
+  assert.ok(CALQUES.every((c) => calques_par_defaut()[c.id] === (c.defaut !== false)));
   assert.deepEqual(lire_calques(null), calques_par_defaut());
   const casse = {getItem: () => { throw new Error("refus"); }, setItem: () => { throw new Error("refus"); }};
   assert.deepEqual(lire_calques(casse), calques_par_defaut());

@@ -678,3 +678,56 @@ Hypothèses de restitution, sans effet sur le calcul :
 - **Cap.** Celui du moteur (§ 23).
 - **Terrain exporté.** Le maillage relie les nœuds de la grille du moteur par des triangles, sans recalcul d'altitude :
   entre deux nœuds, il peut s'écarter de l'interpolation bilinéaire du moteur (§ 16), d'autant plus que `--pas-km` est grand.
+
+## 25 · Couvertures par objet et résultante des C2 (docs/PLAN_JEU.md, étape 3)
+
+Chaque objet porte jusqu'à trois enveloppes, calculées une seule fois par `src/moteur/couvertures.js` et lues par toutes les
+interfaces. Toutes sont données à l'altitude de l'essaim.
+
+### 25.1 Détection
+
+Un radar voit jusqu'à min(horizon radar, portée instrumentée) (§ 2), réduit par le relief s'il y a un terrain (§ 16.2).
+
+### 25.2 Conduite de tir
+
+Distance à laquelle un effecteur suit assez bien une cible pour tirer dessus, par son propre capteur (radar de conduite,
+optronique, désignateur). C'est une contrainte du moteur : un effecteur ne tire pas au-delà.
+
+  conduite = portee_conduite si l'unité la déclare, sinon facteur_conduite × portée de l'arme
+
+- Un **poste** est aussi borné par l'horizon de son capteur, de hauteur `hauteur_conduite_m`, contre un drone à l'altitude
+  de l'essaim (§ 2), et, sur un terrain, par son masque d'horizon (§ 16.2). Sa bulle de tir devient :
+
+    r_tir = min(portée de l'arme, conduite, horizon de conduite)
+
+  La cadence du § 5 se calcule sur r_tir : la traversée utile est celle que le poste peut suivre.
+- Un **vecteur** (avion, drone défensif) vole au-dessus du relief : ni horizon ni masque. Il tire à min(portée de l'arme,
+  conduite), et sa conduite est aussi la distance à laquelle il accroche seul un drone. Le facteur 3 du catalogue est l'ancienne règle
+  « trois portées d'arme » : le comportement des unités qui ne déclarent rien ne change pas.
+
+Limite : les formules fermées (§ 4 et § 5) supposent la conduite non contraignante. Quand elle l'est, le moteur fait foi.
+
+### 25.3 Interception
+
+Volume où l'objet peut réellement détruire un drone.
+
+- **Poste** : sa bulle de tir r_tir (fixe).
+- **Vecteur** : disque autour de sa position, de rayon
+
+    r_int = min(portée de l'arme, conduite) + v_mise_a_poste × t
+
+  où t est le délai disponible du § 3.2. Il dit jusqu'où le vecteur peut aller chercher un drone détecté à temps. Hypothèses : ligne
+  droite, vitesse constante, pas de virage (§ 3.1). Ce rayon est un indicateur : le moteur, lui, simule le vol. Un objet sans
+  munitions n'a plus d'interception.
+
+### 25.4 Résultante d'un C2
+
+La couverture d'un centre est **l'union des couvertures des objets qui lui sont reliés à l'instant considéré** :
+
+- détection : les radars en état dont la latence vers ce centre est finie (§ 18) ;
+- conduite et interception : les postes des cibles qu'il joint (§ 18.3), et les vecteurs à portée d'une liaison vers lui (§ 15.2).
+
+Elle change avec le réseau : une liaison coupée ou un centre détruit retire aussitôt les objets concernés. Un centre hors
+service n'a aucune couverture. La surface annoncée se mesure sur une grille de 2 km : l'erreur reste petite devant les
+incertitudes de portée, et le calcul n'entre pas dans la simulation.
+

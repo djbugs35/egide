@@ -15,6 +15,10 @@ export const COULEURS = {
   eclat: "#fff1cc",
   // Sélection de l'éditeur : hors palette de séries, pour ne jamais se confondre avec une entité.
   selection: "#f2f2f2",
+  // Enveloppes des objets (MODELE § 25) : la détection garde la couleur « ami » des radars.
+  conduite: "#e8c547",
+  interception: "#57c785",
+  resultante: "#b48ee8",
 };
 
 /** Publier les couleurs en variables CSS (--fond, --ami…) sur l'élément racine. */

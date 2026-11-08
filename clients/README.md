@@ -14,7 +14,7 @@ godot --path clients/godot
 ```
 
 Sans argument, il prend le rejeu et le terrain les plus récents de `resultats/`. On peut les désigner :
-`godot --path clients/godot -- --rejeu <fichier> --terrain <dossier> --debut 400 --camera 2`. Le terrain est facultatif. Le chargement du
+`godot --path clients/godot -- --rejeu <fichier> --terrain <dossier> --debut 400 --camera 2 --couverture 3`. Le terrain est facultatif. Le chargement du
 scénario de référence prend plusieurs secondes.
 
 | Commande | Effet |
@@ -25,6 +25,8 @@ scénario de référence prend plusieurs secondes.
 | 1, 2, 3 | caméra libre, suivi, vue de radar |
 | Tab | drone suivi suivant |
 | R | radar suivant |
+| C | couverture affichée : détection, conduite de tir, interception, résultante d'un C2 |
+| X | C2 suivant, pour sa résultante |
 | WASD (touches physiques), bouton droit, molette | déplacer la caméra libre, regarder, changer sa vitesse |
 
 Les entités sont agrandies selon la distance : à leur taille réelle, elles feraient moins d'un pixel à l'échelle d'un

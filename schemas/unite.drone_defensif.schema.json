@@ -125,6 +125,16 @@
       "type": "integer",
       "description": "Nombre d'armes emportees, sans rechargement pendant le raid.",
       "default": 12
+    },
+    "portee_conduite_km": {
+      "type": "number",
+      "description": "Portee du capteur embarque qui accroche et suit un drone ; 0 : non declaree, on prend facteur_conduite x portee de l'arme (MODELE § 25.2).",
+      "default": 0
+    },
+    "facteur_conduite": {
+      "type": "number",
+      "description": "Conduite rapportee a la portee de l'arme, pour une unite qui ne declare pas portee_conduite_km.",
+      "default": 3
     }
   },
   "additionalProperties": true

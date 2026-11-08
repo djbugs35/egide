@@ -1,6 +1,7 @@
 extends Node3D
 ## Client de référence : relit un rejeu Égide, avec son terrain, et le montre (docs/FORMATS.md § 6 et 7).
-## Espace : lecture ; + et - : vitesse ; flèches gauche et droite : ±10 s ; 1, 2, 3 : caméra ; Tab : entité suivie ; R : radar.
+## Espace : lecture ; + et - : vitesse ; flèches gauche et droite : ±10 s ; 1, 2, 3 : caméra ; Tab : entité suivie ; R : radar ;
+## C : couverture affichée ; X : C2 suivant.
 
 # Par preload et non class_name : les noms globaux n'existent qu'après un passage dans l'éditeur, et le client doit
 # se lancer depuis un dossier fraîchement cloné.
@@ -15,6 +16,14 @@ const SAUT_S := 10.0
 const TAILLE_RELATIVE := 0.012
 const TAILLE_MINIMALE := 15.0
 const DUREE_TRACE_TIR := 0.5
+const COUVERTURES := ["aucune", "détection", "conduite de tir", "interception", "résultante du C2"]
+const CLES_COUVERTURE := ["", "detection", "conduite", "interception"]
+const COULEURS_COUVERTURE := [Color.WHITE, Color(0.29, 0.6, 0.91), Color(0.91, 0.77, 0.28), Color(0.34, 0.78, 0.52)]
+const COULEUR_RESULTANTE := Color(0.71, 0.56, 0.91)
+const MODE_RESULTANTE := 4
+const SEGMENTS_ANNEAU := 48
+const ALTITUDE_ANNEAU_SANS_DRONE := 100.0
+const RAYON_TERRE := 6_371_000.0
 const AABB_THEATRE := AABB(Vector3(-2e6, -2e6, -2e6), Vector3(4e6, 4e6, 4e6))
 const COULEUR_DRONE_INCONNU := Color(0.75, 0.75, 0.75)
 const COULEUR_DRONE_DETECTE := Color(0.95, 0.25, 0.2)
@@ -37,6 +46,10 @@ var _fixes: Array[Dictionary] = []
 var _radars := PackedVector3Array()
 var _tirs := MeshInstance3D.new()
 var _lignes_tirs := ImmediateMesh.new()
+var _anneaux := MeshInstance3D.new()
+var _lignes_anneaux := ImmediateMesh.new()
+var _couverture := 0
+var _c2 := 0
 var _t := 0.0
 var _rang_vitesse := 2
 var _en_lecture := true
@@ -59,6 +72,7 @@ func _ready() -> void:
 		return
 	_construire()
 	_t = float(options["debut"])
+	_couverture = posmod(int(options["couverture"]), COUVERTURES.size())
 	_pilote.mode = clampi(int(options["camera"]) - 1, 0, PiloteCamera.NOMS.size() - 1) as PiloteCamera.Mode
 	_pret = true
 
@@ -88,10 +102,10 @@ func _preparer_scene() -> void:
 	add_child(calque)
 
 
-## Rendre {rejeu, terrain, debut (s), camera (1 à 3)} : valeurs données après « -- », sinon les plus récents de resultats/.
+## Rendre {rejeu, terrain, debut (s), camera (1 à 3), couverture (0 à 4)} : valeurs données après « -- », sinon les plus récents de resultats/.
 func _options() -> Dictionary:
 	var resultats := ProjectSettings.globalize_path("res://").path_join("../../resultats").simplify_path()
-	var options := {"rejeu": _plus_recent(resultats.path_join("rejeux")), "terrain": _terrain_recent(resultats.path_join("terrains")), "debut": "0", "camera": "1"}
+	var options := {"rejeu": _plus_recent(resultats.path_join("rejeux")), "terrain": _terrain_recent(resultats.path_join("terrains")), "debut": "0", "camera": "1", "couverture": "0"}
 	var arguments := OS.get_cmdline_user_args()
 	for rang in range(0, arguments.size() - 1, 2):
 		options[arguments[rang].trim_prefix("--")] = arguments[rang + 1]
@@ -165,6 +179,10 @@ func _construire() -> void:
 	_tirs.material_override = matiere
 	_tirs.custom_aabb = AABB_THEATRE
 	add_child(_tirs)
+	_anneaux.mesh = _lignes_anneaux
+	_anneaux.material_override = matiere
+	_anneaux.custom_aabb = AABB_THEATRE
+	add_child(_anneaux)
 
 
 func _nouvelle_couche(maille: Mesh, capacite: int) -> MultiMeshInstance3D:
@@ -253,6 +271,10 @@ func _unhandled_input(evenement: InputEvent) -> void:
 			_suivi += 1
 		KEY_R:
 			_radar += 1
+		KEY_C:
+			_couverture = posmod(_couverture + 1, COUVERTURES.size())
+		KEY_X:
+			_c2 += 1
 
 
 func _process(delta: float) -> void:
@@ -270,6 +292,7 @@ func _process(delta: float) -> void:
 	_dessiner_vecteurs(vecteurs)
 	_ajuster_fixes()
 	_dessiner_tirs()
+	_dessiner_couvertures(vecteurs)
 	_afficher(drones.size() / _rejeu.largeur_drones)
 
 
@@ -361,6 +384,67 @@ func _dessiner_tirs() -> void:
 		_lignes_tirs.surface_end()
 
 
+func _dessiner_couvertures(vecteurs: PackedFloat32Array) -> void:
+	_lignes_anneaux.clear_surfaces()
+	if _couverture == 0:
+		return
+	var etat := _rejeu.couvertures_a(_t)
+	var objets: Array = etat["objets"]
+	_lignes_anneaux.surface_begin(Mesh.PRIMITIVE_LINES)
+	if _couverture == MODE_RESULTANTE:
+		var centre: Dictionary = etat["c2"][posmod(_c2, etat["c2"].size())]
+		for rang in centre["membres"]:
+			for cle in ["detection", "conduite", "interception"]:
+				_tracer_anneau(objets[int(rang)], cle, vecteurs, COULEUR_RESULTANTE)
+	else:
+		for objet: Dictionary in objets:
+			_tracer_anneau(objet, CLES_COUVERTURE[_couverture], vecteurs, COULEURS_COUVERTURE[_couverture])
+	# Une surface sans sommet est une erreur pour ImmediateMesh : on en pose un, invisible, au cas où rien ne soit tracé.
+	_lignes_anneaux.surface_set_color(Color.TRANSPARENT)
+	_lignes_anneaux.surface_add_vertex(Vector3.ZERO)
+	_lignes_anneaux.surface_add_vertex(Vector3.ZERO)
+	_lignes_anneaux.surface_end()
+
+
+## Tracer une enveloppe, à l'altitude de l'essaim ; un vecteur la porte à sa position courante (FORMATS § 6.5).
+func _tracer_anneau(objet: Dictionary, cle: String, vecteurs: PackedFloat32Array, couleur: Color) -> void:
+	var rayon: float = objet[cle]
+	if rayon <= 0.0:
+		return
+	var lieu: Dictionary = objet["lieu"]
+	var e: float = lieu["e"]
+	var n: float = lieu["n"]
+	if objet["genre"] == "vecteur":
+		var k: int = int(objet["id"]) * _rejeu.largeur_vecteurs
+		e = vecteurs[k + Rejeu.E]
+		n = vecteurs[k + Rejeu.N]
+	var profil: Variant = objet["profil"]
+	var masque := profil is Array and cle != "conduite"
+	var hauteur := _hauteur_essaim()
+	_lignes_anneaux.surface_set_color(couleur)
+	var precedent := _point_anneau(e, n, rayon, 0, profil, masque, hauteur)
+	for i in range(1, SEGMENTS_ANNEAU + 1):
+		var suivant := _point_anneau(e, n, rayon, i, profil, masque, hauteur)
+		_lignes_anneaux.surface_add_vertex(precedent)
+		_lignes_anneaux.surface_add_vertex(suivant)
+		precedent = suivant
+
+
+## Rendre l'altitude des enveloppes : celle de l'essaim, à laquelle le moteur les calcule (MODELE § 25).
+func _hauteur_essaim() -> float:
+	var drones: PackedFloat32Array = _rejeu.drones[_rejeu.rang_image(_t)]
+	return drones[Rejeu.ALT] if drones.size() > 0 else ALTITUDE_ANNEAU_SANS_DRONE
+
+
+func _point_anneau(e: float, n: float, rayon: float, i: int, profil: Variant, masque: bool, hauteur: float) -> Vector3:
+	var azimut := TAU * i / SEGMENTS_ANNEAU
+	var portee := minf(rayon, profil[int(360.0 * i / SEGMENTS_ANNEAU) % 360]) if masque else rayon
+	var ex := e + portee * sin(azimut)
+	var ny := n + portee * cos(azimut)
+	# En repère ENU, le sol descend avec la rotondité : sans cette correction, l'anneau flotterait à 7 km à 300 km de l'origine.
+	return _point(ex, ny, hauteur - (ex * ex + ny * ny) / (2.0 * RAYON_TERRE), hauteur)
+
+
 func _afficher(en_vol: int) -> void:
 	var r := _rejeu
 	var b := r.bilan
@@ -368,7 +452,7 @@ func _afficher(en_vol: int) -> void:
 		"t = %.1f s / %.1f s   ×%d   %s   caméra %s" % [_t, r.instants[-1], int(VITESSES[_rang_vitesse]), "lecture" if _en_lecture else "pause", PiloteCamera.NOMS[_pilote.mode]],
 		"En vol : %d drones   Frappes : %d   Détruits air : %d   Détruits sol : %d" % [en_vol, Rejeu.compter_jusqua(r.instants_impacts, _t), Rejeu.compter_jusqua(r.instants_detruits_air, _t), Rejeu.compter_jusqua(r.instants_detruits_sol, _t)],
 		"Bilan de la simulation : %d frappes, %d détruits air, %d détruits sol, %d tirs air, %d tirs sol" % [int(b["fuites"]), int(b["detruits_air"]), int(b["detruits_sol"]), int(b["tirs_air"]), int(b["tirs_sol"])],
-		"Graine %d   empreinte %s" % [int(r.entete["graine"]), str(r.entete["empreinte"]).left(12)],
+		"Graine %d   empreinte %s   couverture : %s" % [int(r.entete["graine"]), str(r.entete["empreinte"]).left(12), COUVERTURES[_couverture]],
 	]
 	if _imagerie_attribution != "":
 		lignes.append(_imagerie_attribution)

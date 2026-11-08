@@ -70,7 +70,7 @@ function masquer_absents(pool, vus) {
 }
 
 /**
- * Rendre la vue 3D créée dans `conteneur` : {rendre({monde, calques, montre, percue, selection, exageration, camera, effets, traces, maintenant}), appliquer_fond(fond),
+ * Rendre la vue 3D créée dans `conteneur` : {rendre({monde, calques, montre, percue, selection, inspection, exageration, camera, effets, traces, maintenant}), appliquer_fond(fond),
  * sous_curseur(x, y)}. `sources` : les sources de cartes/ ; `fond` : la source de fond choisie, ou null ; `local` : {fond, relief}
  * préparés par outils/hors_ligne.js, qui priment s'ils existent. Lève sans WebGL.
  */
@@ -234,7 +234,7 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
       const objet = viewer.scene.pick(new Cesium.Cartesian2(x, y));
       return typeof objet?.primitive?.id === "string" ? objet.primitive.id : null;
     },
-    rendre({monde, calques, montre, percue, selection, exageration, camera, effets, traces, maintenant}) {
+    rendre({monde, calques, montre, percue, selection, inspection, exageration, camera, effets, traces, maintenant}) {
       const debut = performance.now();
       cadrer(monde);
       if (++images % VIE_CACHE_SOL === 0) sols.clear();
@@ -247,7 +247,7 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
         const {drones, unites, icone_drone: icone} = entites_scene(monde, calques, montre);
         placer_drones(drones, icone, selection, exageration);
         placer_unites(unites, selection, exageration);
-        couches.maj({monde, calques, montre, exageration, effets, traces, maintenant});
+        couches.maj({monde, calques, montre, inspection, exageration, effets, traces, maintenant});
         for (let i = tiges_posees; i < pool_tiges.length; i++) pool_tiges[i].show = false;
         viewer.scene.requestRender();
       }

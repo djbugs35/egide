@@ -2,6 +2,7 @@
 // tirs, impulsions et plots. Tout vient de scene3d.js ou des effets de la 2D : aucun calcul de portée ici.
 import {vers_degres} from "../moteur/geodesie.js";
 import {COULEURS} from "./couleurs.js";
+import {contour_objet, enveloppes_a_montrer} from "./couvertures_vue.js";
 import {avancement} from "./effets.js";
 import {bulles_scene, couvertures_scene, liaisons_scene} from "./scene3d.js";
 import {calque_vecteur} from "./symboles.js";
@@ -133,6 +134,19 @@ export function creer_couches3d(Cesium, viewer, hauteur_sol) {
     }
   }
 
+  /** Tracer les enveloppes des objets (MODELE § 25), posées au sol de leur centre, à l'altitude de l'essaim. */
+  function maj_enveloppes(monde, calques, inspection, exageration) {
+    const hauteur = monde.scenario.rouge.altitude * exageration;
+    for (const {objets, genre, couleur, largeur} of enveloppes_a_montrer(monde, calques, inspection)) {
+      for (const objet of objets) {
+        if (objet[genre] <= 0) continue;
+        const sol = hauteur_sol(vers_degres(objet.geo.lat), vers_degres(objet.geo.lon)) + hauteur;
+        const points = contour_objet(objet, genre).map((p) => Cesium.Cartesian3.fromDegrees(vers_degres(p.lon), vers_degres(p.lat), sol));
+        traits.poser([...points, points[0]], couleur, 0.8, largeur);
+      }
+    }
+  }
+
   function maj_ralliements(monde, calques, exageration) {
     for (const avion of monde.avions) {
       if (avion.perdu || avion.etat !== "ralliement" || !avion.point || !calques[calque_vecteur(avion)]) continue;
@@ -171,11 +185,12 @@ export function creer_couches3d(Cesium, viewer, hauteur_sol) {
   }
 
   return {
-    maj({monde, calques, montre, exageration, effets, traces, maintenant}) {
+    maj({monde, calques, montre, inspection, exageration, effets, traces, maintenant}) {
       maj_couverture(monde, exageration, calques.couverture);
       maj_bulles(monde, calques.postes);
       traits.debut();
       eclats.debut();
+      maj_enveloppes(monde, calques, inspection, exageration);
       if (calques.reseau) maj_liaisons(monde, exageration);
       if (calques.missions) maj_ralliements(monde, calques, exageration);
       maj_effets(effets, calques, maintenant, exageration);

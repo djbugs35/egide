@@ -2,6 +2,9 @@
   "_aide": {
     "portee_km": "Rayon de la bulle d'engagement du poste.",
     "pk": "Probabilite de destruction par tir.",
+    "portee_conduite_km": "Portee du capteur de conduite de tir ; 0 : non declaree, on prend facteur_conduite x portee_km (MODELE § 25.2).",
+    "facteur_conduite": "Conduite de tir rapportee a la portee de l'arme, pour une unite qui ne declare pas portee_conduite_km.",
+    "hauteur_conduite_m": "Hauteur du capteur de conduite au-dessus du sol : son horizon borne la bulle de tir (MODELE § 25.2).",
     "engagements_par_passage": "Tirs utiles du poste pendant la traversee de sa bulle par un drone (MODELE § 5).",
     "acquisition_s": "Delai pour qu'un poste non designe par un centre acquiere seul un drone entre dans sa bulle ; designe, il tire aussitot (MODELE § 18.3)."
   },
@@ -11,6 +14,9 @@
     "Ordre de grandeur notionnel : defense sol-air tres courte portee, roquettes et missiles"
   ],
   "portee_km": 8,
+  "portee_conduite_km": 0,
+  "facteur_conduite": 1.5,
+  "hauteur_conduite_m": 10,
   "pk": 0.7,
   "engagements_par_passage": 8,
   "acquisition_s": 10,

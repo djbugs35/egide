@@ -1,6 +1,7 @@
 // Contenu de la vue 3D (jalon 14, MODELE § 23) : ce que la scène montre à un instant, lu dans le monde comme la 2D, et
 // décodage du relief. Pur, sans Cesium ni DOM, testé : les positions sont celles du moteur, sans second calcul.
 import {direct, vers_degres} from "../moteur/geodesie.js";
+import {enveloppe_poste} from "../moteur/couvertures.js";
 import {horizon_radar} from "../moteur/geometrie.js";
 import {cap_drone} from "../moteur/menace.js";
 import {parametres_radar, portee_site, positions_radars} from "../moteur/radars.js";
@@ -109,11 +110,11 @@ export function bulles_scene(monde) {
   const parCible = monde.postes.length ? sol.munitions / monde.cibles.length : 0;
   const bulles = monde.cibles.flatMap((cible, k) => {
     const postes = monde.postes.filter((p) => p.cible === k && p.batterie === undefined);
-    return postes.length ? [{id: `s${k}`, ...degres(cible.geo), rayon: sol.portee, part: Math.min(1, postes.reduce((n, p) => n + p.munitions, 0) / parCible)}] : [];
+    return postes.length ? [{id: `s${k}`, ...degres(cible.geo), rayon: enveloppe_poste(sol, monde.scenario.rouge.altitude), part: Math.min(1, postes.reduce((n, p) => n + p.munitions, 0) / parCible)}] : [];
   });
   const initiales = sol.batteries ?? [];
   for (const p of monde.postes) {
-    if (p.batterie !== undefined) bulles.push({id: `b${p.batterie}`, ...degres(p.geo), rayon: p.unite.portee, part: Math.min(1, p.munitions / Math.max(1, initiales[p.batterie]?.munitions ?? 1))});
+    if (p.batterie !== undefined) bulles.push({id: `b${p.batterie}`, ...degres(p.geo), rayon: p.enveloppe, part: Math.min(1, p.munitions / Math.max(1, initiales[p.batterie]?.munitions ?? 1))});
   }
   return bulles;
 }

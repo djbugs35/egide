@@ -6,6 +6,8 @@
     "facteur_charge_max_g": "Facteur de charge maximal en virage.",
     "emport": "Identifiant de l'arme emportee (catalogue des effecteurs).",
     "emport_nombre": "Nombre d'armes emportees, sans rechargement pendant le raid.",
+    "portee_conduite_km": "Portee du capteur embarque qui accroche et suit un drone ; 0 : non declaree, on prend facteur_conduite x portee de l'arme (MODELE § 25.2).",
+    "facteur_conduite": "Conduite rapportee a la portee de l'arme, pour une unite qui ne declare pas portee_conduite_km.",
     "type_vecteur": "Famille du vecteur : 'avion', 'drone_arme', 'kamikaze' ou 'brouilleur' ; fixe le symbole et, pour un kamikaze ou un brouilleur, le comportement (MODELE § 19).",
     "consomme_au_tir": "Vrai : le vecteur est son arme (intercepteur kamikaze) et se perd a son premier tir."
   },
@@ -17,6 +19,8 @@
   "facteur_charge_max_g": 5,
   "emport": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
   "emport_nombre": 12,
+  "portee_conduite_km": 0,
+  "facteur_conduite": 3,
   "algos": {
     "mouvement": "global/mouvement/croisiere_geodesique"
   },

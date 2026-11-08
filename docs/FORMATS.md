@@ -223,7 +223,7 @@ chaque ligne est dans `schemas/rejeu.schema.json`.
 |---|---|---|
 | 1 | `entete` | format, version, empreinte, graine, origine, repère, durées, colonnes, états, catalogue des unités |
 | 2 | `statique` | drones (unité, nombre), vecteurs, sites, radars, postes, centres, liaisons, zones |
-| suivantes | `image`, `evenement` | mêlées par instant croissant |
+| suivantes | `image`, `evenement`, `couvertures` | mêlées par instant croissant |
 | dernière | `bilan` | bilan de la simulation, mêmes clés que `bilan()` du moteur |
 
 Les évènements d'un pas précèdent l'image de la fin de ce pas. La dernière image est toujours celle de la fin du raid,
@@ -288,7 +288,20 @@ perte : ECEF = ECEF(origine) + rotation ENU vers ECEF, puis géodésique (`depui
 
 Un nom de nœud (`radar:0`, `sol:3`, `avions:1`, `conduite`, `centre:0`) est celui du champ `noeud` du statique.
 
-### 6.5 Vérifier un client
+### 6.5 Couvertures
+
+`{"genre": "couvertures", "t", "objets", "c2"}` est écrit à l'instant initial, puis à chaque changement du réseau (panne,
+destruction d'un centre). Sens des enveloppes : `docs/MODELE.md` § 25.
+
+- `objets` : `{noeud, genre ("radar", "poste", "vecteur"), id, unite, lieu, detection, conduite, interception, profil}`.
+  Portées en mètres, 0 si l'objet n'a pas cette enveloppe. Le `lieu` d'un vecteur est celui de l'instant de la ligne : le client
+  centre son enveloppe sur la position courante, celle de `vecteurs` à l'`id` de l'objet.
+- `profil` : sur un terrain, portée pour chaque degré d'azimut, à borner par `detection` ou `interception` ; sinon `null`.
+  Il ne s'applique pas à `conduite`.
+- `c2` : `{noeud, nom, hs, membres}`, `membres` étant les rangs dans `objets` reliés à ce centre. La couverture d'un centre est
+  l'union des enveloppes de ses membres.
+
+### 6.6 Vérifier un client
 
 Fuites, destructions, munitions restantes et durée se recalculent à partir des images et des évènements :
 `bilan_du_rejeu` dans `src/moteur/rejeu.js` fait référence, et le test vérifie qu'il redonne la ligne `bilan`.

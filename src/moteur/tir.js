@@ -9,11 +9,11 @@ export const est_actif = (drone, t) => drone.vivant && !drone.arrive && t >= dro
  * Rendre le drone actif le plus proche de `centre` (ECEF) à moins de `portee` m en distance oblique, ou null.
  * `exclureVises` écarte les drones qu'une roquette en vol vise déjà : on ne gaspille pas deux tirs sur un drone.
  */
-export function plus_proche(monde, centre, portee, exclureVises) {
+export function plus_proche(monde, centre, portee, exclureVises, visible = null) {
   let retenu = null;
   let meilleure = portee;
   parcourir_voisins(monde.index, centre, portee, (drone) => {
-    if (!est_actif(drone, monde.t) || (exclureVises && drone.vise)) return;
+    if (!est_actif(drone, monde.t) || (exclureVises && drone.vise) || (visible && !visible(drone))) return;
     const ecart = distance_oblique(drone.ecef, centre);
     if (ecart <= meilleure) {
       meilleure = ecart;

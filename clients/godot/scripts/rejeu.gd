@@ -28,6 +28,8 @@ var largeur_vecteurs := 0
 var instants_impacts := PackedFloat64Array()
 var instants_detruits_air := PackedFloat64Array()
 var instants_detruits_sol := PackedFloat64Array()
+var instants_couvertures := PackedFloat64Array()
+var couvertures: Array[Dictionary] = []
 
 
 ## Charger le fichier `chemin` ; rendre "" ou le message d'erreur.
@@ -72,6 +74,9 @@ func _ranger(objet: Dictionary) -> void:
 			bilan = objet
 		"evenement":
 			_noter_evenement(objet)
+		"couvertures":
+			instants_couvertures.append(float(objet["t"]))
+			couvertures.append(objet)
 		"image":
 			var t: float = objet["t"]
 			instants.append(t)
@@ -138,6 +143,11 @@ static func interpoler(a: PackedFloat32Array, b: PackedFloat32Array, largeur: in
 ## Rendre le point de scène de coordonnées locales : (x, y, z) = (e, hauteur, -n), comme le maillage glTF (FORMATS § 7.2).
 static func point_scene(e: float, n: float, hauteur: float) -> Vector3:
 	return Vector3(e, hauteur, -n)
+
+
+## Rendre les couvertures en vigueur à l'instant `t`.
+func couvertures_a(t: float) -> Dictionary:
+	return couvertures[maxi(instants_couvertures.bsearch(t, false) - 1, 0)]
 
 
 ## Rendre le nombre d'instants de `liste` antérieurs ou égaux à `t`.

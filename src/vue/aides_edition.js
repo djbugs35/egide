@@ -2,6 +2,7 @@
 // proches. Pur, sans DOM, testé ; editeur.js ne fait que lire les gestes et dessiner ce qui est rendu ici.
 import {unite_si} from "../moteur/catalogue.js";
 import {direct, inverse, vers_degres} from "../moteur/geodesie.js";
+import {enveloppe_poste} from "../moteur/couvertures.js";
 import {horizon_radar} from "../moteur/geometrie.js";
 import {portee_liaison} from "../moteur/reseau.js";
 import {famille_de, hauteur_noeud} from "./deploiement.js";
@@ -62,7 +63,7 @@ export function apercu_depot(id, fichiers, altitudeEssaim) {
   const famille = famille_de(id)?.id;
   const unite = unite_si(id, fichiers);
   if (famille === "capteurs") return {rayon: Math.min(horizon_radar(unite.hauteur_antenne, altitudeEssaim), unite.portee_max), libelle: "portée"};
-  if (famille === "sol") return {rayon: unite.portee, libelle: "bulle"};
+  if (famille === "sol") return {rayon: enveloppe_poste(unite, altitudeEssaim), libelle: "bulle"};
   return null;
 }
 

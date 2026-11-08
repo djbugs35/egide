@@ -2,6 +2,7 @@
 // et mis en lignes JSON. Égide reste l'autorité : un client relit ces positions, il ne simule rien. Node et navigateur.
 import {unite_si} from "./catalogue.js";
 import {soustraire, vers_degres, vers_ecef, vers_enu} from "./geodesie.js";
+import {couvertures} from "./couvertures.js";
 import {cap_drone} from "./menace.js";
 import {bilan, simuler} from "./monde.js";
 import {empreinte} from "./preuve.js";
@@ -86,6 +87,16 @@ function image(monde, repere) {
   return {genre: "image", t: arrondi(monde.t, DECIMALES_TEMPS), drones, vecteurs, postes: monde.postes.map((p) => p.munitions)};
 }
 
+/** Rendre l'enregistrement des couvertures à l'instant du monde (MODELE § 25) : portées en m, profil par degré d'azimut. */
+function ligne_couvertures(monde, lieu) {
+  const {objets, c2} = couvertures(monde);
+  const metres = (valeur) => arrondi(valeur, DECIMALES_METRE);
+  return {
+    genre: "couvertures", t: arrondi(monde.t, DECIMALES_TEMPS), c2,
+    objets: objets.map((o) => ({noeud: o.noeud, genre: o.genre, id: o.id, unite: o.unite, lieu: lieu(o.geo), detection: metres(o.detection), conduite: metres(o.conduite), interception: metres(o.interception), profil: o.profil?.map(metres) ?? null})),
+  };
+}
+
 /** Rendre la description de ce qui ne bouge pas, lue à l'instant initial (munitions de départ). */
 function statique(monde, lieu) {
   const {scenario} = monde;
@@ -133,7 +144,7 @@ export async function creer_rejeu(brut, fichiers, registre, {pas_echantillon = P
   const repere = creer_repere({...scenario.theatre.origine, alt: scenario.theatre.origine.alt ?? 0});
   const lieu = creer_lieu(repere);
   const chronologie = [];
-  let [fixes, derniere, journalises, rang] = [null, null, 0, 0];
+  let [fixes, derniere, journalises, rang, reseau] = [null, null, 0, 0, null];
 
   // Les évènements d'un pas précèdent l'image de sa fin : les instants du fichier ne décroissent jamais.
   const vider_journal = (monde) => {
@@ -146,6 +157,12 @@ export async function creer_rejeu(brut, fichiers, registre, {pas_echantillon = P
   };
   const observer = (monde) => {
     fixes ??= statique(monde, lieu);
+    // Le moteur remplace `reseau` à chaque panne : c'est alors, et alors seulement, que les couvertures des C2 changent.
+    if (monde.reseau !== reseau) {
+      reseau = monde.reseau;
+      vider_journal(monde);
+      chronologie.push(ligne_couvertures(monde, lieu));
+    }
     if (monde.t + TOLERANCE_INSTANT < rang * pas) return;
     rang = Math.floor(monde.t / pas + TOLERANCE_INSTANT) + 1;
     prendre_image(monde);
@@ -161,12 +178,12 @@ export async function creer_rejeu(brut, fichiers, registre, {pas_echantillon = P
 /** Rendre le texte du fichier : un enregistrement JSON par ligne. */
 export const texte_rejeu = (enregistrements) => `${enregistrements.map((e) => JSON.stringify(e)).join("\n")}\n`;
 
-/** Rendre {entete, statique, images, evenements, bilan} du texte d'un rejeu ; lève une erreur si ce n'en est pas un. */
+/** Rendre {entete, statique, images, evenements, couvertures, bilan} du texte d'un rejeu ; lève une erreur si ce n'en est pas un. */
 export function lire_rejeu(texte) {
   const [tete, fixes, ...suite] = texte.trim().split("\n").map((ligne) => JSON.parse(ligne));
   if (tete?.format !== FORMAT_REJEU) throw new Error(`pas un fichier de rejeu : format « ${tete?.format} »`);
   if (tete.version !== VERSION_REJEU) throw new Error(`version de rejeu ${tete.version} non prise en charge (attendue : ${VERSION_REJEU})`);
-  return {entete: tete, statique: fixes, images: suite.filter((e) => e.genre === "image"), evenements: suite.filter((e) => e.genre === "evenement"), bilan: suite.find((e) => e.genre === "bilan")};
+  return {entete: tete, statique: fixes, images: suite.filter((e) => e.genre === "image"), evenements: suite.filter((e) => e.genre === "evenement"), couvertures: suite.filter((e) => e.genre === "couvertures"), bilan: suite.find((e) => e.genre === "bilan")};
 }
 
 /**
