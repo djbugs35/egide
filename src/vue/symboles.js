@@ -1,5 +1,6 @@
 // Entités du scope en symbologie inspirée d'APP-6 : ami en dôme (plein = IR, creux = laser), hostile en
 // demi-losange, cibles en carré ; bulle de défense sol dont l'opacité suit les munitions restantes.
+import {ecrire_nom} from "./libelles.js";
 import {chemin_cercle, ecran as projeter_ecran} from "./ecran.js";
 import {COULEURS} from "./couleurs.js";
 import {avancement} from "./effets.js";
@@ -43,7 +44,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
     ctx.strokeRect(ecran.x - 5, ecran.y - 5, 10, 10);
     ctx.font = "12px system-ui, sans-serif";
     ctx.fillStyle = COULEURS.texte;
-    ctx.fillText(`C${indice + 1}`, ecran.x + 9, ecran.y - 6);
+    ecrire_nom(ctx, `C${indice + 1}`, ecran.x + 9, ecran.y - 6);
     if (monde.fuites[indice]) {
       ctx.fillStyle = COULEURS.hostile;
       ctx.fillText(`${monde.fuites[indice]} frappes`, ecran.x + 9, ecran.y + 9);
@@ -69,7 +70,7 @@ function dessiner_batteries(ctx, camera, monde, calques) {
     if (calques.icones && poste.unite.icone && dessiner_icone(ctx, p.x, p.y, {icone: poste.unite.icone, pays: poste.unite.pays, camp: COULEURS.sol, taille: 22})) {
       ctx.font = "11px system-ui, sans-serif";
       ctx.fillStyle = COULEURS.sol;
-      ctx.fillText(`B${poste.batterie + 1}`, p.x + 13, p.y + 4);
+      ecrire_nom(ctx, `B${poste.batterie + 1}`, p.x + 13, p.y + 4);
       continue;
     }
     // Symbole de batterie sol-air : socle et rampe dressée.
@@ -84,7 +85,7 @@ function dessiner_batteries(ctx, camera, monde, calques) {
     ctx.stroke();
     ctx.font = "11px system-ui, sans-serif";
     ctx.fillStyle = COULEURS.sol;
-    ctx.fillText(`B${poste.batterie + 1}`, p.x + 9, p.y + 4);
+    ecrire_nom(ctx, `B${poste.batterie + 1}`, p.x + 9, p.y + 4);
   }
 }
 
@@ -244,7 +245,7 @@ export function dessiner_radars(ctx, camera, positions, icones = () => null) {
     const icone = icones(i);
     if (icone && dessiner_icone(ctx, p.x, p.y, {...icone, taille: 24})) {
       ctx.fillStyle = COULEURS.ami;
-      ctx.fillText(`R${i + 1}`, p.x + 14, p.y + 4);
+      ecrire_nom(ctx, `R${i + 1}`, p.x + 14, p.y + 4);
       return;
     }
     ctx.fillStyle = COULEURS.fond;
@@ -259,7 +260,7 @@ export function dessiner_radars(ctx, camera, positions, icones = () => null) {
     ctx.lineTo(p.x, p.y + 5);
     ctx.stroke();
     ctx.fillStyle = COULEURS.ami;
-    ctx.fillText(`R${i + 1}`, p.x + 11, p.y + 4);
+    ecrire_nom(ctx, `R${i + 1}`, p.x + 11, p.y + 4);
   });
 }
 

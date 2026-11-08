@@ -4,6 +4,7 @@ import test from "node:test";
 import {direct, geo_deg, inverse} from "../src/moteur/geodesie.js";
 import {horizon_radar} from "../src/moteur/geometrie.js";
 import {aimanter, aimanter_grille, apercu_depot, apercu_liaison, mesure, points_geodesique, regrouper, texte_distance, texte_mesure} from "../src/vue/aides_edition.js";
+import {ecrire_nom, nouvelle_image_libelles} from "../src/vue/libelles.js";
 import {FICHIERS} from "./aide_scenario.js";
 
 const ORIGINE = geo_deg(47, 2.5);
@@ -69,4 +70,17 @@ test("aperçu liaison : horizon radioélectrique depuis le mât ou l'altitude du
 test("regroupement : les points proches forment un groupe compté à leur position moyenne ; un isolé n'en forme pas", () => {
   const groupes = regrouper([{x: 0, y: 0}, {x: 10, y: 0}, {x: 200, y: 200}, {x: 5, y: 6}], 14);
   assert.deepEqual(groupes, [{x: 5, y: 2, nombre: 3}]);
+});
+
+test("noms d'unités : un nom qui recouvre un nom déjà écrit s'efface, chaque image repart de zéro", () => {
+  const ecrits = [];
+  const ctx = {measureText: (t) => ({width: 8 * t.length}), fillText: (t) => ecrits.push(t)};
+  nouvelle_image_libelles();
+  ecrire_nom(ctx, "C1", 100, 100);
+  ecrire_nom(ctx, "R1", 105, 102);
+  ecrire_nom(ctx, "R2", 200, 100);
+  assert.deepEqual(ecrits, ["C1", "R2"]);
+  nouvelle_image_libelles();
+  ecrire_nom(ctx, "R1", 105, 102);
+  assert.deepEqual(ecrits, ["C1", "R2", "R1"]);
 });

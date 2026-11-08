@@ -5,6 +5,7 @@ import {COULEURS} from "./couleurs.js";
 import {parametres_radar, positions_radars} from "../moteur/radars.js";
 import {pistes_connues, connu_du_pc} from "./situation.js";
 import {calques_par_defaut, element_visible} from "./calques.js";
+import {nouvelle_image_libelles} from "./libelles.js";
 import {dessiner_pannes, dessiner_reseau} from "./reseau_vue.js";
 import {dessiner_avions, dessiner_cibles, dessiner_drones, dessiner_messages, dessiner_radars, dessiner_tirs} from "./symboles.js";
 
@@ -16,6 +17,7 @@ import {dessiner_avions, dessiner_cibles, dessiner_drones, dessiner_messages, de
 export function dessiner_scope(ctx, camera, etat) {
   const {monde, traces, effets, maintenant} = etat;
   const calques = etat.calques ?? calques_par_defaut();
+  nouvelle_image_libelles();
   // Sur la carte, le canevas est un calque transparent posé sur le fond MapLibre.
   if (camera.type === "carte") ctx.clearRect(0, 0, camera.largeur, camera.hauteur);
   else {
