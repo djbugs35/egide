@@ -41,7 +41,9 @@ export function designe(monde, poste, drone) {
  * éloigné, le premier que voit son capteur), le garde tant qu'il y reste, et ne tire qu'après le délai d'acquisition.
  */
 function cible_du_poste(monde, poste, sol) {
-  const visible = poste.masque ? (drone) => vu_par(poste.masque, grille_scenario(monde.scenario), drone.geo, drone.ecef, monde.scenario.rouge.altitude) : null;
+  const dans_champ = poste.masque ? (drone) => vu_par(poste.masque, grille_scenario(monde.scenario), drone.geo, drone.ecef, monde.scenario.rouge.altitude) : null;
+  // MODELE § 27.4 : seul un poste déclaré anti-balistique engage une trajectoire balistique.
+  const visible = (drone) => (!drone.trajectoire || sol.anti_balistique) && (!dans_champ || dans_champ(drone));
   const proche = plus_proche(monde, poste.ecef, poste.enveloppe, false, visible);
   if (!proche) return null;
   if (designe(monde, poste, proche)) return {drone: proche, designe: true};

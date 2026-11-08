@@ -100,6 +100,10 @@
       "type": "number",
       "description": "Portee instrumentee maximale, avant limitation par l'horizon.",
       "default": 250
+    },
+    "ser_reference_m2": {
+      "description": "SER pour laquelle vaut la portee instrumentee ; null : la portee ne depend pas de la SER (MODELE § 27.1).",
+      "default": null
     }
   },
   "additionalProperties": true

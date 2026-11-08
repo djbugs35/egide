@@ -6,7 +6,8 @@
     "facteur_conduite": "Conduite de tir rapportee a la portee de l'arme, pour une unite qui ne declare pas portee_conduite_km.",
     "hauteur_conduite_m": "Hauteur du capteur de conduite au-dessus du sol : son horizon borne la bulle de tir (MODELE § 25.2).",
     "engagements_par_passage": "Tirs utiles du poste pendant la traversee de sa bulle par un drone (MODELE § 5).",
-    "acquisition_s": "Delai pour qu'un poste non designe par un centre acquiere seul un drone entre dans sa bulle ; designe, il tire aussitot (MODELE § 18.3)."
+    "acquisition_s": "Delai pour qu'un poste non designe par un centre acquiere seul un drone entre dans sa bulle ; designe, il tire aussitot (MODELE § 18.3).",
+    "anti_balistique": "Vrai : le poste peut engager une trajectoire balistique (MODELE § 27.4)."
   },
   "herite_de": "_unite",
   "nom": "Poste sol-air de courte portee (notionnel)",
@@ -23,5 +24,6 @@
   "algos": {
     "tir_sol": "global/tir_sol/cadence_par_passage"
   },
-  "icone": "batterie_courte"
+  "icone": "batterie_courte",
+  "anti_balistique": false
 }

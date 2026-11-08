@@ -2,8 +2,17 @@
 import {direct} from "./geodesie.js";
 import {horizon_radar} from "./geometrie.js";
 
-/** Rendre la portée au sol d'un radar contre l'essaim : horizon radar borné par la portée instrumentée. */
-export const portee_radar = (scenario) => Math.min(horizon_radar(scenario.radar.hauteur_antenne, scenario.rouge.altitude), scenario.radar.portee_max);
+/**
+ * Rendre la portée au sol (m) de `radar` contre une menace à `altitude` m, de surface équivalente `ser` m² (MODELE § 27.1) :
+ * horizon, borné par la portée instrumentée que l'équation du radar réduit selon la SER.
+ */
+export function portee_contre_menace(radar, altitude, ser) {
+  const facteur = radar.ser_reference_m2 && ser ? (ser / radar.ser_reference_m2) ** 0.25 : 1;
+  return Math.min(horizon_radar(radar.hauteur_antenne, altitude), radar.portee_max * facteur);
+}
+
+/** Rendre la portée au sol d'un radar contre l'essaim. */
+export const portee_radar = (scenario) => portee_contre_menace(scenario.radar, scenario.rouge.altitude, scenario.rouge.ser_m2);
 
 /**
  * Rendre les paramètres (hauteur d'antenne, portée instrumentée) du radar `i` : ceux de son unité propre si le site
@@ -13,8 +22,7 @@ export const parametres_radar = (scenario, i) => (scenario.radar.disposition ===
 
 /** Rendre la portée au sol du radar `i` contre l'essaim. */
 export function portee_site(scenario, i) {
-  const {hauteur_antenne, portee_max} = parametres_radar(scenario, i);
-  return Math.min(horizon_radar(hauteur_antenne, scenario.rouge.altitude), portee_max);
+  return portee_contre_menace(parametres_radar(scenario, i), scenario.rouge.altitude, scenario.rouge.ser_m2);
 }
 
 /**

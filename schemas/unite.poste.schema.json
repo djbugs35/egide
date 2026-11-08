@@ -125,6 +125,11 @@
       "type": "number",
       "description": "Delai pour qu'un poste non designe par un centre acquiere seul un drone entre dans sa bulle ; designe, il tire aussitot (MODELE § 18.3).",
       "default": 10
+    },
+    "anti_balistique": {
+      "type": "boolean",
+      "description": "Vrai : le poste peut engager une trajectoire balistique (MODELE § 27.4).",
+      "default": false
     }
   },
   "additionalProperties": true

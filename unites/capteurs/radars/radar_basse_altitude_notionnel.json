@@ -1,7 +1,8 @@
 {
   "_aide": {
     "hauteur_antenne_m": "Hauteur de l'antenne au-dessus du sol ; avec l'altitude de la cible, fixe l'horizon radar (MODELE § 2).",
-    "portee_max_km": "Portee instrumentee maximale, avant limitation par l'horizon."
+    "portee_max_km": "Portee instrumentee maximale, avant limitation par l'horizon.",
+    "ser_reference_m2": "SER pour laquelle vaut la portee instrumentee ; null : la portee ne depend pas de la SER (MODELE § 27.1)."
   },
   "herite_de": "_unite",
   "nom": "Radar de surveillance basse altitude (notionnel)",
@@ -13,5 +14,6 @@
   "algos": {
     "detection": "global/detection/couverture_frontiere"
   },
-  "icone": "radar_mobile"
+  "icone": "radar_mobile",
+  "ser_reference_m2": null
 }

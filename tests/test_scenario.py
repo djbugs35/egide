@@ -124,3 +124,8 @@ def test_reseau_refuse_un_noeud_inconnu():
     ]
     with pytest.raises(ScenarioInvalideError, match="noeud inconnu"):
         resoudre_scenario(brut, charger_unites(ids_unites(brut)))
+
+
+def test_resolution_des_menaces_multiples_identique_au_jumeau_javascript():
+    brut, attendu = _variante("variante_menaces")
+    assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), attendu)

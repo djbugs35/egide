@@ -69,12 +69,16 @@ export function algo(registre, id, role) {
 }
 
 /** Rendre les identifiants des algorithmes qu'un scénario résolu fait tourner. */
+/** Algorithme de mouvement de chaque trajectoire d'un groupe de menaces (MODELE § 27). */
+export const MOUVEMENT_GROUPE = {croisiere: "global/mouvement/croisiere_geodesique", balistique: "global/mouvement/balistique"};
+
 export function ids_algos(scenario) {
   // Un brouilleur n'a pas d'algorithme de tir : on écarte les rôles vides.
   return [...new Set([
     scenario.rouge.comportement,
     scenario.rouge.reaction,
     scenario.rouge.algos.mouvement,
+    ...(scenario.rouge.groupes ?? []).map((g) => MOUVEMENT_GROUPE[g.trajectoire]),
     ...scenario.avions.flatMap((groupe) => [groupe.algos.mouvement, groupe.arme.algos.tir]),
     scenario.sol.algos.tir_sol,
     ...(scenario.sol.batteries ?? []).map((b) => b.unite.algos.tir_sol),

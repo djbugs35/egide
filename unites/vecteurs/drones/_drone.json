@@ -2,7 +2,8 @@
   "_aide": {
     "_": "Base des drones d'attaque : vol a vitesse et altitude constantes, sans reaction a la defense (MODELE § 8.2).",
     "vitesse_kmh": "Vitesse de croisiere, supposee constante.",
-    "altitude_croisiere_m": "Altitude de vol au-dessus de l'ellipsoide ; fixe la portee de detection radar a l'horizon."
+    "altitude_croisiere_m": "Altitude de vol au-dessus de l'ellipsoide ; fixe la portee de detection radar a l'horizon.",
+    "ser_m2": "Surface equivalente radar ; null : la portee du catalogue s'applique telle quelle (MODELE § 27.1)."
   },
   "herite_de": "_unite",
   "vitesse_kmh": 185,
@@ -10,5 +11,6 @@
   "algos": {
     "mouvement": "global/mouvement/croisiere_geodesique"
   },
-  "icone": "drone_delta"
+  "icone": "drone_delta",
+  "ser_m2": null
 }

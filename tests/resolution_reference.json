@@ -38,6 +38,7 @@
       "icone": "drone_reaction",
       "vitesse": 222.22222222222223,
       "altitude_croisiere": 100,
+      "ser_m2": null,
       "altitude": 100,
       "reaction": null,
       "reaction_delai": 2,
@@ -57,7 +58,8 @@
       "fourmi_eclatement_rayon": 60000,
       "fourmi_largeur_couloir": 6000,
       "plan_de_vol": [],
-      "comportement": "global/comportement/essaim_fourmi"
+      "comportement": "global/comportement/essaim_fourmi",
+      "groupes": []
     },
     "avions": [
       {
@@ -353,6 +355,7 @@
       "pk": 0.7,
       "engagements_par_passage": 8,
       "acquisition": 10,
+      "anti_balistique": false,
       "nombre": 200,
       "munitions": 1020
     },
@@ -374,6 +377,7 @@
       "icone": "radar_mobile",
       "hauteur_antenne": 20,
       "portee_max": 250000,
+      "ser_reference_m2": null,
       "disposition": "frontiere",
       "sites": []
     },
@@ -478,6 +482,7 @@
         "icone": "drone_reaction",
         "vitesse": 222.22222222222223,
         "altitude_croisiere": 100,
+        "ser_m2": null,
         "altitude": 100,
         "reaction": null,
         "reaction_delai": 2,
@@ -497,7 +502,8 @@
         "fourmi_eclatement_rayon": 60000,
         "fourmi_largeur_couloir": 6000,
         "plan_de_vol": [],
-        "comportement": "global/comportement/essaim_fourmi"
+        "comportement": "global/comportement/essaim_fourmi",
+        "groupes": []
       },
       "avions": [
         {
@@ -793,6 +799,7 @@
         "pk": 0.7,
         "engagements_par_passage": 8,
         "acquisition": 10,
+        "anti_balistique": false,
         "nombre": 200,
         "munitions": 1020
       },
@@ -814,6 +821,7 @@
         "icone": "radar_mobile",
         "hauteur_antenne": 20,
         "portee_max": 250000,
+        "ser_reference_m2": null,
         "disposition": "frontiere",
         "sites": []
       },
@@ -1030,6 +1038,7 @@
         "icone": "drone_reaction",
         "vitesse": 222.22222222222223,
         "altitude_croisiere": 100,
+        "ser_m2": null,
         "altitude": 100,
         "reaction": null,
         "reaction_delai": 2,
@@ -1049,7 +1058,8 @@
         "fourmi_eclatement_rayon": 60000,
         "fourmi_largeur_couloir": 6000,
         "plan_de_vol": [],
-        "comportement": "global/comportement/essaim_fourmi"
+        "comportement": "global/comportement/essaim_fourmi",
+        "groupes": []
       },
       "avions": [
         {
@@ -1345,6 +1355,7 @@
         "pk": 0.7,
         "engagements_par_passage": 8,
         "acquisition": 10,
+        "anti_balistique": false,
         "nombre": 200,
         "munitions": 1020,
         "batteries": [
@@ -1378,7 +1389,8 @@
               "hauteur_conduite": 10,
               "pk": 0.6,
               "engagements_par_passage": 6,
-              "acquisition": 20
+              "acquisition": 20,
+              "anti_balistique": false
             }
           },
           {
@@ -1410,7 +1422,8 @@
               "hauteur_conduite": 10,
               "pk": 0.7,
               "engagements_par_passage": 8,
-              "acquisition": 10
+              "acquisition": 10,
+              "anti_balistique": false
             }
           }
         ]
@@ -1433,6 +1446,7 @@
         "icone": "radar_mobile",
         "hauteur_antenne": 20,
         "portee_max": 250000,
+        "ser_reference_m2": null,
         "disposition": "sites",
         "sites": [
           {
@@ -1453,6 +1467,7 @@
             "nom": "Radar de veille longue portée (notionnel)",
             "hauteur_antenne": 40,
             "portee_max": 350000,
+            "ser_reference_m2": null,
             "pays": null,
             "icone": "radar_pylone"
           }
@@ -1533,6 +1548,7 @@
         "icone": "drone_reaction",
         "vitesse": 222.22222222222223,
         "altitude_croisiere": 100,
+        "ser_m2": null,
         "altitude": 100,
         "reaction": "global/reaction/essaim_adaptatif",
         "reaction_delai": 3,
@@ -1552,7 +1568,8 @@
         "fourmi_eclatement_rayon": 60000,
         "fourmi_largeur_couloir": 6000,
         "plan_de_vol": [],
-        "comportement": "global/comportement/essaim_fourmi"
+        "comportement": "global/comportement/essaim_fourmi",
+        "groupes": []
       },
       "avions": [
         {
@@ -1848,6 +1865,7 @@
         "pk": 0.7,
         "engagements_par_passage": 8,
         "acquisition": 10,
+        "anti_balistique": false,
         "nombre": 200,
         "munitions": 1020
       },
@@ -1869,6 +1887,466 @@
         "icone": "radar_mobile",
         "hauteur_antenne": 20,
         "portee_max": 250000,
+        "ser_reference_m2": null,
+        "disposition": "frontiere",
+        "sites": []
+      },
+      "conduite": {
+        "delai_reaction": 90,
+        "pas_decision": 5,
+        "interception_profondeur": 50000,
+        "pistage": "global/pistage/cellules",
+        "allocation": "global/allocation/densite_pistes"
+      },
+      "reseau": {
+        "mode": "complet",
+        "centre": {
+          "lat": 0.8203047484373349,
+          "lon": 0.04363323129985824,
+          "alt": 0
+        },
+        "conduite_ciblee": false,
+        "centres": [],
+        "liaisons": [],
+        "pannes": []
+      },
+      "ordres": [],
+      "simulation": {
+        "pas": 0.5,
+        "graine": 42
+      }
+    }
+  },
+  "variante_menaces": {
+    "modifications": {
+      "rouge.groupes": [
+        {
+          "unite": "vecteurs/avions/turbopropulseur_ir_notionnel",
+          "nombre": 2,
+          "cible": 0,
+          "depart_lat_deg": 49,
+          "depart_lon_deg": 3,
+          "altitude_m": 8000,
+          "vitesse_kmh": 900,
+          "ser_m2": 5,
+          "instant_s": 10
+        },
+        {
+          "nom": "Missile",
+          "unite": "vecteurs/drones/drone_reaction_notionnel",
+          "nombre": 1,
+          "cible": 1,
+          "depart_lat_deg": 50,
+          "depart_lon_deg": -6,
+          "altitude_m": 0,
+          "vitesse_kmh": 7200,
+          "trajectoire": "balistique",
+          "apogee_km": 150
+        }
+      ]
+    },
+    "resolu": {
+      "nom": "Référence : 1 000 drones rapides contre une défense mixte",
+      "theatre": {
+        "origine": {
+          "lat": 0.8203047484373349,
+          "lon": 0.04363323129985824,
+          "alt": 0
+        },
+        "zone_rayon": 150000,
+        "cibles_nombre": 10,
+        "cibles_placees": [],
+        "zones": [],
+        "terrain": null
+      },
+      "rouge": {
+        "id": "vecteurs/drones/drone_reaction_notionnel",
+        "nom": "Drone d'attaque a reaction (notionnel)",
+        "fidelite": "notionnel",
+        "sources": [
+          "Ordre de grandeur notionnel : classe des drones d'attaque a turboreacteur, 600 a 900 km/h, vol tres bas"
+        ],
+        "lignee": [
+          "_unite",
+          "vecteurs/drones/_drone",
+          "vecteurs/drones/drone_reaction_notionnel"
+        ],
+        "algos": {
+          "mouvement": "global/mouvement/croisiere_geodesique"
+        },
+        "pays": null,
+        "icone": "drone_reaction",
+        "vitesse": 222.22222222222223,
+        "altitude_croisiere": 100,
+        "ser_m2": null,
+        "altitude": 100,
+        "reaction": null,
+        "reaction_delai": 2,
+        "reaction_pas": 5,
+        "reaction_rayon_danger": 10000,
+        "reaction_seuil_pertes": 3,
+        "reaction_allongement_max": 0.3,
+        "reaction_seuil_gain": 0.2,
+        "reaction_reaffectations_max": 1,
+        "reaction_detours_max": 2,
+        "reaction_esquive_reduction": 0.3,
+        "reaction_esquive_perte_vitesse": 0.3,
+        "nombre": 1000,
+        "tactique": "fourmi",
+        "concentration_max": 300,
+        "etalement": 120,
+        "fourmi_eclatement_rayon": 60000,
+        "fourmi_largeur_couloir": 6000,
+        "plan_de_vol": [],
+        "comportement": "global/comportement/essaim_fourmi",
+        "groupes": [
+          {
+            "id": "vecteurs/avions/turbopropulseur_ir_notionnel",
+            "nom": "Turbopropulseur d'appui, roquettes IR (notionnel)",
+            "ser_m2": 5,
+            "instant": 10,
+            "trajectoire": "croisiere",
+            "apogee": 0,
+            "nombre": 2,
+            "cible": 0,
+            "depart_lat": 0.8552113334772214,
+            "depart_lon": 0.05235987755982988,
+            "altitude": 8000,
+            "vitesse": 250
+          },
+          {
+            "id": "vecteurs/drones/drone_reaction_notionnel",
+            "nom": "Missile",
+            "ser_m2": null,
+            "instant": 0,
+            "trajectoire": "balistique",
+            "apogee": 150000,
+            "nombre": 1,
+            "cible": 1,
+            "depart_lat": 0.8726646259971648,
+            "depart_lon": -0.10471975511965977,
+            "altitude": 0,
+            "vitesse": 2000
+          }
+        ]
+      },
+      "avions": [
+        {
+          "id": "vecteurs/avions/turbopropulseur_ir_notionnel",
+          "nom": "Turbopropulseur d'appui, roquettes IR (notionnel)",
+          "fidelite": "notionnel",
+          "sources": [
+            "Ordre de grandeur notionnel : classe des turbopropulseurs d'appui leger, 450 a 600 km/h"
+          ],
+          "lignee": [
+            "_unite",
+            "vecteurs/avions/_avion",
+            "vecteurs/avions/turbopropulseur_ir_notionnel"
+          ],
+          "algos": {
+            "mouvement": "global/mouvement/croisiere_geodesique"
+          },
+          "pays": null,
+          "icone": "turbopropulseur",
+          "type_vecteur": "avion",
+          "consomme_au_tir": false,
+          "vitesse_mise_a_poste": 138.88888888888889,
+          "vitesse_engagement": 97.22222222222223,
+          "facteur_charge_max": 5,
+          "emport": "effecteurs/roquettes/roquette_guidee_ir_notionnelle",
+          "emport_nombre": 12,
+          "portee_conduite": 0,
+          "facteur_conduite": 3,
+          "nombre": 20,
+          "altitude": 1000,
+          "orbites_placees": [],
+          "arme": {
+            "id": "effecteurs/roquettes/roquette_guidee_ir_notionnelle",
+            "nom": "Roquette guidee infrarouge (notionnelle)",
+            "fidelite": "notionnel",
+            "sources": [
+              "Ordre de grandeur notionnel : classe des roquettes a autodirecteur infrarouge, tire et oublie"
+            ],
+            "lignee": [
+              "_unite",
+              "effecteurs/roquettes/_roquette_guidee",
+              "effecteurs/roquettes/roquette_guidee_ir_notionnelle"
+            ],
+            "algos": {
+              "tir": "global/tir/tire_et_oublie"
+            },
+            "pays": null,
+            "icone": null,
+            "guidage": "ir",
+            "portee": 8000,
+            "pk": 0.7,
+            "duree_designation": 10,
+            "cadence": 3,
+            "vitesse": 700
+          }
+        },
+        {
+          "id": "vecteurs/avions/turbopropulseur_laser_notionnel",
+          "nom": "Turbopropulseur d'appui, roquettes laser (notionnel)",
+          "fidelite": "notionnel",
+          "sources": [
+            "Ordre de grandeur notionnel : classe des turbopropulseurs d'appui leger, 450 a 600 km/h"
+          ],
+          "lignee": [
+            "_unite",
+            "vecteurs/avions/_avion",
+            "vecteurs/avions/turbopropulseur_laser_notionnel"
+          ],
+          "algos": {
+            "mouvement": "global/mouvement/croisiere_geodesique"
+          },
+          "pays": null,
+          "icone": "turbopropulseur",
+          "type_vecteur": "avion",
+          "consomme_au_tir": false,
+          "vitesse_mise_a_poste": 138.88888888888889,
+          "vitesse_engagement": 97.22222222222223,
+          "facteur_charge_max": 5,
+          "emport": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
+          "emport_nombre": 12,
+          "portee_conduite": 0,
+          "facteur_conduite": 3,
+          "nombre": 30,
+          "altitude": 1000,
+          "orbites_placees": [],
+          "arme": {
+            "id": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
+            "nom": "Roquette guidee laser de 70 mm (notionnelle)",
+            "fidelite": "notionnel",
+            "sources": [
+              "Ordre de grandeur notionnel : classe des roquettes de 70 mm a guidage laser semi-actif, 5 a 10 km"
+            ],
+            "lignee": [
+              "_unite",
+              "effecteurs/roquettes/_roquette_guidee",
+              "effecteurs/roquettes/roquette_guidee_laser_notionnelle"
+            ],
+            "algos": {
+              "tir": "global/tir/guidage_laser_semi_actif"
+            },
+            "pays": null,
+            "icone": null,
+            "guidage": "laser",
+            "portee": 8000,
+            "pk": 0.7,
+            "duree_designation": 10,
+            "cadence": 3,
+            "vitesse": 700
+          }
+        },
+        {
+          "id": "vecteurs/drones_defensifs/drone_arme_notionnel",
+          "nom": "Drone defensif arme (notionnel)",
+          "fidelite": "notionnel",
+          "sources": [
+            "Ordre de grandeur notionnel : drone d'interception reutilisable a faible emport, classe 150 a 200 km/h"
+          ],
+          "lignee": [
+            "_unite",
+            "vecteurs/avions/_avion",
+            "vecteurs/drones_defensifs/_drone_defensif",
+            "vecteurs/drones_defensifs/drone_arme_notionnel"
+          ],
+          "algos": {
+            "mouvement": "global/mouvement/croisiere_geodesique"
+          },
+          "pays": null,
+          "icone": "drone_arme",
+          "type_vecteur": "drone_arme",
+          "consomme_au_tir": false,
+          "vitesse_mise_a_poste": 50,
+          "vitesse_engagement": 41.666666666666664,
+          "facteur_charge_max": 3,
+          "emport": "effecteurs/drones/munition_drone_notionnelle",
+          "emport_nombre": 2,
+          "portee_conduite": 0,
+          "facteur_conduite": 3,
+          "nombre": 0,
+          "altitude": 300,
+          "orbites_placees": [],
+          "arme": {
+            "id": "effecteurs/drones/munition_drone_notionnelle",
+            "nom": "Munition de drone (notionnelle)",
+            "fidelite": "notionnel",
+            "sources": [
+              "Ordre de grandeur notionnel : petite munition tiree a courte distance par un drone"
+            ],
+            "lignee": [
+              "_unite",
+              "effecteurs/roquettes/_roquette_guidee",
+              "effecteurs/drones/_charge_drone",
+              "effecteurs/drones/munition_drone_notionnelle"
+            ],
+            "algos": {
+              "tir": "global/tir/tire_et_oublie"
+            },
+            "pays": null,
+            "icone": null,
+            "guidage": "ir",
+            "portee": 1000,
+            "pk": 0.4,
+            "duree_designation": 10,
+            "cadence": 5,
+            "vitesse": 150
+          }
+        },
+        {
+          "id": "vecteurs/drones_defensifs/intercepteur_kamikaze_notionnel",
+          "nom": "Drone intercepteur a usage unique (notionnel)",
+          "fidelite": "notionnel",
+          "sources": [
+            "Ordre de grandeur notionnel : intercepteur consommable qui percute sa cible, classe 250 a 300 km/h"
+          ],
+          "lignee": [
+            "_unite",
+            "vecteurs/avions/_avion",
+            "vecteurs/drones_defensifs/_drone_defensif",
+            "vecteurs/drones_defensifs/intercepteur_kamikaze_notionnel"
+          ],
+          "algos": {
+            "mouvement": "global/mouvement/croisiere_geodesique"
+          },
+          "pays": null,
+          "icone": "intercepteur",
+          "type_vecteur": "kamikaze",
+          "consomme_au_tir": true,
+          "vitesse_mise_a_poste": 83.33333333333333,
+          "vitesse_engagement": 83.33333333333333,
+          "facteur_charge_max": 3,
+          "emport": "effecteurs/drones/charge_impact_notionnelle",
+          "emport_nombre": 1,
+          "portee_conduite": 0,
+          "facteur_conduite": 3,
+          "nombre": 0,
+          "altitude": 300,
+          "orbites_placees": [],
+          "arme": {
+            "id": "effecteurs/drones/charge_impact_notionnelle",
+            "nom": "Interception par impact (notionnelle)",
+            "fidelite": "notionnel",
+            "sources": [
+              "Ordre de grandeur notionnel : le drone intercepteur percute sa cible"
+            ],
+            "lignee": [
+              "_unite",
+              "effecteurs/roquettes/_roquette_guidee",
+              "effecteurs/drones/_charge_drone",
+              "effecteurs/drones/charge_impact_notionnelle"
+            ],
+            "algos": {
+              "tir": "global/tir/tire_et_oublie"
+            },
+            "pays": null,
+            "icone": null,
+            "guidage": "ir",
+            "portee": 300,
+            "pk": 0.6,
+            "duree_designation": 10,
+            "cadence": 1,
+            "vitesse": 80
+          }
+        },
+        {
+          "id": "vecteurs/drones_defensifs/brouilleur_notionnel",
+          "nom": "Drone brouilleur (notionnel)",
+          "fidelite": "notionnel",
+          "sources": [
+            "Ordre de grandeur notionnel : effet de brouillage represente par une probabilite de neutralisation, sans modele de signal"
+          ],
+          "lignee": [
+            "_unite",
+            "vecteurs/avions/_avion",
+            "vecteurs/drones_defensifs/_drone_defensif",
+            "vecteurs/drones_defensifs/brouilleur_notionnel"
+          ],
+          "algos": {
+            "mouvement": "global/mouvement/croisiere_geodesique"
+          },
+          "pays": null,
+          "icone": "brouilleur",
+          "type_vecteur": "brouilleur",
+          "consomme_au_tir": false,
+          "vitesse_mise_a_poste": 50,
+          "vitesse_engagement": 41.666666666666664,
+          "facteur_charge_max": 3,
+          "emport": "effecteurs/brouillage/brouillage_notionnel",
+          "emport_nombre": 1,
+          "portee_conduite": 0,
+          "facteur_conduite": 3,
+          "nombre": 0,
+          "altitude": 300,
+          "orbites_placees": [],
+          "arme": {
+            "id": "effecteurs/brouillage/brouillage_notionnel",
+            "nom": "Brouillage (notionnel)",
+            "fidelite": "notionnel",
+            "sources": [
+              "Ordre de grandeur notionnel : effet de zone, sans parametre de signal"
+            ],
+            "lignee": [
+              "_unite",
+              "effecteurs/brouillage/brouillage_notionnel"
+            ],
+            "algos": {},
+            "pays": null,
+            "icone": null,
+            "type": "brouillage",
+            "portee": 3000,
+            "constante_temps": 60
+          }
+        }
+      ],
+      "sol": {
+        "id": "sites/postes/poste_sol_air_notionnel",
+        "nom": "Poste sol-air de courte portee (notionnel)",
+        "fidelite": "notionnel",
+        "sources": [
+          "Ordre de grandeur notionnel : defense sol-air tres courte portee, roquettes et missiles"
+        ],
+        "lignee": [
+          "_unite",
+          "sites/postes/poste_sol_air_notionnel"
+        ],
+        "algos": {
+          "tir_sol": "global/tir_sol/cadence_par_passage"
+        },
+        "pays": null,
+        "icone": "batterie_courte",
+        "portee": 8000,
+        "portee_conduite": 0,
+        "facteur_conduite": 1.5,
+        "hauteur_conduite": 10,
+        "pk": 0.7,
+        "engagements_par_passage": 8,
+        "acquisition": 10,
+        "anti_balistique": false,
+        "nombre": 200,
+        "munitions": 1020
+      },
+      "radar": {
+        "id": "capteurs/radars/radar_basse_altitude_notionnel",
+        "nom": "Radar de surveillance basse altitude (notionnel)",
+        "fidelite": "notionnel",
+        "sources": [
+          "Ordre de grandeur notionnel : radar de surveillance terrestre, antenne sur mat"
+        ],
+        "lignee": [
+          "_unite",
+          "capteurs/radars/radar_basse_altitude_notionnel"
+        ],
+        "algos": {
+          "detection": "global/detection/couverture_frontiere"
+        },
+        "pays": null,
+        "icone": "radar_mobile",
+        "hauteur_antenne": 20,
+        "portee_max": 250000,
+        "ser_reference_m2": null,
         "disposition": "frontiere",
         "sites": []
       },

@@ -100,6 +100,10 @@
       "type": "number",
       "description": "Altitude de vol au-dessus de l'ellipsoide ; fixe la portee de detection radar a l'horizon.",
       "default": 100
+    },
+    "ser_m2": {
+      "description": "Surface equivalente radar ; null : la portee du catalogue s'applique telle quelle (MODELE § 27.1).",
+      "default": null
     }
   },
   "additionalProperties": true

@@ -48,6 +48,12 @@
     "fidelite": "notionnel"
   },
   {
+    "id": "global/mouvement/balistique",
+    "nom": "Arc balistique",
+    "role": "mouvement",
+    "fidelite": "notionnel"
+  },
+  {
     "id": "global/mouvement/croisiere_geodesique",
     "nom": "Croisière géodésique",
     "role": "mouvement",

@@ -1,7 +1,7 @@
 // L'essaim : répartition sur les cibles (MODELE § 6.1), puis comportement et mouvement délégués aux algorithmes
 // désignés par le scénario (rouge.tactique) et par l'unité de drone (algos.mouvement).
-import {algo} from "./algos.js";
-import {cap_vers, vers_ecef} from "./geodesie.js";
+import {algo, MOUVEMENT_GROUPE} from "./algos.js";
+import {cap_vers, inverse, vers_ecef} from "./geodesie.js";
 import {melanger} from "./hasard.js";
 import {OUTILS} from "./outils.js";
 import {effet_esquive} from "./reaction.js";
@@ -32,7 +32,7 @@ export function creer_drones(scenario, registre, cibles, hasard, rayonApparition
     caps: cibles.map(() => hasard.uniforme(0, 2 * Math.PI)),
     cap_commun: hasard.uniforme(0, 2 * Math.PI),
   };
-  return repartir_drones(scenario, hasard, cibles.length).map((cible, id) => {
+  const essaim = repartir_drones(scenario, hasard, cibles.length).map((cible, id) => {
     const {position, route, depart} = comportement.planifier_drone(contexte, cible, hasard, OUTILS);
     const geo = {...position, alt: rouge.altitude};
     // Chaque point de route garde son ECEF à l'altitude du drone : un pas ne coûte qu'un changement de repère.
@@ -42,7 +42,29 @@ export function creer_drones(scenario, registre, cibles, hasard, rayonApparition
       geo, ecef: vers_ecef(geo), vitesse: {x: 0, y: 0, z: 0},
     };
   });
+  return [...essaim, ...creer_groupes(rouge, cibles, essaim.length)];
 }
+
+// Écart en latitude entre deux objets d'un même groupe : ils ne partent pas du même point. Environ 1 km.
+const ECART_GROUPE_RAD = 1.6e-4;
+
+/** Rendre les objets des groupes supplémentaires (MODELE § 27), numérotés à partir de `premier` ; aucun tirage au hasard. */
+function creer_groupes(rouge, cibles, premier) {
+  let id = premier;
+  return (rouge.groupes ?? []).flatMap((groupe, rang) => Array.from({length: groupe.nombre}, (_, k) => {
+    const balistique = groupe.trajectoire === "balistique";
+    const altitude = balistique ? 0 : groupe.altitude;
+    const geo = {lat: groupe.depart_lat + k * ECART_GROUPE_RAD, lon: groupe.depart_lon, alt: altitude};
+    const but = {...cibles[groupe.cible], alt: altitude};
+    const {distance, azimut_depart} = inverse(geo, but);
+    return {
+      id: id++, groupe: rang, cible: groupe.cible, vivant: true, arrive: false, vise: false, detection: null, connu: null, depart: groupe.instant,
+      route: [{geo: but, ecef: vers_ecef(but)}], geo, ecef: vers_ecef(geo), vitesse: {x: 0, y: 0, z: 0},
+      ...(balistique ? {trajectoire: {depart: geo, longueur: distance, cap: azimut_depart, apogee: groupe.apogee}} : {}),
+    };
+  }));
+}
+
 
 /**
  * Faire avancer chaque drone actif de `dt` s par son algorithme de mouvement ; au bout de sa route, il frappe.
@@ -55,8 +77,9 @@ export function avancer_drones(monde, dt) {
   for (const drone of monde.drones) {
     if (!est_actif(drone, monde.t)) continue;
     const avant = drone.ecef;
-    const pas = rouge.vitesse * dt * (drone.vise ? 1 - perte : 1);
-    const suivant = mouvement.avancer(drone, drone.route, pas, OUTILS);
+    const groupe = drone.groupe === undefined ? null : rouge.groupes[drone.groupe];
+    const pas = (groupe ? groupe.vitesse : rouge.vitesse) * dt * (drone.vise ? 1 - perte : 1);
+    const suivant = (groupe ? algo(monde.registre, MOUVEMENT_GROUPE[groupe.trajectoire], "mouvement") : mouvement).avancer(drone, drone.route, pas, OUTILS);
     drone.geo = suivant.geo;
     drone.ecef = suivant.ecef;
     if (suivant.atteints) drone.route.splice(0, suivant.atteints);

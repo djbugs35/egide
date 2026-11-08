@@ -2,7 +2,7 @@
 // interfaces. Détection, conduite de tir et interception, à l'altitude de l'essaim. Pur.
 import {delai_disponible, horizon_radar} from "./geometrie.js";
 import {soustraire, vers_degres, vers_ecef, vers_enu} from "./geodesie.js";
-import {parametres_radar, portee_radar, portee_site, positions_radars} from "./radars.js";
+import {parametres_radar, portee_contre_menace, portee_radar, portee_site, positions_radars} from "./radars.js";
 import {acces_avion, grille_scenario} from "./reseau.js";
 import {couverture_reelle} from "./terrain.js";
 
@@ -33,13 +33,19 @@ function profil_masque(masque, grille, altitude) {
   return profils.get(masque);
 }
 
-function objets_radars(monde, altitude) {
+function objets_radars(monde, altitude, classes) {
   const {scenario, reseau} = monde;
-  return positions_radars(scenario).map((geo, i) => ({
-    noeud: `radar:${i}`, genre: "radar", id: i, unite: parametres_radar(scenario, i).id, geo, hs: reseau.radars_hs[i],
-    detection: portee_site(scenario, i), conduite: 0, interception: 0,
-    profil: reseau.masques ? profil_masque(reseau.masques[i], reseau.grille, altitude) : null,
-  }));
+  const noms = Object.fromEntries([["instrumentee", "instrumentée"], ...classes.map((c) => [c.genre, c.nom])]);
+  return positions_radars(scenario).map((geo, i) => {
+    const parametres = parametres_radar(scenario, i);
+    return {
+      noeud: `radar:${i}`, genre: "radar", id: i, unite: parametres.id, geo, hs: reseau.radars_hs[i],
+      detection: portee_site(scenario, i), conduite: 0, interception: 0,
+      profil: reseau.masques ? profil_masque(reseau.masques[i], reseau.grille, altitude) : null,
+      instrumentee: parametres.portee_max, noms,
+      ...Object.fromEntries(classes.map((c) => [c.genre, portee_contre_menace(parametres, c.altitude, c.ser)])),
+    };
+  });
 }
 
 /** Rendre les objets au sol : un par cible pour le dispositif commun (ses postes y sont tous), un par batterie placée. */
@@ -89,11 +95,18 @@ function est_relie(monde, o, c) {
  */
 export function couvertures(monde) {
   const altitude = monde.scenario.rouge.altitude;
-  const objets = [...objets_radars(monde, altitude), ...objets_postes(monde, altitude), ...objets_vecteurs(monde)];
+  const classes = classes_menace(monde.scenario);
+  const objets = [...objets_radars(monde, altitude, classes), ...objets_postes(monde, altitude), ...objets_vecteurs(monde)];
   const c2 = monde.reseau.centres.map((centre, c) => ({
     noeud: centre.id, nom: centre.nom, hs: centre.hs, membres: objets.flatMap((o, rang) => (est_relie(monde, o, c) ? [rang] : [])),
   }));
-  return {objets, c2};
+  return {objets, c2, classes};
+}
+
+/** Rendre les classes de menace à tracer (MODELE § 27.2) : {genre, nom, altitude (m), ser (m²)}, l'essaim d'abord ; un arc balistique se lit à son apogée. */
+function classes_menace({rouge}) {
+  const groupes = (rouge.groupes ?? []).map((g) => ({nom: g.nom, altitude: g.trajectoire === "balistique" ? g.apogee : g.altitude, ser: g.ser_m2}));
+  return [{nom: "essaim", altitude: rouge.altitude, ser: rouge.ser_m2}, ...groupes].map((c, k) => ({...c, genre: `menace_${k}`}));
 }
 
 /** Rendre le rayon (m) d'un objet dans la direction `azimut` (rad), pour l'enveloppe `genre`, compte tenu du relief. */

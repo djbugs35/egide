@@ -13,6 +13,7 @@ export const CALQUES = [
   {id: "conduite_tir", groupe: "Défense", libelle: "Conduite de tir (jaune)", defaut: false},
   {id: "interception", groupe: "Défense", libelle: "Interception (vert)", defaut: false},
   {id: "resultante_c2", groupe: "Défense", libelle: "Couverture des C2 (violet)", defaut: false},
+  {id: "portees_menaces", groupe: "Défense", libelle: "Portée radar par menace (couleurs)", defaut: false},
   {id: "balayage", groupe: "Défense", libelle: "Faisceau radar"},
   {id: "postes", groupe: "Défense", libelle: "Bulles des postes sol"},
   {id: "drones_detectes", groupe: "Menace", libelle: "Drones détectés"},

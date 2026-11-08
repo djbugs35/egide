@@ -17,11 +17,13 @@ export const meta = {
 
 /** Rendre l'état de la couverture : centre et rayon au sol au-delà duquel rien n'est vu. */
 export function preparer(scenario, radar, outils) {
-  const detection = Math.min(outils.horizon_radar(radar.hauteur_antenne, scenario.rouge.altitude), radar.portee_max);
-  return {origine: scenario.theatre.origine, rayon_couverture: scenario.theatre.zone_rayon + detection};
+  const detection = outils.portee_contre_menace(radar, scenario.rouge.altitude, scenario.rouge.ser_m2);
+  return {origine: scenario.theatre.origine, rayon_couverture: scenario.theatre.zone_rayon + detection, zone_rayon: scenario.theatre.zone_rayon, radar, groupes: scenario.rouge.groupes ?? []};
 }
 
 /** Rendre vrai si `drone` est dans la couverture. */
 export function detecte(etat, drone, outils) {
-  return outils.inverse(etat.origine, drone.geo).distance <= etat.rayon_couverture;
+  // MODELE § 27.2 : un groupe se détecte à sa propre altitude et selon sa propre SER.
+  const rayon = drone.groupe === undefined ? etat.rayon_couverture : etat.zone_rayon + outils.portee_contre_menace(etat.radar, drone.geo.alt, etat.groupes[drone.groupe].ser_m2);
+  return outils.inverse(etat.origine, drone.geo).distance <= rayon;
 }

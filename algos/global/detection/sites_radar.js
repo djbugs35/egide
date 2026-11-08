@@ -25,25 +25,33 @@ export function preparer(scenario, radar, outils) {
   // Un site peut porter sa propre unité (déploiement, MODELE § 21.1) : sa hauteur d'antenne et sa portée priment.
   const sites = radar.sites.map((geo, i) => {
     const propre = radar.sites_unites?.[i] ?? radar;
-    const portee = Math.min(outils.horizon_radar(propre.hauteur_antenne, scenario.rouge.altitude), propre.portee_max);
-    return {geo, ecef: outils.vers_ecef(geo), portee, seuil2: portee ** 2 + (scenario.rouge.altitude - geo.alt) ** 2};
+    const portee = outils.portee_contre_menace(propre, scenario.rouge.altitude, scenario.rouge.ser_m2);
+    return {geo, ecef: outils.vers_ecef(geo), portee, propre, seuil2: portee ** 2 + (scenario.rouge.altitude - geo.alt) ** 2};
   });
   const eloignement = sites.map((site) => outils.inverse(scenario.theatre.origine, site.geo).distance + site.portee);
-  return {origine: scenario.theatre.origine, rayon_couverture: Math.max(scenario.theatre.zone_rayon, ...eloignement), sites};
+  return {origine: scenario.theatre.origine, rayon_couverture: Math.max(scenario.theatre.zone_rayon, ...eloignement), sites, groupes: scenario.rouge.groupes ?? []};
+}
+
+/** Rendre le carré de la distance de détection de `site` contre `drone` : celle du groupe se calcule à son altitude du moment (MODELE § 27.2). */
+function seuil_carre(etat, site, drone, outils) {
+  if (drone.groupe === undefined) return site.seuil2;
+  const portee = outils.portee_contre_menace(site.propre, drone.geo.alt, etat.groupes[drone.groupe].ser_m2);
+  return portee ** 2 + (drone.geo.alt - site.geo.alt) ** 2;
 }
 
 /** Rendre les indices des sites dont la portée contient `drone` (réseau d'information, MODELE § 15.2). */
-export function detecte_par(etat, drone) {
+export function detecte_par(etat, drone, outils) {
   const {x, y, z} = drone.ecef;
   const voyants = [];
-  etat.sites.forEach(({ecef, seuil2}, i) => {
-    if ((x - ecef.x) ** 2 + (y - ecef.y) ** 2 + (z - ecef.z) ** 2 <= seuil2) voyants.push(i);
+  etat.sites.forEach((site, i) => {
+    const {ecef} = site;
+    if ((x - ecef.x) ** 2 + (y - ecef.y) ** 2 + (z - ecef.z) ** 2 <= seuil_carre(etat, site, drone, outils)) voyants.push(i);
   });
   return voyants;
 }
 
 /** Rendre vrai si `drone` est dans la portée d'au moins un site. */
-export function detecte(etat, drone) {
+export function detecte(etat, drone, outils) {
   const {x, y, z} = drone.ecef;
-  return etat.sites.some(({ecef, seuil2}) => (x - ecef.x) ** 2 + (y - ecef.y) ** 2 + (z - ecef.z) ** 2 <= seuil2);
+  return etat.sites.some((site) => (x - site.ecef.x) ** 2 + (y - site.ecef.y) ** 2 + (z - site.ecef.z) ** 2 <= seuil_carre(etat, site, drone, outils));
 }

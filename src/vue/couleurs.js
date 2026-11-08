@@ -19,6 +19,8 @@ export const COULEURS = {
   conduite: "#e8c547",
   interception: "#57c785",
   resultante: "#b48ee8",
+  instrumentee: "#9aa6b2",
+  menaces: ["#5ab4e8", "#e87a5a", "#e85ab4", "#c8e85a", "#5ae8c8"],
 };
 
 /** Publier les couleurs en variables CSS (--fond, --ami…) sur l'élément racine. */

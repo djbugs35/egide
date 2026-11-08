@@ -70,7 +70,7 @@ test("conformité mouvement : jamais plus loin que demandé, altitude conservée
   const but = OUTILS.direct(depart, 1.2, 5_000);
   const route = Object.freeze([Object.freeze({geo: but, ecef: OUTILS.vers_ecef({...but, alt: 300})})]);
   const mobile = Object.freeze({geo: depart, ecef: OUTILS.vers_ecef(depart)});
-  for (const [id, module] of Object.entries(REGISTRE).filter(([, m]) => m.meta.role === "mouvement")) {
+  for (const [id, module] of Object.entries(REGISTRE).filter(([, m]) => m.meta.role === "mouvement" && !m.meta.trajectoire_propre)) {
     for (const pas of [0, 100, 4_999, 20_000]) {
       const suivant = module.avancer(mobile, route, pas, OUTILS);
       assert.ok(OUTILS.distance_oblique(mobile.ecef, suivant.ecef) <= pas + 1e-6, `${id} pas ${pas}`);

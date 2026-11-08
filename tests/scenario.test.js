@@ -71,6 +71,11 @@ test("résolution d'un déploiement (MODELE § 21) : identique à la variante pa
   assert.deepEqual(JSON.parse(JSON.stringify(resoudre_scenario(modifier_scenario(REFERENCE, modifications), FICHIERS))), resolu);
 });
 
+test("résolution des menaces multiples (MODELE § 27) : identique à la variante partagée avec le jumeau Python", () => {
+  const {modifications, resolu} = JSON.parse(readFileSync(new URL("./resolution_reference.json", import.meta.url))).variante_menaces;
+  assert.deepEqual(JSON.parse(JSON.stringify(resoudre_scenario(modifier_scenario(REFERENCE, modifications), FICHIERS))), resolu);
+});
+
 test("résolution de l'essaim réactif (MODELE § 22) : identique à la variante partagée avec le jumeau Python", () => {
   const {modifications, resolu} = JSON.parse(readFileSync(new URL("./resolution_reference.json", import.meta.url))).variante_reaction;
   assert.deepEqual(JSON.parse(JSON.stringify(resoudre_scenario(modifier_scenario(REFERENCE, modifications), FICHIERS))), resolu);

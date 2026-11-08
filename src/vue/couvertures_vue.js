@@ -48,11 +48,14 @@ export function enveloppes_inspectees({objets, c2}, inspection) {
  */
 export function enveloppes_a_montrer(monde, calques, inspection) {
   const choix = ["conduite", "centre", "radar", "cible", "avion"].includes(inspection?.type);
-  if (!calques.conduite_tir && !calques.interception && !calques.resultante_c2 && !choix) return [];
+  if (!calques.conduite_tir && !calques.interception && !calques.resultante_c2 && !calques.portees_menaces && !choix) return [];
   const donnees = couvertures(monde);
   const liste = [];
   if (calques.conduite_tir) liste.push({objets: donnees.objets, genre: "conduite", couleur: COULEURS.conduite, largeur: 1, union: true});
   if (calques.interception) liste.push({objets: donnees.objets, genre: "interception", couleur: COULEURS.interception, largeur: 1, union: true});
+  // MODELE § 27.2 : la portée instrumentée du radar, puis celle que chaque menace lui laisse, une couleur par classe.
+  const par_menace = (objets, largeur, union) => [{genre: "instrumentee", couleur: COULEURS.instrumentee}, ...donnees.classes.map((c, k) => ({genre: c.genre, couleur: COULEURS.menaces[k % COULEURS.menaces.length]}))].map((t) => ({objets, largeur, union, ...t}));
+  if (calques.portees_menaces) liste.push(...par_menace(donnees.objets.filter((o) => o.genre === "radar"), 1, true));
   if (calques.resultante_c2) {
     for (const centre of donnees.c2.filter((c) => !c.hs)) {
       const objets = centre.membres.map((m) => donnees.objets[m]);
@@ -61,6 +64,7 @@ export function enveloppes_a_montrer(monde, calques, inspection) {
   }
   if (choix) {
     const {objets, c2} = enveloppes_inspectees(donnees, inspection);
+    if (inspection.type === "radar") liste.push(...par_menace(objets, 2, false));
     liste.push(...GENRES.map((genre) => ({objets, genre, couleur: c2 === null ? COULEUR_GENRE[genre] : COULEURS.resultante, largeur: 2, union: c2 !== null})));
   }
   return liste;
@@ -81,7 +85,7 @@ function ecrire_portee(ctx, camera, objet, genre, couleur) {
   const p = ecran(camera, direct(objet.geo, 0, objet[genre]));
   ctx.fillStyle = couleur;
   ctx.textAlign = "center";
-  ctx.fillText(`${NOM_GENRE[genre]} ${Math.round(objet[genre] / 100) / 10} km`, p.x, p.y - 4);
+  ctx.fillText(`${NOM_GENRE[genre] ?? objet.noms[genre]} ${Math.round(objet[genre] / 100) / 10} km`, p.x, p.y - 4);
   ctx.textAlign = "start";
 }
 

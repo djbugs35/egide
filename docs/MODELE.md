@@ -749,3 +749,38 @@ des ordres du § 12.4 : aucune autre règle.
 Les éditeurs du client (FORMATS § 10.4 et 10.5) ne changent aucune règle de simulation. Le pinceau de relief calcule ses distances en
 plan local, à titre d'outil de dessin ; seules les altitudes enregistrées entrent dans le moteur, comme celles d'un terrain importé (§ 16).
 Un terrain retouché garde son identifiant : le moteur compare son contenu, et non son nom, pour décider de refaire grille et masques.
+
+## 27 · Menaces multiples, SER et trajectoire balistique
+
+L'essaim reste la menace principale : un seul type, une seule altitude. `rouge.groupes` ajoute des groupes, chacun avec son unité, son
+point de départ, sa cible, son altitude ou sa trajectoire. Sans groupe, sans `ser_m2` et sans `ser_reference_m2`, rien ne change.
+
+### 27.1 Portée radar et surface équivalente
+
+L'équation du radar donne une portée proportionnelle à la racine quatrième de la SER. La portée du catalogue vaut pour la SER de référence du radar :
+
+    d = min(horizon(h_r, h_c), portee_max × (SER / SER_ref)^(1/4))
+
+Si le radar n'a pas de `ser_reference_m2` ou la menace pas de `ser_m2`, le facteur vaut 1. Hypothèses : SER constante quel que soit l'aspect,
+pas de fluctuation (radar parfait dans sa portée, § 7) ; les SER sont des ordres de grandeur.
+
+### 27.2 Détection des groupes et affichage
+
+Un objet de groupe se détecte à son altitude du moment (§ 2) et selon sa SER. Le calque « Portée radar par menace » trace, pour chaque radar,
+la portée instrumentée et une couleur par classe de menace, avec le même calcul ; un arc balistique s'y lit à son apogée. Limite : sur un
+terrain, les masques d'horizon restent calculés à l'altitude de l'essaim (§ 16.2), donc approchés pour les groupes.
+
+### 27.3 Trajectoire balistique
+
+Arc au-dessus de la géodésique, à vitesse au sol constante V, de longueur L et d'apogée H :
+
+    h(s) = 4 H (s / L) (1 − s / L)
+
+Hypothèses : ni propulsion, ni rentrée atmosphérique, ni manœuvre. Le modèle situe altitude et temps de vol ; il ne décrit aucun missile réel.
+
+### 27.4 Engagement
+
+Un avion n'engage pas une trajectoire balistique. Seul un poste déclaré `anti_balistique` le peut, dans sa bulle de tir habituelle. Limites :
+la bulle reste calculée à l'altitude de l'essaim (§ 25.2), ce qui est prudent contre un objet plus haut ; la cadence (§ 5) et le Pk ne
+dépendent pas de la vitesse de la cible.
+

@@ -95,7 +95,16 @@ export function ids_unites(brut) {
   const equipements = (v2.bleu.reseau?.equipements ?? []).flatMap((e) => e.moyens);
   // Arme changée dans l'éditeur (dépôt d'un armement sur un avion) : elle n'est citée que par la surcharge du groupe.
   const emports = v2.bleu.avions.map((g) => g.surcharges?.emport).filter(Boolean);
-  return [...new Set([v2.rouge.unite, ...v2.bleu.avions.map((g) => g.unite), ...emports, v2.bleu.sol.unite, v2.bleu.radar.unite, ...moyens, ...terrain, ...propres, ...equipements])];
+  return [...new Set([v2.rouge.unite, ...(v2.rouge.groupes ?? []).map((g) => g.unite), ...v2.bleu.avions.map((g) => g.unite), ...emports, v2.bleu.sol.unite, v2.bleu.radar.unite, ...moyens, ...terrain, ...propres, ...equipements])];
+}
+
+/** Rendre les groupes de menaces supplémentaires en SI (MODELE § 27) ; `cibles_nombre` borne la cible visée. */
+function resoudre_groupes(groupes, fichiers, cibles_nombre) {
+  return (groupes ?? []).map(({unite, surcharges, ...reglages}) => {
+    const modele = unite_si(unite, fichiers, surcharges);
+    if (!(reglages.cible >= 0 && reglages.cible < cibles_nombre)) throw new ScenarioInvalide(`groupe ${unite} : cible ${reglages.cible} inexistante`);
+    return {id: modele.id, nom: modele.nom, ser_m2: modele.ser_m2 ?? null, instant: 0, trajectoire: "croisiere", apogee: 0, ...convertir_objet(reglages)};
+  });
 }
 
 function resoudre_avions(groupes, fichiers) {
@@ -119,7 +128,7 @@ function resoudre_radar(radar, fichiers) {
   // Zéro site est permis (carte vidée dans l'éditeur) : personne ne détecte rien.
   const detection = DISPOSITIONS_RADAR[disposition] ?? unite.algos.detection;
   const resolu = {...unite, algos: {...unite.algos, detection}, disposition, sites};
-  if (propres.some(Boolean)) resolu.sites_unites = propres.map((p) => p && {id: p.id, nom: p.nom, hauteur_antenne: p.hauteur_antenne, portee_max: p.portee_max, pays: p.pays, icone: p.icone});
+  if (propres.some(Boolean)) resolu.sites_unites = propres.map((p) => p && {id: p.id, nom: p.nom, hauteur_antenne: p.hauteur_antenne, portee_max: p.portee_max, ser_reference_m2: p.ser_reference_m2, pays: p.pays, icone: p.icone});
   return resolu;
 }
 
@@ -186,7 +195,7 @@ export function resoudre_scenario(brutDonne, fichiers) {
   }
   try {
     const drone = unite_si(rouge.unite, fichiers, rouge.surcharges);
-    const {unite: _u, surcharges: _s, plan_de_vol: plan, ...reglagesRouge} = rouge;
+    const {unite: _u, surcharges: _s, plan_de_vol: plan, groupes, ...reglagesRouge} = rouge;
     const {cibles_placees: placees, zones, terrain, ...reglagesTheatre} = theatre;
     const ciblesPlacees = vers_geo(placees, 0);
     return structuredClone({
@@ -204,6 +213,7 @@ export function resoudre_scenario(brutDonne, fichiers) {
         ...drone, altitude: drone.altitude_croisiere, ...convertir_objet({...DEFAUTS_REACTION, ...reglagesRouge}),
         plan_de_vol: vers_geo(plan, drone.altitude_croisiere), comportement: algo_tactique(rouge.tactique),
         reaction: algo_reaction(rouge.reaction),
+        groupes: resoudre_groupes(groupes, fichiers, Math.max(reglagesTheatre.cibles_nombre, ciblesPlacees.length)),
       },
       avions: resoudre_avions(bleu.avions, fichiers),
       sol: resoudre_sol(bleu.sol, fichiers),

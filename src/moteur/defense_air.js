@@ -38,7 +38,7 @@ export function drone_approchant(monde, avion) {
   let retenu = null;
   let meilleure = conduite_vecteur(avion.groupe);
   parcourir_voisins(monde.index, avion.ecef, meilleure, (drone) => {
-    if (!est_actif(drone, monde.t)) return;
+    if (!est_actif(drone, monde.t) || drone.trajectoire) return;
     const versAvion = soustraire(avion.ecef, drone.ecef);
     const ecart = distance_oblique(avion.ecef, drone.ecef);
     if (ecart <= meilleure && produit_scalaire(versAvion, drone.vitesse) > 0) {
@@ -69,7 +69,8 @@ function affecter(monde, c, siens) {
   const {conduite} = monde.scenario;
   const connus = monde.drones.filter((drone) => {
     const connu = connu_du_centre(drone, c);
-    return est_actif(drone, monde.t) && connu !== null && monde.t - connu >= conduite.delai_reaction;
+    // MODELE § 27.4 : un avion n'engage pas une trajectoire balistique.
+    return est_actif(drone, monde.t) && !drone.trajectoire && connu !== null && monde.t - connu >= conduite.delai_reaction;
   });
   const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
   // Un centre secondaire peut avoir son propre algorithme d'allocation (déploiement, MODELE § 21.3).

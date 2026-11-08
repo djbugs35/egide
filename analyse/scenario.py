@@ -65,12 +65,35 @@ def _valider_aide(objet: dict, chemin: str) -> None:
             _valider_aide(valeur, f"{chemin}{cle}.")
 
 
+def _resoudre_groupes(groupes: list[dict] | None, fichiers: dict, cibles_nombre: int) -> list[dict]:
+    """Rendre les groupes de menaces supplementaires en SI (MODELE § 27)."""
+    resolus = []
+    for groupe in groupes or []:
+        modele = unite_si(groupe["unite"], fichiers, groupe.get("surcharges"))
+        reglages = {cle: valeur for cle, valeur in groupe.items() if cle not in {"unite", "surcharges"}}
+        if not 0 <= reglages["cible"] < cibles_nombre:
+            raise ScenarioInvalideError(f"groupe {groupe['unite']} : cible {reglages['cible']} inexistante")
+        resolus.append(
+            {
+                "id": modele["id"],
+                "nom": modele["nom"],
+                "ser_m2": modele.get("ser_m2"),
+                "instant": 0,
+                "trajectoire": "croisiere",
+                "apogee": 0,
+                **convertir_objet(reglages),
+            }
+        )
+    return resolus
+
+
 def ids_unites(brut: dict) -> list[str]:
     """Rendre les identifiants d'unites que cite le scenario."""
     bleu = brut["bleu"]
     moyens = [liaison["moyen"] for liaison in bleu.get("reseau", {}).get("liaisons", [])]
     ids = [
         brut["rouge"]["unite"],
+        *(g["unite"] for g in brut["rouge"].get("groupes", [])),
         *(g["unite"] for g in bleu["avions"]),
         # Arme changee dans l'editeur (depot d'un armement sur un avion) : seule la surcharge du groupe la cite.
         *(g["surcharges"]["emport"] for g in bleu["avions"] if g.get("surcharges", {}).get("emport")),
@@ -128,6 +151,7 @@ def _resoudre_radar(radar: dict, fichiers: dict) -> dict:
                 "nom": p["nom"],
                 "hauteur_antenne": p["hauteur_antenne"],
                 "portee_max": p["portee_max"],
+                "ser_reference_m2": p.get("ser_reference_m2"),
                 "pays": p["pays"],
                 "icone": p["icone"],
             }
@@ -235,7 +259,11 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
         drone = unite_si(rouge["unite"], fichiers, rouge.get("surcharges"))
         reglages_rouge = {
             **DEFAUTS_REACTION,
-            **{cle: valeur for cle, valeur in rouge.items() if cle not in {"unite", "surcharges", "plan_de_vol"}},
+            **{
+                cle: valeur
+                for cle, valeur in rouge.items()
+                if cle not in {"unite", "surcharges", "plan_de_vol", "groupes"}
+            },
         }
         cibles_placees = _vers_geo(theatre.get("cibles_placees"), 0)
         return {
@@ -263,6 +291,9 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
                 "plan_de_vol": _vers_geo(rouge.get("plan_de_vol"), drone["altitude_croisiere"]),
                 "comportement": TACTIQUES.get(rouge["tactique"], rouge["tactique"]),
                 "reaction": REACTIONS.get(reaction, reaction) if reaction else None,
+                "groupes": _resoudre_groupes(
+                    rouge.get("groupes"), fichiers, max(theatre["cibles_nombre"], len(cibles_placees))
+                ),
             },
             "avions": _resoudre_avions(bleu["avions"], fichiers),
             "sol": _resoudre_sol(bleu["sol"], fichiers),
