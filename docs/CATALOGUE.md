@@ -281,6 +281,9 @@ et appliqués aussi à la palette de la simulation :
   unités publiques disparaissent de la palette ; les dossiers qu'il ne couvre pas (terrains, roquettes…) et les
   classes de base `_` publiques restent.
 
+Quand le privé est importé, la bibliothèque de scénarios propose aussi ceux que liste `prive/scenarios/index.json`
+(`[{"id": "nom", "nom": "Nom affiché"}]`, un fichier `prive/scenarios/<id>.json` par entrée).
+
 Sans index privé, l'interface reste sur le catalogue public et la page Catalogue dit quoi lancer. Les scénarios
 citent toujours les unités par identifiant : un scénario qui cite une unité privée ne s'ouvre que là où `prive/`
 la contient.

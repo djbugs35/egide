@@ -9,7 +9,7 @@ import {cadrer_carte, creer_carte, deverrouiller_vue, verrouiller_vue} from "./c
 import {MODES_CAMERA} from "./cameras3d.js";
 import {entite_depuis_id, id_depuis_inspection} from "./scene3d.js";
 import {creer_vue3d} from "./vue3d.js";
-import {charger_index} from "./catalogue_prive.js";
+import {charger_index, lire_mode} from "./catalogue_prive.js";
 import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./carte_style.js";
 import {aide_chemin, valeur_effective} from "./chemins.js";
 import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./calques.js";
@@ -422,17 +422,20 @@ async function remplacer_base(brut) {
   cadrer(true);
 }
 
-let bibliotheque = {depot: [], locale: {}};
+let bibliotheque = {depot: [], prive: [], locale: {}};
 async function remplir_bibliotheque() {
   try {
     bibliotheque.depot = await lire_json("scenarios/index.json");
   } catch {
     bibliotheque.depot = [];
   }
+  // Seulement catalogue privé importé : sans lui, ces scénarios citeraient des unités inconnues.
+  bibliotheque.prive = lire_mode() === "public" ? [] : await lire_json("prive/scenarios/index.json").catch(() => []);
   bibliotheque.locale = lire_bibliotheque_locale();
   const liste = $("[name='bibliotheque']");
   liste.innerHTML = `<option value="">Bibliothèque de scénarios…</option>`
     + bibliotheque.depot.map((s) => `<option value="depot:${s.id}">${s.nom}</option>`).join("")
+    + bibliotheque.prive.map((s) => `<option value="prive:${s.id}">${s.nom}</option>`).join("")
     + Object.keys(bibliotheque.locale).map((nom) => `<option value="locale:${nom}">${nom} (ce navigateur)</option>`).join("");
 }
 
@@ -441,7 +444,8 @@ function brancher_bibliotheque() {
   $("[name='bibliotheque']").addEventListener("change", async (e) => {
     const [source, id] = [e.target.value.split(":")[0], e.target.value.slice(e.target.value.indexOf(":") + 1)];
     if (!source) return;
-    const brut = source === "depot" ? await lire_json(`scenarios/${id}.json`) : bibliotheque.locale[id];
+    const dossiers = {depot: "scenarios", prive: "prive/scenarios"};
+    const brut = dossiers[source] ? await lire_json(`${dossiers[source]}/${id}.json`) : bibliotheque.locale[id];
     if (brut) await remplacer_base(brut);
     e.target.value = "";
   });
