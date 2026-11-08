@@ -5,7 +5,7 @@ import {positions_radars} from "../moteur/radars.js";
 import {en_v2, ids_unites, modifier_scenario, resoudre_scenario, ScenarioInvalide} from "../moteur/scenario.js";
 import {brancher_balayage, montrer} from "./balayage.js";
 import {creer_camera, deplacer, zoomer} from "./camera.js";
-import {cadrer_carte, creer_carte} from "./carte.js";
+import {cadrer_carte, creer_carte, deverrouiller_vue, verrouiller_vue} from "./carte.js";
 import {charger_index} from "./catalogue_prive.js";
 import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./carte_style.js";
 import {aide_chemin, valeur_effective} from "./chemins.js";
@@ -456,9 +456,32 @@ function brancher_reglages_carte() {
     etat.reglages_carte = {...etat.reglages_carte, [cle]: e.target.type === "checkbox" ? e.target.checked : e.target.value};
     memoriser_reglages_carte(etat.reglages_carte);
     if (cle === "scope_seul") preparer_carte();
-    else if (etat.carte) etat.carte.setStyle(style_carte(etat.sources_carte, etat.reglages_carte));
+    else if (etat.carte) etat.carte.setStyle(style_carte(etat.sources_carte, reglages_affiches()));
+    synchroniser_verrou();
     cadrer(cle === "scope_seul");
   });
+}
+
+const edition_de_dessus = () => avec_carte() && Boolean(etat.editeur?.est_actif()) && etat.editeur.mode() === "edition";
+
+/** Rendre les réglages de carte à afficher : en édition, ni relief 3D ni globe (MODELE § 21.6). */
+const reglages_affiches = () => (edition_de_dessus() ? {...etat.reglages_carte, relief_3d: false, globe: false} : etat.reglages_carte);
+
+/** Verrouiller la vue de dessus quand on édite sur la carte, et lui rendre ses réglages en sortant. */
+function synchroniser_verrou() {
+  const voulu = edition_de_dessus();
+  if (voulu === Boolean(etat.vue_avant) || !etat.carte) return;
+  if (voulu) etat.vue_avant = verrouiller_vue(etat.carte);
+  else {
+    deverrouiller_vue(etat.carte, etat.vue_avant);
+    etat.vue_avant = null;
+  }
+  if (etat.reglages_carte.relief_3d || etat.reglages_carte.globe) etat.carte.setStyle(style_carte(etat.sources_carte, reglages_affiches()));
+}
+
+/** Charger au besoin le fichier de l'unité `id`, pour en montrer l'aperçu avant de la poser. */
+async function preparer_unite(id) {
+  if (id && !(id in etat.fichiers)) Object.assign(etat.fichiers, await charger_unites([id], lire_json));
 }
 
 /**
@@ -525,6 +548,9 @@ function brancher_editeur() {
     vue: $("#vue"), toile: $("#scope"), barre: $(".barre-edition"),
     camera: () => etat.camera, monde: () => etat.lecteur.monde, brut: brut_courant, calques: () => etat.calques,
     moyen: () => $("[name='moyen_liaison']").value,
+    aimantation: () => $("[name='aimantation']").value,
+    fichiers: () => etat.fichiers,
+    preparer_unite,
     appliquer: appliquer_edition, annuler: annuler_edition,
     quantite: () => Number($("[name='quantite_depot']").value) || 1,
     nom: (id) => etat.noms_unites?.[id] ?? id,
@@ -536,7 +562,10 @@ function brancher_editeur() {
       await appliquer_edition(modifications);
       $("[data-champ='message']").textContent = `${liaisons} liaison${liaisons > 1 ? "s" : ""} créée${liaisons > 1 ? "s" : ""}${isoles.length ? ` ; hors réseau : ${isoles.map((n) => libelle_noeud(etat.lecteur.monde, n)).join(", ")}` : ""}.`;
     },
-    sur_depot: (id) => $("[data-zone='palette']").querySelectorAll("[data-unite]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.unite === id))),
+    sur_depot: (id) => {
+      preparer_unite(id);
+      $("[data-zone='palette']").querySelectorAll("[data-unite]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.unite === id)));
+    },
     panoramique: (dx, dy) => {
       if (etat.camera.type === "carte") etat.carte.panBy([-dx, -dy], {duration: 0});
       else etat.camera = deplacer(etat.camera, dx, dy);
@@ -548,6 +577,7 @@ function brancher_editeur() {
     sur_activation: (actif, mode) => {
       bouton.setAttribute("aria-pressed", String(actif));
       $(".palette").hidden = !(actif && mode === "edition");
+      synchroniser_verrou();
       if (!actif) return;
       // Pour éditer, on dégage la vue : les panneaux se replient.
       etat.panneaux.fermer();

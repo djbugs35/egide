@@ -126,7 +126,7 @@ export function noeuds_reseau(monde) {
 }
 
 /** Rendre la hauteur d'une extrémité pour la portée d'un moyen : altitude du groupe pour des vecteurs, mât du moyen au sol. */
-const hauteur_noeud = (monde, noeud, moyen) => (noeud.startsWith("avions:") ? monde.scenario.avions[Number(noeud.slice(7))].altitude : moyen.hauteur_antenne);
+export const hauteur_noeud = (monde, noeud, moyen) => (noeud.startsWith("avions:") ? monde.scenario.avions[Number(noeud.slice(7))].altitude : moyen.hauteur_antenne);
 
 /** Rendre le moyen le plus rapide que partagent deux nœuds équipés et que leur distance permet, ou null. */
 function meilleur_moyen(monde, brut, fichiers, de, vers) {

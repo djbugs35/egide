@@ -244,10 +244,19 @@
       <button data-action="tout_effacer" title="Vider la carte : radars, batteries, avions, drones, C2, liaisons, zones (Ctrl+Z pour revenir)">Tout effacer</button>
       <button data-outil="zone" aria-pressed="false" title="Dessiner une zone protégée : un clic par sommet, double-clic ou Entrée pour fermer (Z)">Zone</button>
       <button data-action="mettre_hors_service" class="seulement-ordres" title="Mettre hors service, à cet instant, les radars, le CDC ou les liaisons sélectionnés (Suppr)">Mettre hors service</button>
+      <button data-outil="mesure" aria-pressed="false" title="Règle : glisser pour mesurer distance et cap (M)">Règle</button>
+      <select name="aimantation" class="seulement-edition" aria-label="Aimantation" title="Aimanter les poses à une grille ou aux unités proches">
+        <option value="aucune">Sans aimant</option>
+        <option value="unites">Aimant : unités</option>
+        <option value="1000">Grille 1 km</option>
+        <option value="5000">Grille 5 km</option>
+        <option value="10000">Grille 10 km</option>
+        <option value="25000">Grille 25 km</option>
+      </select>
       <button data-action="annuler_edition" title="Annuler le dernier geste (Ctrl+Z)">Annuler</button>
       <button data-action="terminer_edition" class="principal">Terminer</button>
       <p class="aide-edition seulement-edition">Glisser pour déplacer, rectangle pour sélectionner, clic droit pour envoyer la sélection.
-        Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle, Suppr efface la sélection ; Gomme (X) ou Maj+clic pendant un dépôt efface l'unité visée. Molette : zoom ; bouton du milieu ou Alt+glisser : déplacer la vue.</p>
+        Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle, Suppr efface la sélection ; Gomme (X) ou Maj+clic pendant un dépôt efface l'unité visée. Molette : zoom ; bouton du milieu ou Alt+glisser : déplacer la vue. Règle (M) : glisser pour mesurer ; l'aimant cale les poses sur une grille ou sur les unités.</p>
       <p class="aide-edition seulement-ordres">Ordres à <b data-champ="instant_ordres">0:00</b> : sélectionner des avions (clic, Maj+clic, rectangle),
         puis clic droit pour les envoyer depuis le CDC ; sélectionner un radar, le CDC ou une liaison, puis Suppr pour le mettre hors service.
         Tout est enregistré dans le scénario et rejoué à l'identique.</p>

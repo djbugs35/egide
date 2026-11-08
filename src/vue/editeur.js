@@ -1,8 +1,9 @@
 // Éditeur à la souris, à la manière d'un jeu de stratégie vu de dessus (jalon 3) : sélection au clic ou au rectangle,
 // glisser pour déplacer, clic droit pour envoyer la sélection, groupes Ctrl+1–9, outils cible et plan de vol.
 // Toute la logique vit dans edition.js ; ici, seulement les gestes et leur dessin.
+import {aimanter, apercu_depot, apercu_liaison, mesure, points_geodesique, regrouper, texte_distance, texte_mesure} from "./aides_edition.js";
 import {COULEURS} from "./couleurs.js";
-import {ecran, geo_depuis_ecran} from "./ecran.js";
+import {chemin_cercle, ecran, geo_depuis_ecran} from "./ecran.js";
 import {
   barycentre, dans_rectangle, element_sous, elements_editables, modifications_ajout_cible, modifications_ajout_passage,
   modifications_ajout_centre, modifications_ajout_liaison, modifications_ajout_radar, modifications_panne, modifications_tout_effacer, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
@@ -11,7 +12,7 @@ import {element_visible} from "./calques.js";
 import {modifications_depot} from "./deploiement.js";
 import {format_duree} from "./format.js";
 
-const TOUCHES_OUTILS = {s: "selection", c: "cible", r: "radar", k: "centre", l: "liaison", p: "plan", z: "zone", x: "gomme"};
+const TOUCHES_OUTILS = {s: "selection", c: "cible", r: "radar", k: "centre", l: "liaison", p: "plan", z: "zone", x: "gomme", m: "mesure"};
 // Couleurs du curseur de dépôt : vert pour ajouter, rouge pour effacer (Maj enfoncée, ou outil Gomme).
 const AJOUT = "#4cc47a";
 const EFFACEMENT = "#e5574b";
@@ -21,11 +22,11 @@ const SEUIL_GLISSER = 4;
 /**
  * Rendre l'éditeur branché sur `env` : {vue, toile, barre, camera(), monde(), brut(), calques(), moyen(), appliquer(modifs),
  * annuler(), panoramique(dx, dy), zoom(facteur, point), sur_activation(actif), quantite(), nom(id), signaler(texte),
- * sur_depot(id), choisir_moyen(de, vers), reseau_auto()}. Un calque masqué ne s'édite pas.
+ * sur_depot(id), choisir_moyen(de, vers), reseau_auto(), aimantation(), fichiers(), preparer_unite(id)}. Un calque masqué ne s'édite pas.
  */
 export function creer_editeur(env) {
   // mode « edition » : on prépare le scénario à t = 0 ; mode « ordres » : en pause au cours du raid, on envoie des avions.
-  const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null, liaison: null, depot: null, maj: false};
+  const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null, liaison: null, depot: null, maj: false, mesure: null};
   const elements = () => elements_editables(env.monde(), env.brut(), etat.mode).filter((e) => element_visible(env.calques(), e));
   const vers_ecran = (geo) => ecran(env.camera(), geo);
   const local = (e) => {
@@ -36,6 +37,7 @@ export function creer_editeur(env) {
   function choisir_outil(outil) {
     etat.outil = outil;
     etat.liaison = null;
+    if (outil !== "mesure") etat.mesure = null;
     if (outil !== "depot" && etat.depot) {
       etat.depot = null;
       env.sur_depot(null);
@@ -55,6 +57,15 @@ export function creer_editeur(env) {
     env.sur_activation(actif, mode);
   }
 
+  /** Rendre le point de pose visé en `p`, aimanté selon la barre (édition seulement) ; `exclure` : clés des unités qu'on déplace. */
+  function pose(p, exclure = []) {
+    const geo = geo_depuis_ecran(env.camera(), p);
+    const choix = etat.mode === "edition" ? env.aimantation() : "aucune";
+    if (choix === "aucune") return geo;
+    if (choix === "unites") return aimanter(geo, p, {type: "unites", elements: elements().filter((e) => !exclure.includes(e.cle)), versEcran: vers_ecran});
+    return aimanter(geo, p, {type: "grille", pas: Number(choix), origine: env.monde().scenario.theatre.origine});
+  }
+
   /** Armer le dépôt de l'unité `id` du catalogue (palette) : chaque clic sur la carte en dépose une, jusqu'à Échap. */
   function armer_depot(id) {
     if (!etat.actif) activer(true);
@@ -67,7 +78,7 @@ export function creer_editeur(env) {
   /** Déposer l'unité `id` au point écran `p` ; sur une unité déjà placée si le point en touche une (moyens, armements). */
   function deposer(id, p) {
     const sous = element_sous(elements(), vers_ecran, p, 14);
-    const modifications = modifications_depot(env.monde(), env.brut(), id, geo_depuis_ecran(env.camera(), p), {quantite: env.quantite(), sous});
+    const modifications = modifications_depot(env.monde(), env.brut(), id, pose(p), {quantite: env.quantite(), sous});
     if (!Object.keys(modifications).length) return env.signaler(`${env.nom(id)} : à déposer sur une unité déjà placée (et pas deux fois le même moyen).`);
     env.signaler("");
     env.appliquer(modifications);
@@ -93,7 +104,10 @@ export function creer_editeur(env) {
     const touche = element_sous(elements(), vers_ecran, p, 14);
     const noeud = touche && noeud_element(env.monde(), touche);
     if (!noeud) return void (etat.liaison = null);
-    if (!etat.liaison) return void (etat.liaison = {noeud, geo: touche.geo});
+    if (!etat.liaison) {
+      env.preparer_unite(env.moyen());
+      return void (etat.liaison = {noeud, geo: touche.geo});
+    }
     // Le moyen est celui que les deux unités partagent (MODELE § 21.4) ; le choix de la barre l'emporte s'il est commun.
     const moyen = env.choisir_moyen(etat.liaison.noeud, noeud);
     if (moyen) env.appliquer(modifications_ajout_liaison(env.monde(), env.brut(), etat.liaison.noeud, noeud, moyen));
@@ -113,8 +127,13 @@ export function creer_editeur(env) {
       return;
     }
     if (e.button !== 0) return;
-    const geo = geo_depuis_ecran(env.camera(), p);
+    const geo = pose(p);
     if (en_effacement()) return effacer(p);
+    if (etat.outil === "mesure") {
+      etat.mesure = {de: geo, vers: geo};
+      etat.geste = {type: "mesure"};
+      return;
+    }
     if (etat.outil === "depot" && etat.depot) return deposer(etat.depot, p);
     if (etat.outil === "cible") return env.appliquer(modifications_ajout_cible(env.monde(), geo));
     if (etat.outil === "radar") return env.appliquer(modifications_ajout_radar(env.monde(), geo));
@@ -149,7 +168,9 @@ export function creer_editeur(env) {
       geste.dernier = p;
     } else if (geste.type === "glisser") {
       geste.deplace ||= Math.hypot(p.x - geste.depart.x, p.y - geste.depart.y) > SEUIL_GLISSER;
-      if (geste.deplace) geste.vers = geo_depuis_ecran(env.camera(), p);
+      if (geste.deplace) geste.vers = pose(p, etat.selection);
+    } else if (geste.type === "mesure") {
+      etat.mesure.vers = pose(p);
     } else {
       Object.assign(geste.rectangle, {x1: p.x, y1: p.y});
     }
@@ -284,6 +305,9 @@ export function creer_editeur(env) {
     if (calques.missions) dessiner_ordres(ctx, camera, monde);
     if (!etat.actif) return;
     dessiner_brouillon(ctx, camera);
+    dessiner_groupes(ctx, camera);
+    dessiner_apercu(ctx, camera, monde);
+    dessiner_mesure(ctx, camera);
     dessiner_curseur(ctx);
     if (etat.liaison && etat.curseur) {
       const p = ecran(camera, etat.liaison.geo);
@@ -297,6 +321,15 @@ export function creer_editeur(env) {
     }
     const choisis = elements().filter((element) => etat.selection.includes(element.cle));
     const geste = etat.geste;
+    const survol = etat.outil === "selection" && !geste && etat.curseur ? element_sous(elements(), vers_ecran, etat.curseur) : null;
+    if (survol && !etat.selection.includes(survol.cle)) {
+      const p = ecran(camera, survol.geo);
+      ctx.strokeStyle = COULEURS.texte;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 12, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
     ctx.strokeStyle = COULEURS.selection;
     ctx.lineWidth = 1.5;
     for (const element of choisis) {
@@ -321,6 +354,71 @@ export function creer_editeur(env) {
       ctx.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0));
       ctx.strokeRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0));
     }
+  }
+
+  /** Écrire `texte` sur un cartouche, lisible sur tout fond de carte. */
+  function etiquette(ctx, texte, x, y, couleur) {
+    ctx.font = "bold 12px system-ui, sans-serif";
+    ctx.fillStyle = COULEURS.fond;
+    ctx.fillRect(x - 4, y - 13, ctx.measureText(texte).width + 8, 18);
+    ctx.fillStyle = couleur;
+    ctx.fillText(texte, x, y);
+  }
+
+  /** Porter le nombre d'avions superposés à l'écran, dont les symboles se cachent les uns les autres. */
+  function dessiner_groupes(ctx, camera) {
+    const avions = elements().filter((element) => element.type === "avion").map((element) => ecran(camera, element.geo));
+    for (const {x, y, nombre} of regrouper(avions)) etiquette(ctx, `×${nombre}`, x + 12, y - 12, COULEURS.texte);
+  }
+
+  /** Montrer, avant de poser : portée du radar ou bulle de la batterie au point visé, portée de la liaison en cours. */
+  function dessiner_apercu(ctx, camera, monde) {
+    if (!etat.curseur) return;
+    const id = etat.depot ?? (etat.outil === "radar" ? env.brut().bleu.radar.unite : null);
+    const apercu = id && !en_effacement() ? apercu_depot(id, env.fichiers(), monde.scenario.rouge.altitude) : null;
+    if (apercu) {
+      dessiner_disque(ctx, camera, pose(etat.curseur), apercu.rayon, AJOUT);
+      etiquette(ctx, `${apercu.libelle} ${texte_distance(apercu.rayon)}`, etat.curseur.x + 12, etat.curseur.y + 12, AJOUT);
+    }
+    if (!etat.liaison) return;
+    const portee = apercu_liaison(monde, etat.liaison.noeud, env.moyen(), env.fichiers());
+    if (portee === null) return;
+    const distance = mesure(etat.liaison.geo, geo_depuis_ecran(camera, etat.curseur)).distance;
+    const couleur = distance > portee ? EFFACEMENT : AJOUT;
+    dessiner_disque(ctx, camera, etat.liaison.geo, portee, couleur);
+    etiquette(ctx, `${texte_distance(distance)} / portée ${texte_distance(portee)}`, etat.curseur.x + 12, etat.curseur.y + 12, couleur);
+  }
+
+  function dessiner_disque(ctx, camera, centre, rayon, couleur) {
+    chemin_cercle(ctx, camera, centre, rayon, 96);
+    ctx.globalAlpha = 0.1;
+    ctx.fillStyle = couleur;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = couleur;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /** Tracer la règle le long de la géodésique, avec distance et cap ; elle reste posée jusqu'au changement d'outil. */
+  function dessiner_mesure(ctx, camera) {
+    if (!etat.mesure) return;
+    const {de, vers} = etat.mesure;
+    const points = points_geodesique(de, vers).map((geo) => ecran(camera, geo));
+    ctx.strokeStyle = COULEURS.selection;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    points.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+    ctx.stroke();
+    for (const p of [points[0], points.at(-1)]) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+    const fin = points.at(-1);
+    etiquette(ctx, texte_mesure(mesure(de, vers)), fin.x + 10, fin.y - 10, COULEURS.selection);
   }
 
   function dessiner_zones(ctx, camera, monde) {

@@ -556,6 +556,22 @@ de la fiche (modèle, algorithmes par rôle, munitions, effectifs, moyens) est u
 L'annulation, l'export, la bibliothèque et le rejeu valent donc d'office. Un groupe de vecteurs grossit à chaque dépôt :
 les orbites des avions déjà placés sont figées et les nouveaux orbitent au point déposé.
 
+### 21.6 Aides au déploiement (jalon 13)
+En édition, la vue est verrouillée de dessus : ni inclinaison, ni rotation, ni relief 3D, ni globe ; elle reprend ses
+réglages à la sortie. Ces aides n'entrent jamais dans le calcul : elles ne changent que le point où l'on pose.
+
+- **Règle** : distance et cap initial sur l'ellipsoïde (Vincenty, § 9), tracés le long de la géodésique.
+- **Aimantation à la grille** : la grille de pas `p` vit dans le plan azimutal équidistant du théâtre. Un point à la
+  distance `d` et à l'azimut `α` de l'origine a pour coordonnées `x = d sin α`, `y = d cos α`, arrondies au multiple de
+  `p` le plus proche, puis ramenées sur l'ellipsoïde. Hypothèse : maille régulière dans ce plan, donc légèrement
+  déformée loin de l'origine ; elle sert à aligner des unités, pas à mesurer.
+- **Aimantation aux unités** : la pose vient sur l'unité à moins de 12 px du curseur, hors unités déplacées.
+- **Aperçus** : un radar montre sa portée contre l'essaim, `min(horizon(h, altitude de l'essaim), portée instrumentée)`
+  (§ 2), sans masquage par le relief ; une batterie, sa bulle ; une liaison, `portée_liaison` (§ 15.2) depuis son premier
+  nœud, l'autre extrémité supposée au sol sur le mât du moyen.
+- **Regroupement** : les avions à moins de 14 px à l'écran portent le nombre d'avions superposés ; le dessin et la
+  sélection de chacun ne changent pas.
+
 ## 22 · Essaim réactif (jalon 16)
 ### 22.1 Principe et perception
 Par défaut l'essaim ne réagit pas (`rouge.reaction` null) : tout résultat antérieur est inchangé. Avec un algorithme

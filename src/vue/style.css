@@ -38,6 +38,9 @@ label:has(input:focus-visible) { outline: 2px solid var(--texte); outline-offset
 .vue.edition #scope { pointer-events: auto; cursor: default; }
 .vue.edition:is([data-outil="cible"], [data-outil="radar"], [data-outil="centre"], [data-outil="plan"], [data-outil="zone"]) #scope { cursor: crosshair; }
 .vue.edition[data-outil="liaison"] #scope { cursor: cell; }
+.vue.edition[data-outil="mesure"] #scope { cursor: crosshair; }
+/* Vue de dessus verrouillée pendant le déploiement : rien pour l'incliner ni la tourner. */
+.vue.edition[data-mode="edition"] .maplibregl-ctrl-compass { display: none; }
 .maplibregl-ctrl-attrib, .maplibregl-ctrl-group { filter: invert(0.9) hue-rotate(180deg); }
 .maplibregl-ctrl-bottom-right { inset-block-end: 64px; }
 
@@ -201,7 +204,7 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .vue[data-outil="depot"] #scope { cursor: copy; }
 .vue[data-outil="gomme"] #scope { cursor: not-allowed; }
 .barre-edition [data-action="tout_effacer"] { color: var(--hostile); border-color: var(--hostile); }
-.barre-edition { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; padding: 7px 10px; max-inline-size: 900px; }
+.barre-edition { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; padding: 7px 10px; max-inline-size: min(1040px, calc(100vw - 32px)); }
 .barre-edition[hidden] { display: none; }
 .barre-edition [aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
 .vue[data-mode="ordres"] .barre-edition :is([data-outil]:not([data-outil="selection"]), [name="moyen_liaison"], [data-action="reseau_complet"], [data-action="reseau_auto"], [data-action="tout_effacer"]),
