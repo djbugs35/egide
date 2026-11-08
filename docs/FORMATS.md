@@ -369,3 +369,46 @@ Le format de scénario est versionné (`format`) ; un format plus ancien est mig
 sont jamais retirées sans migration ; une clé ajoutée aux classes de base reçoit une valeur par défaut, si bien qu'un
 fichier valide le reste. Les schémas de `schemas/` portent la forme de la version du dépôt où ils se trouvent. Le
 fichier de rejeu porte sa `version` : un lecteur refuse celle qu'il ne connaît pas.
+
+## 10 · Partie en direct
+
+`node src/direct.js [--scenario <fichier>] [--port 8767] [--chemin valeur…]` fait tourner la simulation et la sert en
+WebSocket sur `ws://127.0.0.1:8767`, messages texte JSON, un enregistrement par message. Le serveur n'écoute que ce poste
+et refuse toute page web d'une autre origine. La partie démarre en pause. Un client qui arrive reçoit l'ouverture.
+
+### 10.1 Du serveur au client
+
+Les enregistrements sont ceux du rejeu (§ 6), avec le même repère et les mêmes colonnes.
+
+| `genre` | Quand | Contenu |
+|---|---|---|
+| `entete` | ouverture | comme § 6.1 ; `duree_s` et `images` valent `null`, la fin n'étant pas connue d'avance |
+| `statique` | ouverture | comme § 6.1 |
+| `couvertures` | ouverture, puis à chaque changement du réseau | comme § 6.5 |
+| `image` | ouverture, puis au plus dix fois par seconde | comme § 6.2 ; à grande vitesse, seule la dernière d'un tic part |
+| `evenement` | au fil de l'eau, avant l'image de leur pas | comme § 6.4 ; jamais sautés |
+| `etat` | après chaque tic utile et chaque commande | `t` (s), `pause`, `vitesse`, `vitesse_obtenue`, `termine`, `bilan` à cet instant |
+| `bilan` | une fois, à la fin du raid | comme le rejeu |
+| `archive` | après le bilan | `chemin` du scénario joué, `empreinte` |
+| `erreur` | commande refusée | `commande`, `message` ; la partie continue |
+
+Un client qui ne suit pas perd des images, jamais d'évènement. Une `entete` reçue en cours de route annonce une nouvelle
+partie : le client repart de zéro.
+
+### 10.2 Du client au serveur
+
+Chaque message porte son `type` :
+
+| `type` | Champs | Effet |
+|---|---|---|
+| `pause`, `reprendre` | | arrête ou relance l'horloge |
+| `vitesse` | `valeur`, de 0 exclu à 60 | temps simulé par seconde réelle |
+| `ordre` | `avions` (rangs de `statique.vecteurs`), `e`, `n` (m, repère du § 6.3) | les vecteurs rallient ce point, au pas suivant |
+| `recommencer` | | même scénario, à l'instant initial, en pause |
+| `modifier` | `modifications` : `{chemin: valeur}` | scénario modifié par chemin (§ 5), relancé à l'instant initial, en pause |
+
+### 10.3 Partie enregistrée
+
+À la fin d'un raid, le scénario de départ et ses ordres vont dans `resultats/parties/`. `node src/rejeu.js --scenario <ce
+fichier>` en refait le rejeu, identique à la partie jouée (MODELE § 26). `clients/godot/scripts/verifier_direct.gd` joue une
+partie et écrit le dump à passer à `outils/verifier_client.js --scenario <ce fichier>` (§ 8).

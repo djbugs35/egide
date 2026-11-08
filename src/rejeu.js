@@ -9,21 +9,10 @@ import {mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
 import {pathToFileURL} from "node:url";
 import {gzipSync} from "node:zlib";
+import {lire_arguments} from "./arguments.js";
 import {charger_tous_algos, charger_unites_scenario} from "./moteur/catalogue_node.js";
 import {creer_rejeu, PAS_ECHANTILLON_DEFAUT, texte_rejeu} from "./moteur/rejeu.js";
 import {en_v2, modifier_scenario} from "./moteur/scenario.js";
-
-function lire_arguments(liste) {
-  const options = {scenario: "scenarios/reference.json", echantillon: PAS_ECHANTILLON_DEFAUT, sortie: "resultats/rejeux"};
-  const modifications = {};
-  for (let i = 0; i < liste.length; i += 2) {
-    const cle = liste[i].replace(/^--/, "");
-    const valeur = liste[i + 1];
-    if (cle in options) options[cle] = cle === "echantillon" ? Number(valeur) : valeur;
-    else modifications[cle] = Number.isNaN(Number(valeur)) ? valeur : Number(valeur);
-  }
-  return {options, modifications};
-}
 
 function enregistrer(dossier, nom, octets) {
   mkdirSync(dossier, {recursive: true});
@@ -35,7 +24,7 @@ function enregistrer(dossier, nom, octets) {
 }
 
 async function principal() {
-  const {options, modifications} = lire_arguments(process.argv.slice(2));
+  const {options, modifications} = lire_arguments(process.argv.slice(2), {scenario: "scenarios/reference.json", echantillon: PAS_ECHANTILLON_DEFAUT, sortie: "resultats/rejeux"});
   const brut = modifier_scenario(en_v2(JSON.parse(readFileSync(options.scenario, "utf-8"))), modifications);
   const fichiers = await charger_unites_scenario(brut);
   const enregistrements = await creer_rejeu(brut, fichiers, await charger_tous_algos(), {pas_echantillon: options.echantillon});

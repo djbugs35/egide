@@ -14,6 +14,7 @@ const ALT := 4
 const CAP := 5
 const ETAT := 6
 const MUNITIONS := 7
+const NOMBRE_INSTANTS_CONTROLE := 25
 
 var entete: Dictionary = {}
 var statique: Dictionary = {}
@@ -41,20 +42,25 @@ func charger(chemin: String) -> String:
 	var lignes := texte.split("\n", false)
 	if lignes.is_empty():
 		return "fichier vide : %s" % chemin
-	var erreur := _lire_entete(lignes[0])
+	var erreur := _entete_de_ligne(lignes[0])
 	if erreur != "":
 		return erreur
 	for rang in range(1, lignes.size()):
 		var objet: Variant = JSON.parse_string(lignes[rang])
 		if not objet is Dictionary:
 			return "ligne %d illisible" % (rang + 1)
-		_ranger(objet)
+		ajouter(objet)
 	return "" if not bilan.is_empty() else "fichier tronqué : pas de ligne de bilan"
 
 
-func _lire_entete(ligne: String) -> String:
+func _entete_de_ligne(ligne: String) -> String:
 	var objet: Variant = JSON.parse_string(ligne)
-	if not objet is Dictionary or objet.get("format") != FORMAT:
+	return lire_entete(objet) if objet is Dictionary else "pas un fichier de rejeu"
+
+
+## Retenir l'en-tête `objet` ; rendre "" ou le message d'erreur.
+func lire_entete(objet: Dictionary) -> String:
+	if objet.get("format") != FORMAT:
 		return "pas un fichier de rejeu"
 	if int(objet["version"]) != VERSION:
 		return "version de rejeu %d non prise en charge" % int(objet["version"])
@@ -66,7 +72,8 @@ func _lire_entete(ligne: String) -> String:
 	return ""
 
 
-func _ranger(objet: Dictionary) -> void:
+## Ranger un enregistrement du rejeu ou de la liaison en direct, à la suite des précédents.
+func ajouter(objet: Dictionary) -> void:
 	match objet["genre"]:
 		"statique":
 			statique = objet
@@ -109,6 +116,23 @@ static func _aplatir(lignes: Array, largeur: int) -> PackedFloat32Array:
 	return plat
 
 
+## Ne garder que les `gardees` dernières images et les évènements qu'elles couvrent : une partie en direct n'a pas de fin connue.
+func oublier_anciennes(gardees: int) -> void:
+	var premiere := instants.size() - gardees
+	if premiere <= 0:
+		return
+	var seuil := instants[premiere]
+	instants = instants.slice(premiere)
+	drones = drones.slice(premiere)
+	vecteurs = vecteurs.slice(premiere)
+	postes = postes.slice(premiere)
+	var restants: Array[Dictionary] = []
+	for evenement in evenements:
+		if float(evenement["t"]) >= seuil:
+			restants.append(evenement)
+	evenements = restants
+
+
 ## Rendre le rang de l'image qui précède `t`, sans jamais désigner la dernière : l'image suivante existe toujours.
 func rang_image(t: float) -> int:
 	return clampi(instants.bsearch(t, false) - 1, 0, maxi(instants.size() - 2, 0))
@@ -119,6 +143,11 @@ func fraction(rang: int, t: float) -> float:
 	if instants.size() < 2:
 		return 0.0
 	return clampf((t - instants[rang]) / (instants[rang + 1] - instants[rang]), 0.0, 1.0)
+
+
+## Rendre l'image qui suit le rang `rang`, ou celle-là même s'il n'y en a pas encore (partie en direct, à l'instant initial).
+func rang_suivant(rang: int) -> int:
+	return mini(rang + 1, instants.size() - 1)
 
 
 ## Rendre les lignes de `a` avancées de la fraction `f` vers `b` ; une entité absente de `b` reste où elle est.
@@ -171,6 +200,25 @@ func bilan_recalcule() -> Dictionary:
 		"fuites": total, "fuites_max_cible": maximum, "detruits_air": instants_detruits_air.size(), "detruits_sol": instants_detruits_sol.size(),
 		"munitions_air_restantes": _somme_munitions(vecteurs[-1]), "munitions_sol_restantes": _somme(postes[-1]), "duree": instants[-1],
 	}
+
+
+## Rendre un échantillon d'images pour outils/verifier_client.js : [{t, drones, vecteurs}], points en (e, u, -n) sans le sol.
+func images_de_controle() -> Array:
+	var images := []
+	var saut := maxi(1, instants.size() / NOMBRE_INSTANTS_CONTROLE)
+	for rang in range(0, instants.size() - 1, saut):
+		images.append({"t": instants[rang], "drones": _points(drones[rang], largeur_drones), "vecteurs": _points(vecteurs[rang], largeur_vecteurs)})
+	return images
+
+
+static func _points(plat: PackedFloat32Array, largeur: int) -> Array:
+	var points := []
+	var k := 0
+	while k < plat.size():
+		var p := point_scene(plat[k + E], plat[k + N], plat[k + U])
+		points.append([int(plat[k + ID]), p.x, p.y, p.z])
+		k += largeur
+	return points
 
 
 func _somme_munitions(plat: PackedFloat32Array) -> int:

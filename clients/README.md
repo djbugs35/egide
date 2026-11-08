@@ -32,6 +32,27 @@ scénario de référence prend plusieurs secondes.
 Les entités sont agrandies selon la distance : à leur taille réelle, elles feraient moins d'un pixel à l'échelle d'un
 théâtre. Les modèles sont des formes génériques construites dans le code.
 
+### Jouer en direct
+
+`./jouer.command` (ou `jouer.bat`) lance le serveur de partie et le client. À la main :
+
+```sh
+node src/direct.js
+godot --path clients/godot -- --direct 8767
+```
+
+Le moteur tourne dans le serveur, Godot affiche et commande (docs/FORMATS.md § 10). La partie démarre en pause.
+
+| Commande | Effet en direct |
+|---|---|
+| Espace | lancer, pause |
+| + et − | vitesse (×1 à ×60) |
+| G | groupe de vecteurs suivant, ou tous |
+| clic droit sans glisser | envoyer le groupe au point visé |
+| N | nouvelle partie |
+
+Caméras et couvertures restent celles du rejeu. Un terrain dont l'origine n'est pas celle du scénario est ignoré.
+
 ### Vérifier le client
 
 Sans écran, le client recalcule le bilan, puis `outils/verifier_client.js` compare ses positions à une nouvelle simulation.
@@ -40,6 +61,13 @@ Le critère est de 1 m au plus, aux mêmes instants.
 ```sh
 godot --headless --path clients/godot --script res://scripts/verifier.gd -- --rejeu "$PWD/resultats/rejeux/<fichier>" --sortie "$PWD/resultats/dump.json"
 node outils/verifier_client.js --client resultats/dump.json
+```
+
+La partie en direct se vérifie de la même façon, serveur lancé, sur le scénario que la partie a enregistré :
+
+```sh
+godot --headless --path clients/godot --script res://scripts/verifier_direct.gd -- --port 8767 --sortie "$PWD/resultats/dump.json"
+node outils/verifier_client.js --client resultats/dump.json --scenario resultats/parties/<fichier>
 ```
 
 ## Porter vers un autre moteur

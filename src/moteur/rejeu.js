@@ -42,7 +42,7 @@ export function creer_repere(origine) {
 }
 
 /** Rendre la fonction qui écrit un point géographique : {lat_deg, lon_deg, alt_m, e, n, u}. */
-function creer_lieu(repere) {
+export function creer_lieu(repere) {
   return (geo) => {
     const point = {...geo, alt: geo.alt ?? 0};
     const {e, n, u} = repere(vers_ecef(point));
@@ -54,7 +54,7 @@ function creer_lieu(repere) {
 }
 
 /** Rendre `valeur` où chaque position géographique du moteur (rad) est remplacée par son écriture `lieu`. */
-function en_lieux(valeur, lieu) {
+export function en_lieux(valeur, lieu) {
   if (Array.isArray(valeur)) return valeur.map((v) => en_lieux(v, lieu));
   if (!valeur || typeof valeur !== "object") return valeur;
   if (Number.isFinite(valeur.lat) && Number.isFinite(valeur.lon)) return lieu(valeur);
@@ -80,7 +80,7 @@ function echantillon({geo, ecef}, repere, cap, etat) {
 }
 
 /** Rendre l'image du monde : drones en vol, vecteurs (perdus compris) et munitions de chaque poste, dans l'ordre du statique. */
-function image(monde, repere) {
+export function image(monde, repere) {
   const drones = monde.drones.filter((d) => est_actif(d, monde.t))
     .map((d) => [d.id, ...echantillon(d, repere, cap_en_degres(cap_drone(d)), rang_etat(ETATS.drones, d.detection === null ? "inconnu" : "detecte"))]);
   const vecteurs = monde.avions.map((a) => [a.id, ...echantillon(a, repere, cap_en_degres(a.cap), rang_etat(ETATS.vecteurs, a.perdu ? "perdu" : a.etat)), a.munitions]);
@@ -88,7 +88,7 @@ function image(monde, repere) {
 }
 
 /** Rendre l'enregistrement des couvertures à l'instant du monde (MODELE § 25) : portées en m, profil par degré d'azimut. */
-function ligne_couvertures(monde, lieu) {
+export function ligne_couvertures(monde, lieu) {
   const {objets, c2} = couvertures(monde);
   const metres = (valeur) => arrondi(valeur, DECIMALES_METRE);
   return {
@@ -98,7 +98,7 @@ function ligne_couvertures(monde, lieu) {
 }
 
 /** Rendre la description de ce qui ne bouge pas, lue à l'instant initial (munitions de départ). */
-function statique(monde, lieu) {
+export function statique(monde, lieu) {
   const {scenario} = monde;
   return {
     genre: "statique",
@@ -122,7 +122,7 @@ function catalogue(brut, fichiers) {
 }
 
 /** Rendre l'en-tête du rejeu ; `trace` : empreinte de reproductibilité (voir preuve.js). */
-function entete(brut, fichiers, scenario, trace, {pas, duree, images}) {
+export function entete(brut, fichiers, scenario, trace, {pas, duree, images}) {
   const {origine} = scenario.theatre;
   return {
     genre: "entete", format: FORMAT_REJEU, version: VERSION_REJEU, nom: scenario.nom ?? null, empreinte: trace.empreinte, graine: scenario.simulation.graine,

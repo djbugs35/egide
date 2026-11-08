@@ -25,7 +25,7 @@ genre et mécaniques du jeu de stratégie, avec ses propres noms, graphismes et 
 | 2 | Orientation des objets selon leur déplacement, dans toutes les vues | fait |
 | 3 | Couvertures calculées une seule fois dans le moteur : détection, conduite de tir, interception selon l'objet, couverture de chaque C2 comme résultante des objets connectés ; affichées dans le navigateur, Cesium et Godot | fait |
 | 4 | Icônes des objets privés, ressemblantes, sous `prive/icones/` | fait |
-| 5 | Liaison en direct entre Godot et le moteur (remplace le lot 15.4) | à faire |
+| 5 | Liaison en direct entre Godot et le moteur (remplace le lot 15.4) : `node src/direct.js`, `jouer.command` | fait |
 | 6 | Gameplay dans Godot : sélection au rectangle, groupes, ordres, mini-carte, brouillard, sons, effets | à faire |
 | 7 | Éditeurs dans Godot : scénario, puis terrain | à faire |
 

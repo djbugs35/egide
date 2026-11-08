@@ -12,21 +12,10 @@ import {mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
 import {pathToFileURL} from "node:url";
 import {GRANDEURS, mener_campagne} from "./moteur/campagne.js";
+import {lire_arguments} from "./arguments.js";
 import {charger_tous_algos, charger_unites_scenario, RACINE} from "./moteur/catalogue_node.js";
 import {differentiel, empreinte} from "./moteur/preuve.js";
 import {en_v2, modifier_scenario} from "./moteur/scenario.js";
-
-function lire_arguments(liste) {
-  const options = {scenario: "scenarios/reference.json", tirages: 50, sortie: "resultats/campagnes", balayer: null};
-  const modifications = {};
-  for (let i = 0; i < liste.length; i += 2) {
-    const cle = liste[i].replace(/^--/, "");
-    const valeur = liste[i + 1];
-    if (cle in options) options[cle] = cle === "tirages" ? Number(valeur) : valeur;
-    else modifications[cle] = Number.isNaN(Number(valeur)) ? valeur : Number(valeur);
-  }
-  return {options, modifications};
-}
 
 function afficher(libelle, resume) {
   const cellules = GRANDEURS.map((g) => `${g} ${resume[g].moyenne.toFixed(1)} ± ${resume[g].ic95.toFixed(1)}`);
@@ -43,7 +32,7 @@ function enregistrer(dossier, contenu) {
 }
 
 async function principal() {
-  const {options, modifications} = lire_arguments(process.argv.slice(2));
+  const {options, modifications} = lire_arguments(process.argv.slice(2), {scenario: "scenarios/reference.json", tirages: 50, sortie: "resultats/campagnes", balayer: null});
   const brut = modifier_scenario(en_v2(JSON.parse(readFileSync(options.scenario, "utf-8"))), modifications);
   const fichiers = await charger_unites_scenario(brut);
   const registre = await charger_tous_algos();

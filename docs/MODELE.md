@@ -731,3 +731,17 @@ Elle change avec le réseau : une liaison coupée ou un centre détruit retire a
 service n'a aucune couverture. La surface annoncée se mesure sur une grille de 2 km : l'erreur reste petite devant les
 incertitudes de portée, et le calcul n'entre pas dans la simulation.
 
+## 26 · Partie en direct (docs/PLAN_JEU.md, étape 5)
+
+Une partie jouée en direct exécute la même boucle `avancer_monde` que `simuler`, un pas à la fois. Le joueur n'ajoute que
+des ordres du § 12.4 : aucune autre règle.
+
+- **Instant d'un ordre.** Un ordre donné pendant que le monde est à l'instant `t` prend l'instant `t + pas` : celui du pas
+  suivant, le premier à pouvoir l'exécuter. Il garde ensuite le trajet d'un ordre de scénario, latence du réseau comprise.
+- **Rejouabilité.** Le scénario de départ et ses ordres, relus par `simuler`, redonnent la même partie au bit près : le
+  point visé est arrondi à 1e-7 degré (1 cm) puis converti par la fonction de la résolution, et le test le vérifie.
+- **Point visé.** Le client donne `(e, n)` dans le repère ENU du rejeu (§ 24). Le serveur retient le point d'altitude nulle
+  de cette position, en cherchant la hauteur `u` du plan tangent qui l'annule ; la hauteur du relief n'intervient pas,
+  puisqu'un ordre de ralliement ne porte que sur la position horizontale.
+- **Horloge.** Le temps réel décide seulement combien de pas jouer. Si le calcul ne suit pas la vitesse demandée, le retard
+  est abandonné et la vitesse obtenue s'affiche ; les pas joués restent les mêmes, la partie va seulement moins vite.
