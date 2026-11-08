@@ -4,6 +4,7 @@ extends RefCounted
 const RAYON_TERRE := 6_371_000.0
 
 var description: Dictionary = {}
+var imagerie_texture: Texture2D = null
 var _brut := PackedByteArray()
 var _alt_min := 0.0
 var _echelle := 0.0
@@ -57,7 +58,8 @@ func creer_scene(dossier: String) -> Node3D:
 	matiere.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var imagerie: Variant = description["imagerie"]
 	if imagerie is Dictionary:
-		matiere.albedo_texture = ImageTexture.create_from_image(_mosaique(dossier, imagerie))
+		imagerie_texture = ImageTexture.create_from_image(_mosaique(dossier, imagerie))
+		matiere.albedo_texture = imagerie_texture
 	else:
 		matiere.albedo_color = Color(0.45, 0.5, 0.4)
 	for maille in scene.find_children("*", "MeshInstance3D", true, false):

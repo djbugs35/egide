@@ -45,13 +45,26 @@ Le moteur tourne dans le serveur, Godot affiche et commande (docs/FORMATS.md § 
 
 | Commande | Effet en direct |
 |---|---|
-| Espace | lancer, pause |
+| Espace | lancer, pause ; un ordre peut se donner en pause |
 | + et − | vitesse (×1 à ×60) |
-| G | groupe de vecteurs suivant, ou tous |
-| clic droit sans glisser | envoyer le groupe au point visé |
+| clic gauche, cadre | sélectionner des vecteurs ; sur un radar ou un poste, l'inspecter (Maj : ajouter) |
+| double-clic | tous les vecteurs du même type à l'écran |
+| Ctrl+A, Échap | tout sélectionner, désélectionner |
+| clic droit | envoyer la sélection au point visé, aussi sur la mini-carte |
+| Ctrl+1 à 9, 1 à 9 | mémoriser un groupe, le rappeler (deux fois : centrer la caméra) |
+| WASD (touches physiques), flèches, bord d'écran | défiler |
+| molette, bouton du milieu | zoomer, pivoter |
+| clic gauche sur la mini-carte | y centrer la caméra |
+| F1 à F4 | caméra de stratégie, libre, suivi, vue de radar |
+| C, X, Tab, R | couverture affichée, C2, drone suivi, radar suivi |
+| B | lever ou rétablir le brouillard |
+| M, H | couper le son, afficher l'aide |
 | N | nouvelle partie |
 
-Caméras et couvertures restent celles du rejeu. Un terrain dont l'origine n'est pas celle du scénario est ignoré.
+Sélectionner un objet trace ses enveloppes de détection, de conduite de tir et d'interception, jusqu'à huit vecteurs à la fois.
+Le brouillard masque les drones qu'aucun radar n'a encore vus et assombrit le sol hors de la portée de détection, tracée en
+disques sans le masque du relief. Sons et effets sont synthétisés au lancement. Un terrain dont l'origine n'est pas celle du
+scénario est ignoré.
 
 ### Vérifier le client
 
@@ -62,6 +75,9 @@ Le critère est de 1 m au plus, aux mêmes instants.
 godot --headless --path clients/godot --script res://scripts/verifier.gd -- --rejeu "$PWD/resultats/rejeux/<fichier>" --sortie "$PWD/resultats/dump.json"
 node outils/verifier_client.js --client resultats/dump.json
 ```
+
+Les règles du jeu (sélection, groupes, mini-carte, brouillard) se vérifient sans serveur :
+`godot --headless --path clients/godot --script res://scripts/jeu/verifier_jeu.gd`.
 
 La partie en direct se vérifie de la même façon, serveur lancé, sur le scénario que la partie a enregistré :
 
