@@ -1,0 +1,17 @@
+; Client de référence du rejeu Égide (jalon 15.3, docs/FORMATS.md § 6 et 7). Godot 4.4 ou plus récent.
+config_version=5
+
+[application]
+
+config/name="Égide : client de rejeu"
+run/main_scene="res://principal.tscn"
+config/features=PackedStringArray("4.4")
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"

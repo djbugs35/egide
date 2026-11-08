@@ -196,6 +196,8 @@ async function principal() {
   const dossier = o.dossier ?? join("resultats", "terrains", brut.theatre.terrain.split("/").at(-1));
   const hauteurs = carte_hauteurs(grille, decoupe);
   ecrire(join(dossier, "hauteurs.png"), encoder_png_gris16(nc, nl, hauteurs.valeurs));
+  // Godot ramène les PNG 16 bits à 8 bits au chargement : le client lit donc ces mêmes valeurs en brut.
+  ecrire(join(dossier, "hauteurs.raw"), Buffer.from(hauteurs.valeurs.buffer));
   ecrire(join(dossier, "terrain.glb"), encoder_glb(maillage(grille, decoupe, origine, {plat: o.plat, emprise})));
   let imagerie = null;
   if (source) {
@@ -207,7 +209,7 @@ async function principal() {
   const description = {
     format: FORMAT_TERRAIN, version: VERSION_TERRAIN, terrain: {id: brut.theatre.terrain, nom: terrain.nom, sources: terrain.sources},
     origine: {lat_deg: vers_degres(origine.lat), lon_deg: vers_degres(origine.lon), alt_m: origine.alt}, repere: o.plat ? "plat" : "enu",
-    grille: {lignes: nl, colonnes: nc, ...degres}, hauteurs: {fichier: "hauteurs.png", alt_min_m: hauteurs.alt_min_m, echelle_m: hauteurs.echelle_m},
+    grille: {lignes: nl, colonnes: nc, ...degres}, hauteurs: {fichier: "hauteurs.png", brut: "hauteurs.raw", alt_min_m: hauteurs.alt_min_m, echelle_m: hauteurs.echelle_m},
     maillage: {fichier: "terrain.glb", uv: source ? "mosaique" : "grille"}, imagerie,
   };
   ecrire(join(dossier, "terrain.json"), `${JSON.stringify(description, null, 2)}\n`);

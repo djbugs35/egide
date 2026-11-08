@@ -259,6 +259,10 @@ qui vole à altitude constante. Deux façons d'afficher :
 - `(e, n, u)` : positions exactes, à montrer sur un terrain exporté dans le même repère ;
 - `(e, n, alt)` : monde plat, plus simple, déformé loin de l'origine.
 
+**Sur un terrain, ajouter l'altitude du sol à la hauteur choisie.** Le moteur fait voler l'essaim à altitude constante
+au-dessus de l'ellipsoïde, sans suivre le relief : sans cet ajout, un drone à 100 m serait sous un sol à 300 m. La vue 3D
+d'Égide fait de même (MODELE § 23). Le statique et les évènements suivent la même règle.
+
 Les images ne portent pas de latitude ni de longitude, ce qui divise le fichier par deux. Elles se retrouvent sans
 perte : ECEF = ECEF(origine) + rotation ENU vers ECEF, puis géodésique (`depuis_enu` et `depuis_ecef` dans
 `src/moteur/geodesie.js`). Le statique et les évènements écrivent chaque lieu sous les deux formes :
@@ -287,7 +291,8 @@ Un nom de nœud (`radar:0`, `sol:3`, `avions:1`, `conduite`, `centre:0`) est cel
 ### 6.5 Vérifier un client
 
 Fuites, destructions, munitions restantes et durée se recalculent à partir des images et des évènements :
-`bilan_du_rejeu` dans `src/moteur/rejeu.js` fait référence, et le test vérifie qu'il redonne la ligne `bilan`. Les
+`bilan_du_rejeu` dans `src/moteur/rejeu.js` fait référence, et le test vérifie qu'il redonne la ligne `bilan`.
+Pour un client complet, voir § 8. Les
 nombres de tirs ne se recalculent pas : le journal note la résolution d'un tir, et un tir en vol sur un drone déjà
 détruit n'en a pas.
 
@@ -311,7 +316,8 @@ format, version, terrain et sources, origine, repère, grille, hauteurs, maillag
 ### 7.1 Carte de hauteur
 
 `hauteurs.png` : PNG 16 bits en niveaux de gris, nord en haut, ouest à gauche, sur la grille régulière en latitude et
-longitude (`terrain.json` : `grille`). L'altitude d'un pixel vaut `alt_min_m + valeur × echelle_m`.
+longitude (`terrain.json` : `grille`). L'altitude d'un pixel vaut `alt_min_m + valeur × echelle_m`. `hauteurs.raw` porte
+les mêmes valeurs en entiers 16 bits petit-boutistes, pour les moteurs dont le chargeur PNG réduit à 8 bits.
 
 ### 7.2 Maillage
 
@@ -337,7 +343,14 @@ Un client part de l'unité citée par le statique, lit son icône et sa famille 
 affiche son propre modèle pour ce nom. Sites et centres n'ont pas d'unité : icônes `site` et `c2`. Égide ne livre
 aucun modèle d'un système réel.
 
-## 8 · Stabilité
+## 8 · Vérifier un client
+
+`node outils/verifier_client.js --client dump.json` rejoue le scénario et compare. `dump.json` contient
+`{"empreinte", "bilan_recalcule", "bilan_fichier", "images": [{"t", "drones": [[id, x, y, z], …], "vecteurs": […]}]}`, les
+positions en `(e, u, −n)`, sans le sol ajouté. Tout écart de position au-delà de 1 m, tout écart de bilan, ou toute entité sans
+correspondance fait échouer la commande. `clients/README.md` donne la procédure pour Godot et les notes de portage.
+
+## 9 · Stabilité
 
 Le format de scénario est versionné (`format`) ; un format plus ancien est migré à la lecture. Les clés des unités ne
 sont jamais retirées sans migration ; une clé ajoutée aux classes de base reçoit une valeur par défaut, si bien qu'un
