@@ -1,6 +1,6 @@
 # Plan : déployer en 2D, observer en 3D, sortie vers un moteur de jeu
 
-Plan détaillé des jalons 13 à 15, décidé le 5 novembre 2026, à réaliser plus tard. Rien n'est codé à ce stade.
+Plan détaillé des jalons 13 à 15, décidé le 5 novembre 2026. Les jalons 13 et 14 sont faits (v0.10.0) ; pour le 13, le rendu par couches MapLibre a été écarté (voir docs/PLAN_V2.md). Reste le jalon 15.
 
 ## Constat
 

@@ -109,7 +109,8 @@ ni ne s'édite.
 | Espace | Lire / pause | ← → | Reculer / avancer de 30 s |
 | 1 à 7 | Ouvrir un panneau | Échap | Fermer le panneau ou l'inspecteur |
 | E | Éditer | V | Vue du CDC |
-| R | Essaim réactif ou non (hors édition) | | |
+| R | Essaim réactif ou non (hors édition) | O | Vue 3D |
+| M | Règle (en édition) | | |
 | S, C, R, K, L, P, Z | Outils Sélection, Cible, Radar, CDC, Liaison, Plan de vol, Zone (en édition) | Suppr | Effacer la sélection (en édition) ou la mettre hors service (en plein raid) |
 | X | Gomme : effacer l'unité cliquée | Maj+clic | Pendant un dépôt : effacer l'unité visée (curseur rouge) |
 | Ctrl+1 à 9 | Mémoriser la sélection comme groupe | 1 à 9 | Rappeler le groupe (en édition) |
@@ -198,6 +199,25 @@ rejoue à l'identique.
 
 ![Ordres à 7:00 : avions envoyés au nord-ouest, radar R4 mis hors service (croix rouge), liaison optique de R1 hors de portée](docs/images/ordres.png)
 
+### Observer le raid en 3D
+
+Le bouton **3D** (touche O) montre le même raid sur le globe : même instant, même bilan, mêmes calques, sur la photo
+aérienne et le relief réel. Chaque unité en vol est à sa hauteur, reliée au sol par une tige ; les couvertures radar, les
+bulles sol-air, les liaisons et les tirs sont en volume. Les altitudes (100 m sur un théâtre de 600 km) peuvent être
+étirées à l'affichage, le facteur restant écrit à l'écran : le calcul n'en dépend pas.
+
+![Le raid en 3D : vue commandant avec altitudes × 10, puis depuis un radar, puis au plus près de l'essaim](docs/images/vue3d.gif)
+
+Six caméras au choix : libre, suivi de la sélection, depuis un radar, depuis le site attaqué, vue commandant, vue de
+dessus. Un clic sur une unité ouvre le même inspecteur qu'en 2D. Pour une vue 3D sans réseau, préparez le théâtre :
+
+```sh
+node outils/hors_ligne.js --lat 47 --lon 2.5 --rayon-km 300 --zoom-max 10   # dans hors_ligne/, hors git
+```
+
+Tant que ce dossier existe, la vue 3D lit ses tuiles plutôt que le fond choisi. Respectez les conditions de chaque
+source : ces tuiles ne se redistribuent pas forcément.
+
 ## 5 · Déployer ses forces
 
 « Éditer » au début du raid ouvre l'**éditeur de déploiement** : la palette du catalogue à gauche, la fiche de
@@ -235,6 +255,15 @@ carte — radars, batteries, postes, vecteurs, autres C2, liaisons, moyens, zone
 de zéro ; restent le CDC principal et un site à défendre, et Ctrl+Z ramène tout.
 
 ![Éditeur : un radar déplacé, un radar ajouté (R11), une zone protégée et un plan de vol de trois points sélectionnés](docs/images/editeur.png)
+
+### Aides au déploiement
+
+Pendant l'édition, la vue reste de dessus, nord en haut, et reprend son inclinaison à la sortie. La **Règle** (touche M)
+mesure distance et cap le long de la géodésique ; l'**aimant** cale les poses sur une grille de 1 à 25 km ou sur les unités
+proches. Avant de poser, un radar montre sa portée contre l'essaim, une batterie sa bulle, et une liaison en cours de
+tracé sa portée, en rouge si l'autre extrémité est trop loin. Un badge « ×3 » signale les avions superposés.
+
+![La règle mesure 158 km au cap 072°, aimantée à la grille de 25 km](docs/images/aides_deploiement.png)
 
 ### Équiper et relier
 
@@ -480,6 +509,7 @@ cartes/fonds|relief|batiments/<source>.json   une source de carte par fichier, a
 prive/unites/…  prive/algos/…             votre catalogue privé (ignoré par git), identifiants préfixés « prive/ »
 scenarios/                                scénarios JSON, chaque clé documentée
 schemas/                                  schémas JSON des fichiers (générés par node outils/indexer.js)
+hors_ligne/                               tuiles préparées pour la vue 3D sans réseau (ignoré par git)
 ```
 
 - **Unités** : un fichier ne dit que ce qui change par rapport à son parent (`herite_de`) ; les valeurs s'écrivent
