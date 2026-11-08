@@ -7,6 +7,7 @@ import {join} from "node:path";
 import {ROLES} from "../src/moteur/algos.js";
 import {FIDELITES, unite_brute} from "../src/moteur/catalogue.js";
 import {RACINE, ids_unites_disque} from "../src/moteur/catalogue_node.js";
+import {COLONNES, ETATS, FORMAT_REJEU, VERSION_REJEU} from "../src/moteur/rejeu.js";
 
 // Familles d'unités : schéma, classe de base dont on lit les clés, dossier où ranger les fichiers.
 export const FAMILLES = [
@@ -73,11 +74,35 @@ function schema_meta() {
   };
 }
 
+/** Rendre le schéma d'une ligne d'un fichier de rejeu ; colonnes et états viennent du moteur. */
+function schema_rejeu() {
+  const nombre = {type: "number"};
+  const liste = {type: "array"};
+  const lignes = (colonnes) => ({type: "array", items: {type: "array", minItems: colonnes.length, maxItems: colonnes.length, items: nombre}, description: `Colonnes : ${colonnes.join(", ")}.`});
+  const genre = (nom, required, properties, description) => ({type: "object", description, required: ["genre", ...required], properties: {genre: {const: nom}, ...properties}});
+  return {
+    $schema: ENTETE, $id: "egide/schemas/rejeu.schema.json", title: "Ligne d'un fichier de rejeu Égide",
+    description: "Un fichier .egide-rejeu est du JSON lignes compressé en gzip ; chaque ligne valide ce schéma (docs/FORMATS.md § 6).",
+    oneOf: [
+      genre("entete", ["format", "version", "empreinte", "graine", "origine", "repere", "duree_s", "pas_simulation_s", "pas_echantillon_s", "images", "colonnes", "etats", "catalogue"], {
+        format: {const: FORMAT_REJEU}, version: {const: VERSION_REJEU}, empreinte: {type: "string"}, graine: nombre, repere: {type: "string"}, duree_s: nombre, pas_simulation_s: nombre, pas_echantillon_s: nombre, images: {type: "integer"},
+        origine: {type: "object", required: ["lat_deg", "lon_deg", "alt_m"]}, colonnes: {const: COLONNES}, etats: {const: ETATS},
+        catalogue: {type: "array", items: {type: "object", required: ["id", "famille", "nom", "pays", "icone", "dimensions"]}},
+      }, "Première ligne du fichier."),
+      genre("statique", ["drones", "vecteurs", "sites", "radars", "postes", "centres", "liaisons", "zones"], {drones: {type: "object", required: ["unite", "nombre"]}, vecteurs: liste, sites: liste, radars: liste, postes: liste, centres: liste, liaisons: {type: "object", required: ["mode", "liste"]}, zones: liste}, "Deuxième ligne : ce qui ne bouge pas."),
+      genre("image", ["t", "drones", "vecteurs", "postes"], {t: nombre, drones: lignes(COLONNES.drones), vecteurs: lignes(COLONNES.vecteurs), postes: {type: "array", items: {type: "integer"}, description: "Munitions de chaque poste, dans l'ordre du statique."}}, "État du monde à l'instant t (s)."),
+      genre("evenement", ["t", "type"], {t: nombre, type: {type: "string"}}, "Évènement daté du journal ; ses positions sont écrites comme les lieux du statique."),
+      genre("bilan", ["fuites", "fuites_max_cible", "duree"], {fuites: {type: "integer"}, fuites_max_cible: {type: "integer"}, duree: nombre}, "Dernière ligne : bilan de la simulation."),
+    ],
+  };
+}
+
 /** Rendre {nom de fichier: schéma} pour tout le dossier schemas/. */
 export function schemas() {
   const ids = ids_unites_disque().filter((id) => !id.startsWith("prive/"));
   const fichiers = Object.fromEntries(ids.map((id) => [id, JSON.parse(readFileSync(join(RACINE, "unites", `${id}.json`), "utf-8"))]));
   const sortie = Object.fromEntries(FAMILLES.map(([nom, base, dossier]) => [`unite.${nom}.schema.json`, schema_famille(nom, base, dossier, fichiers)]));
   sortie["algo_meta.schema.json"] = schema_meta();
+  sortie["rejeu.schema.json"] = schema_rejeu();
   return sortie;
 }

@@ -30,7 +30,8 @@ import {absorber, creer_effets, sauter} from "./effets.js";
 import {format_duree} from "./format.js";
 import {decrire} from "./infobulles.js";
 import {MULTIPLICATEURS, aller_a, avancer_temps_reel, creer_lecteur} from "./lecteur.js";
-import {enregistrer_prereglage, exporter_scenario, lire_prereglages} from "./prereglages.js";
+import {creer_rejeu, texte_rejeu} from "../moteur/rejeu.js";
+import {enregistrer_prereglage, exporter_rejeu, exporter_scenario, lire_prereglages} from "./prereglages.js";
 import {brancher_panneaux} from "./panneaux.js";
 import {construire_reglages} from "./reglages.js";
 import {dessiner_scope, trouver_sous_curseur} from "./scope.js";
@@ -62,6 +63,23 @@ async function completer_catalogue(brut) {
 }
 
 /** Charger les algorithmes que fait tourner le scénario résolu et qui ne sont pas encore en mémoire. */
+/** Simuler le raid courant et télécharger son rejeu ; seules ses unités entrent dans l'empreinte, comme sous Node. */
+async function telecharger_rejeu() {
+  const message = $("[data-champ='message']");
+  message.textContent = "Simulation du raid pour le rejeu…";
+  // Le raid occupe le fil principal plusieurs secondes : le message doit s'afficher avant.
+  await new Promise((suite) => setTimeout(suite));
+  try {
+    const brut = brut_courant();
+    const enregistrements = await creer_rejeu(brut, await charger_unites(ids_unites(brut), lire_json), etat.registre);
+    await exporter_rejeu(texte_rejeu(enregistrements), `egide-g${enregistrements[0].graine}.egide-rejeu`);
+    message.textContent = `Rejeu exporté : ${enregistrements[0].images} images, ${enregistrements[0].duree_s} s de raid.`;
+  } catch (erreur) {
+    console.error(erreur);
+    message.textContent = `Rejeu impossible : ${erreur.message}`;
+  }
+}
+
 async function completer_registre(scenario) {
   const manquants = ids_algos(scenario).filter((id) => !(id in etat.registre));
   const importer = (chemin) => import(new URL(chemin, document.baseURI).href);
@@ -446,6 +464,7 @@ function brancher_prereglages() {
     remplir();
   });
   $("[data-action='exporter']").addEventListener("click", () => exporter_scenario(brut_courant(), "egide-scenario.json"));
+  $("[data-action='exporter_rejeu']").addEventListener("click", telecharger_rejeu);
   $("[data-action='reinitialiser']").addEventListener("click", () => {
     etat.modifications = {};
     charger().then(rafraichir_reglages);

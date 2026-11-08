@@ -660,3 +660,17 @@ calcul, selon les mêmes calques que la 2D. Hypothèses d'affichage :
 - **Caméras** : une caméra posée sur un radar ou sur un site regarde le barycentre des drones en vol (moyenne de leurs
   latitudes et longitudes, sans rôle dans le calcul) ; le site observé est la cible que visent le plus de drones en vol,
   ou la plus frappée s'il n'y en a plus.
+
+## 24 · Rejeu pour moteur de jeu (jalon 15)
+
+Le rejeu met en fichier un raid simulé, pour le relire dans un moteur de jeu. Il observe la simulation et n'y change
+rien : le test vérifie que le bilan est celui d'une simulation sans journal ni observateur. Format : docs/FORMATS.md § 6.
+
+Hypothèses de restitution, sans effet sur le calcul :
+
+- **Échantillonnage.** Une image à chaque multiple du pas d'échantillonnage (0,5 s par défaut), borné par le pas de
+  simulation. Entre deux images, le client interpole : à 800 km/h, un drone parcourt 111 m en 0,5 s en ligne quasi droite.
+- **Repère.** ENU rigide, tangent à l'origine du théâtre : rotation et translation de l'ECEF, sans déformation ni
+  projection. Il redonne la position du moteur à l'arrondi près (10 cm).
+- **Cap.** Azimut sphérique du déplacement entre deux images (l'écart à l'ellipsoïde ne se voit pas sur une silhouette).
+  Pour une image très espacée, c'est un cap moyen ; une entité immobile garde le dernier.

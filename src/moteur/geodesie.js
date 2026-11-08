@@ -51,6 +51,12 @@ export const norme = (v) => Math.hypot(v.x, v.y, v.z);
 /** Rendre la distance en ligne droite (oblique) entre deux points ECEF, en m : celle que mesure un capteur. */
 export const distance_oblique = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
+/** Rendre le cap (rad, depuis le nord, sens horaire) de `a` vers `b` sur la sphère : il oriente une silhouette, l'écart à l'ellipsoïde ne se voit pas. */
+export function cap_vers(a, b) {
+  const dLon = b.lon - a.lon;
+  return Math.atan2(Math.sin(dLon) * Math.cos(b.lat), Math.cos(a.lat) * Math.sin(b.lat) - Math.sin(a.lat) * Math.cos(b.lat) * Math.cos(dLon));
+}
+
 /** Rendre le vecteur ECEF `v` exprimé dans le repère local Est-Nord-Haut de `origine` (géographique). */
 export function vers_enu(origine, v) {
   const [sl, cl, so, co] = [Math.sin(origine.lat), Math.cos(origine.lat), Math.sin(origine.lon), Math.cos(origine.lon)];

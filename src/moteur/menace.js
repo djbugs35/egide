@@ -64,7 +64,7 @@ export function avancer_drones(monde, dt) {
     if (drone.route.length === 0) {
       drone.arrive = true;
       monde.fuites[drone.cible]++;
-      journaliser(monde, {type: "impact", cible: drone.cible});
+      journaliser(monde, {type: "impact", cible: drone.cible, drone: drone.id});
     }
   }
 }

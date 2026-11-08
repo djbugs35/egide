@@ -202,8 +202,101 @@ Un scénario exporté par l'interface (« Exporter ») a exactement ce format ; 
 recharge par « Importer », se range dans `scenarios/` (puis `node outils/indexer.js`), ou se joue en ligne de commande :
 `node src/campagne.js --scenario scenarios/mon_scenario.json`.
 
-## 6 · Stabilité
+## 6 · Rejeu pour moteur de jeu
+
+Un fichier `.egide-rejeu` rejoue un raid dans un moteur de jeu (Godot, Unity, Unreal…). Égide reste l'autorité : le
+client affiche ce qu'il lit, il ne simule rien. Il se produit par `node src/rejeu.js` (écrit dans `resultats/rejeux/`)
+ou par « Exporter le rejeu » dans le panneau Scénario. Les deux chemins donnent le même contenu, à la même empreinte.
+
+```sh
+node src/rejeu.js --scenario scenarios/reference.json --echantillon 0.5 --simulation.graine 42
+```
+
+Compter environ 23 Mo pour le scénario de référence (1 000 drones, 20 min de raid, une image toutes les 0,5 s).
+
+### 6.1 Structure
+
+Le fichier est du **JSON lignes compressé en gzip** : un objet par ligne, que sa clé `genre` identifie. Le schéma de
+chaque ligne est dans `schemas/rejeu.schema.json`.
+
+| Ligne | `genre` | Contenu |
+|---|---|---|
+| 1 | `entete` | format, version, empreinte, graine, origine, repère, durées, colonnes, états, catalogue des unités |
+| 2 | `statique` | drones (unité, nombre), vecteurs, sites, radars, postes, centres, liaisons, zones |
+| suivantes | `image`, `evenement` | mêlées par instant croissant |
+| dernière | `bilan` | bilan de la simulation, mêmes clés que `bilan()` du moteur |
+
+Les évènements d'un pas précèdent l'image de la fin de ce pas. La dernière image est toujours celle de la fin du raid,
+même hors de la grille d'échantillonnage.
+
+### 6.2 Images
+
+`{"genre": "image", "t": 12.5, "drones": [[…]], "vecteurs": [[…]], "postes": [40, 38, …]}`, `t` en secondes.
+
+| Colonne | Unité | Sens |
+|---|---|---|
+| `id` | | numéro de l'entité, stable sur tout le raid |
+| `e`, `n`, `u` | m | position dans le repère local, à 10 cm près |
+| `alt` | m | altitude au-dessus de l'ellipsoïde |
+| `cap_deg` | degrés | 0 à 360, depuis le nord, sens horaire |
+| `etat` | rang | dans `entete.etats.drones` ou `entete.etats.vecteurs` |
+| `munitions` | | vecteurs seulement ; 0 : à court |
+
+`drones` ne liste que les drones en vol à cet instant : un drone absent n'est pas encore parti, est détruit (évènement
+`tir` avec `detruit`) ou a frappé (évènement `impact`). `vecteurs` les liste tous, les perdus compris. `postes` donne
+les munitions de chaque poste, dans l'ordre de `statique.postes`. L'ordre des colonnes fait foi dans `entete.colonnes`.
+
+Le cap est mesuré sur le déplacement depuis l'image précédente : une entité immobile garde son dernier cap.
+
+### 6.3 Repère
+
+ENU en mètres, tangent à l'origine du théâtre (`entete.origine`) : `e` vers l'est, `n` vers le nord, `u` vers le haut
+de l'origine. Les moteurs de jeu travaillent en flottants simple précision : des mètres locaux évitent les tremblements.
+
+Le plan étant tangent, `u` descend avec la rotondité de la Terre : environ −7 km à 300 km de l'origine, pour un drone
+qui vole à altitude constante. Deux façons d'afficher :
+
+- `(e, n, u)` : positions exactes, à montrer sur un terrain exporté dans le même repère ;
+- `(e, n, alt)` : monde plat, plus simple, déformé loin de l'origine.
+
+Les images ne portent pas de latitude ni de longitude, ce qui divise le fichier par deux. Elles se retrouvent sans
+perte : ECEF = ECEF(origine) + rotation ENU vers ECEF, puis géodésique (`depuis_enu` et `depuis_ecef` dans
+`src/moteur/geodesie.js`). Le statique et les évènements écrivent chaque lieu sous les deux formes :
+`{"lat_deg", "lon_deg", "alt_m", "e", "n", "u"}`.
+
+### 6.4 Évènements
+
+`{"genre": "evenement", "t": 358.5, "type": "tir", …}` reprend le journal du moteur, positions écrites en lieux :
+
+| `type` | Champs |
+|---|---|
+| `detection` | `drone`, `radar`, `connu` |
+| `mission` | `avion`, `point`, `effectif`, `arrivee`, `depuis`, `centre` |
+| `reception` | `avion`, `ordre` |
+| `ordre` | `avions`, `point` |
+| `contact` | `avion`, `drone` |
+| `tir` | `couche`, `de`, `vers`, `detruit`, `drone`, `pk`, `tireur` |
+| `brouillage` | `tireur`, `drone`, `de`, `vers` |
+| `impact` | `cible`, `drone` |
+| `panne` | `element`, `cause` |
+| `reseau` | `hs` |
+| `reaction` | `nature`, `drone`, puis `de`, `vers` ou `point`, `foyer` |
+
+Un nom de nœud (`radar:0`, `sol:3`, `avions:1`, `conduite`, `centre:0`) est celui du champ `noeud` du statique.
+
+### 6.5 Vérifier un client
+
+Fuites, destructions, munitions restantes et durée se recalculent à partir des images et des évènements :
+`bilan_du_rejeu` dans `src/moteur/rejeu.js` fait référence, et le test vérifie qu'il redonne la ligne `bilan`. Les
+nombres de tirs ne se recalculent pas : le journal note la résolution d'un tir, et un tir en vol sur un drone déjà
+détruit n'en a pas.
+
+Dans le catalogue de l'en-tête, `dimensions` vaut `null` tant que l'unité ne déclare pas cette clé : aucune unité du
+catalogue public n'en déclare aujourd'hui.
+
+## 7 · Stabilité
 
 Le format de scénario est versionné (`format`) ; un format plus ancien est migré à la lecture. Les clés des unités ne
 sont jamais retirées sans migration ; une clé ajoutée aux classes de base reçoit une valeur par défaut, si bien qu'un
-fichier valide le reste. Les schémas de `schemas/` portent la forme de la version du dépôt où ils se trouvent.
+fichier valide le reste. Les schémas de `schemas/` portent la forme de la version du dépôt où ils se trouvent. Le
+fichier de rejeu porte sa `version` : un lecteur refuse celle qu'il ne connaît pas.

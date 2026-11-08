@@ -1,6 +1,6 @@
 // Contenu de la vue 3D (jalon 14, MODELE § 23) : ce que la scène montre à un instant, lu dans le monde comme la 2D, et
 // décodage du relief. Pur, sans Cesium ni DOM, testé : les positions sont celles du moteur, sans second calcul.
-import {direct, vers_degres} from "../moteur/geodesie.js";
+import {cap_vers, direct, vers_degres} from "../moteur/geodesie.js";
 import {horizon_radar} from "../moteur/geometrie.js";
 import {parametres_radar, portee_site, positions_radars} from "../moteur/radars.js";
 import {couverture_reelle} from "../moteur/terrain.js";
@@ -8,12 +8,6 @@ import {position_noeud} from "./reseau_vue.js";
 import {calque_vecteur} from "./symboles.js";
 
 const position = ({lat, lon, alt}) => ({lat_deg: vers_degres(lat), lon_deg: vers_degres(lon), alt: alt ?? 0});
-
-/** Rendre le cap (rad, depuis le nord) de `a` vers `b` sur la sphère : il oriente une silhouette, l'écart à l'ellipsoïde ne se voit pas. */
-function cap_vers(a, b) {
-  const dLon = b.lon - a.lon;
-  return Math.atan2(Math.sin(dLon) * Math.cos(b.lat), Math.cos(a.lat) * Math.sin(b.lat) - Math.sin(a.lat) * Math.cos(b.lat) * Math.cos(dLon));
-}
 
 /** Rendre les drones en vol à montrer : {id, lat_deg, lon_deg, alt (m), detecte, cap (rad)} ; `montre` restreint (vue du CDC). */
 function drones_scene(monde, calques, montre) {

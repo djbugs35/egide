@@ -23,9 +23,17 @@ export function enregistrer_prereglage(nom, modifications) {
 }
 
 /** Faire télécharger `brut` (scénario complet, avec son bloc _aide) sous le nom `nomFichier`. */
-export function exporter_scenario(brut, nomFichier) {
+export const exporter_scenario = (brut, nomFichier) => telecharger(new Blob([`${JSON.stringify(brut, null, 2)}\n`], {type: "application/json"}), nomFichier);
+
+/** Télécharger le texte d'un rejeu, compressé en gzip (docs/FORMATS.md § 6). */
+export async function exporter_rejeu(texte, nomFichier) {
+  const flux = new Blob([texte]).stream().pipeThrough(new CompressionStream("gzip"));
+  telecharger(await new Response(flux).blob(), nomFichier);
+}
+
+function telecharger(contenu, nomFichier) {
   const lien = document.createElement("a");
-  lien.href = URL.createObjectURL(new Blob([`${JSON.stringify(brut, null, 2)}\n`], {type: "application/json"}));
+  lien.href = URL.createObjectURL(contenu);
   lien.download = nomFichier;
   lien.click();
   URL.revokeObjectURL(lien.href);

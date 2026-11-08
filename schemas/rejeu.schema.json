@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "egide/schemas/rejeu.schema.json",
+  "title": "Ligne d'un fichier de rejeu Égide",
+  "description": "Un fichier .egide-rejeu est du JSON lignes compressé en gzip ; chaque ligne valide ce schéma (docs/FORMATS.md § 6).",
+  "oneOf": [
+    {
+      "type": "object",
+      "description": "Première ligne du fichier.",
+      "required": [
+        "genre",
+        "format",
+        "version",
+        "empreinte",
+        "graine",
+        "origine",
+        "repere",
+        "duree_s",
+        "pas_simulation_s",
+        "pas_echantillon_s",
+        "images",
+        "colonnes",
+        "etats",
+        "catalogue"
+      ],
+      "properties": {
+        "genre": {
+          "const": "entete"
+        },
+        "format": {
+          "const": "egide-rejeu"
+        },
+        "version": {
+          "const": 1
+        },
+        "empreinte": {
+          "type": "string"
+        },
+        "graine": {
+          "type": "number"
+        },
+        "repere": {
+          "type": "string"
+        },
+        "duree_s": {
+          "type": "number"
+        },
+        "pas_simulation_s": {
+          "type": "number"
+        },
+        "pas_echantillon_s": {
+          "type": "number"
+        },
+        "images": {
+          "type": "integer"
+        },
+        "origine": {
+          "type": "object",
+          "required": [
+            "lat_deg",
+            "lon_deg",
+            "alt_m"
+          ]
+        },
+        "colonnes": {
+          "const": {
+            "drones": [
+              "id",
+              "e",
+              "n",
+              "u",
+              "alt",
+              "cap_deg",
+              "etat"
+            ],
+            "vecteurs": [
+              "id",
+              "e",
+              "n",
+              "u",
+              "alt",
+              "cap_deg",
+              "etat",
+              "munitions"
+            ]
+          }
+        },
+        "etats": {
+          "const": {
+            "drones": [
+              "inconnu",
+              "detecte"
+            ],
+            "vecteurs": [
+              "orbite",
+              "ralliement",
+              "poste",
+              "retour",
+              "engagement",
+              "perdu"
+            ]
+          }
+        },
+        "catalogue": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "famille",
+              "nom",
+              "pays",
+              "icone",
+              "dimensions"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "description": "Deuxième ligne : ce qui ne bouge pas.",
+      "required": [
+        "genre",
+        "drones",
+        "vecteurs",
+        "sites",
+        "radars",
+        "postes",
+        "centres",
+        "liaisons",
+        "zones"
+      ],
+      "properties": {
+        "genre": {
+          "const": "statique"
+        },
+        "drones": {
+          "type": "object",
+          "required": [
+            "unite",
+            "nombre"
+          ]
+        },
+        "vecteurs": {
+          "type": "array"
+        },
+        "sites": {
+          "type": "array"
+        },
+        "radars": {
+          "type": "array"
+        },
+        "postes": {
+          "type": "array"
+        },
+        "centres": {
+          "type": "array"
+        },
+        "liaisons": {
+          "type": "object",
+          "required": [
+            "mode",
+            "liste"
+          ]
+        },
+        "zones": {
+          "type": "array"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "description": "État du monde à l'instant t (s).",
+      "required": [
+        "genre",
+        "t",
+        "drones",
+        "vecteurs",
+        "postes"
+      ],
+      "properties": {
+        "genre": {
+          "const": "image"
+        },
+        "t": {
+          "type": "number"
+        },
+        "drones": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 7,
+            "maxItems": 7,
+            "items": {
+              "type": "number"
+            }
+          },
+          "description": "Colonnes : id, e, n, u, alt, cap_deg, etat."
+        },
+        "vecteurs": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "minItems": 8,
+            "maxItems": 8,
+            "items": {
+              "type": "number"
+            }
+          },
+          "description": "Colonnes : id, e, n, u, alt, cap_deg, etat, munitions."
+        },
+        "postes": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Munitions de chaque poste, dans l'ordre du statique."
+        }
+      }
+    },
+    {
+      "type": "object",
+      "description": "Évènement daté du journal ; ses positions sont écrites comme les lieux du statique.",
+      "required": [
+        "genre",
+        "t",
+        "type"
+      ],
+      "properties": {
+        "genre": {
+          "const": "evenement"
+        },
+        "t": {
+          "type": "number"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "description": "Dernière ligne : bilan de la simulation.",
+      "required": [
+        "genre",
+        "fuites",
+        "fuites_max_cible",
+        "duree"
+      ],
+      "properties": {
+        "genre": {
+          "const": "bilan"
+        },
+        "fuites": {
+          "type": "integer"
+        },
+        "fuites_max_cible": {
+          "type": "integer"
+        },
+        "duree": {
+          "type": "number"
+        }
+      }
+    }
+  ]
+}

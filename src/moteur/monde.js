@@ -49,7 +49,7 @@ function compteurs_defensifs(scenario) {
 
 /**
  * Rendre un monde neuf pour un scénario résolu et le registre de ses algorithmes (voir ids_algos).
- * `journal` : tenir la liste des évènements (rejeu), inutile en campagne.
+ * `journal` : tenir la liste des évènements (rejeu), inutile en campagne ; voir `simuler` pour `observer`.
  */
 export function creer_monde(scenario, {registre, journal = true}) {
   const hasard = creer_hasard(scenario.simulation.graine);
@@ -154,12 +154,17 @@ export function avancer_monde(monde) {
 /** Rendre vrai quand plus aucun drone ne vole et qu'aucun tir n'est en vol. */
 export const est_termine = (monde) => monde.tirs_en_vol.length === 0 && monde.drones.every((drone) => !drone.vivant || drone.arrive);
 
-/** Rendre le monde au terme du raid (`options` : voir creer_monde). */
+/**
+ * Rendre le monde au terme du raid (`options` : voir creer_monde). `options.observer(monde)`, s'il est donné, est
+ * appelé à l'instant initial puis après chaque pas : il ne doit rien modifier.
+ */
 export function simuler(scenario, options) {
   const monde = creer_monde(scenario, options);
+  options.observer?.(monde);
   while (!est_termine(monde)) {
     if (monde.t > DUREE_MAXIMALE) throw new Error(`raid non terminé après ${DUREE_MAXIMALE} s : défaut de simulation`);
     avancer_monde(monde);
+    options.observer?.(monde);
   }
   return monde;
 }
