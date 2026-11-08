@@ -1,0 +1,49 @@
+{
+  "_aide": {
+    "_": "Correspondance entre le rejeu et les modeles 3D du moteur de jeu (docs/FORMATS.md § 7.4). Chaque modele cite est generique : le client fournit le sien, et Egide ne livre aucun modele d'un systeme reel.",
+    "modeles": "Modeles generiques qu'un client doit savoir afficher.",
+    "icones": "Modele de chaque icone du dossier icones/. A consulter en premier.",
+    "familles": "Modele par defaut d'une famille d'unites, pour une unite sans icone connue."
+  },
+  "modeles": [
+    "abri_commandement", "avion_helice", "avion_reaction", "batiment_site", "drone_aile_delta", "drone_helices", "drone_reaction",
+    "helicoptere", "mat_liaison", "mat_radar", "missile", "vehicule_arme", "vehicule_brouilleur", "vehicule_lanceur", "vehicule_radar"
+  ],
+  "icones": {
+    "anti_drone": "vehicule_arme",
+    "batterie_courte": "vehicule_lanceur",
+    "batterie_missile": "vehicule_lanceur",
+    "batterie_moyenne": "vehicule_lanceur",
+    "brouilleur": "vehicule_brouilleur",
+    "c2": "abri_commandement",
+    "canon": "vehicule_arme",
+    "chasseur": "avion_reaction",
+    "drone_arme": "drone_helices",
+    "drone_delta": "drone_aile_delta",
+    "drone_helice": "drone_helices",
+    "drone_reaction": "drone_reaction",
+    "helicoptere": "helicoptere",
+    "hypersonique": "missile",
+    "intercepteur": "avion_reaction",
+    "laser": "vehicule_arme",
+    "liaison": "mat_liaison",
+    "missile_balistique": "missile",
+    "missile_croisier": "missile",
+    "radar_aesa": "vehicule_radar",
+    "radar_mobile": "vehicule_radar",
+    "radar_pylone": "mat_radar",
+    "site": "batiment_site",
+    "turbopropulseur": "avion_helice"
+  },
+  "familles": {
+    "capteurs/radars": "mat_radar",
+    "effecteurs/brouillage": "vehicule_brouilleur",
+    "effecteurs/drones": "drone_helices",
+    "effecteurs/roquettes": "missile",
+    "liaisons": "mat_liaison",
+    "sites/postes": "vehicule_lanceur",
+    "vecteurs/avions": "avion_helice",
+    "vecteurs/drones": "drone_aile_delta",
+    "vecteurs/drones_defensifs": "drone_helices"
+  }
+}

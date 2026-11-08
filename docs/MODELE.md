@@ -674,3 +674,5 @@ Hypothèses de restitution, sans effet sur le calcul :
   projection. Il redonne la position du moteur à l'arrondi près (10 cm).
 - **Cap.** Azimut sphérique du déplacement entre deux images (l'écart à l'ellipsoïde ne se voit pas sur une silhouette).
   Pour une image très espacée, c'est un cap moyen ; une entité immobile garde le dernier.
+- **Terrain exporté.** Le maillage relie les nœuds de la grille du moteur par des triangles, sans recalcul d'altitude :
+  entre deux nœuds, il peut s'écarter de l'interpolation bilinéaire du moteur (§ 16), d'autant plus que `--pas-km` est grand.

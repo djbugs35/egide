@@ -294,7 +294,50 @@ détruit n'en a pas.
 Dans le catalogue de l'en-tête, `dimensions` vaut `null` tant que l'unité ne déclare pas cette clé : aucune unité du
 catalogue public n'en déclare aujourd'hui.
 
-## 7 · Stabilité
+## 7 · Terrain pour moteur de jeu
+
+`node outils/export_terrain.js` écrit le relief d'un terrain du catalogue dans `resultats/terrains/<nom>/`, dans le
+repère local du rejeu : le même théâtre donne la même origine, donc des positions directement superposables.
+
+```sh
+node outils/export_terrain.js --terrain terrains/centre_france --rayon-km 200 --pas-km 2
+node outils/export_terrain.js --terrain terrains/centre_france --plat --imagerie fonds/ign_ortho --zoom-imagerie 9
+```
+
+`--scenario` (référence par défaut) fixe l'origine ; il doit être celui du rejeu. `--terrain` remplace le terrain du
+scénario, `--rayon-km` et `--pas-km` réduisent l'emprise et la finesse. `terrain.json` décrit l'export :
+format, version, terrain et sources, origine, repère, grille, hauteurs, maillage, imagerie.
+
+### 7.1 Carte de hauteur
+
+`hauteurs.png` : PNG 16 bits en niveaux de gris, nord en haut, ouest à gauche, sur la grille régulière en latitude et
+longitude (`terrain.json` : `grille`). L'altitude d'un pixel vaut `alt_min_m + valeur × echelle_m`.
+
+### 7.2 Maillage
+
+`terrain.glb` : glTF 2.0 binaire, avec positions, normales, UV et indices 32 bits. glTF a Y vers le haut et Z vers l'arrière :
+`(x, y, z) = (e, u, −n)`, en mètres. Avec `--plat`, `y` vaut l'altitude : le maillage suit alors la lecture `(e, n, alt)`
+du rejeu (§ 6.3), et `terrain.json` indique `"repere": "plat"`. Le terrain et le rejeu doivent être lus de la même façon.
+
+### 7.3 Imagerie
+
+`--imagerie <source>` n'accepte que les sources dont le fichier sous `cartes/` porte `"export_imagerie": true`, ce qui
+écarte celles qui interdisent le téléchargement en masse. L'attribution et les conditions sont reprises dans `terrain.json`,
+à afficher par le client.
+
+Les tuiles sont écrites telles que servies, sans décodage ni reprojection, dans `imagerie/{z}/{x}/{y}.tuile` (JPEG ou
+PNG). Le client les assemble en une mosaïque de `colonnes × lignes` tuiles, la tuile `(x_min, y_min)` en haut à gauche.
+Une tuile absente (mer, hors couverture) reste vide. Les UV du maillage (`"uv": "mosaique"`) visent cette mosaïque ; sans
+imagerie (`"uv": "grille"`), ils suivent la carte de hauteur.
+
+### 7.4 Modèles 3D
+
+`clients/modeles.json` donne le modèle générique de chaque icône (`icones`) et, à défaut, de chaque famille (`familles`).
+Un client part de l'unité citée par le statique, lit son icône et sa famille dans le catalogue de l'en-tête du rejeu, puis
+affiche son propre modèle pour ce nom. Sites et centres n'ont pas d'unité : icônes `site` et `c2`. Égide ne livre
+aucun modèle d'un système réel.
+
+## 8 · Stabilité
 
 Le format de scénario est versionné (`format`) ; un format plus ancien est migré à la lecture. Les clés des unités ne
 sont jamais retirées sans migration ; une clé ajoutée aux classes de base reçoit une valeur par défaut, si bien qu'un

@@ -75,7 +75,14 @@ test("rejeu : l'en-tête donne reproductibilité, origine et fiches des unités 
   assert.deepEqual(entete.origine, {lat_deg: 47, lon_deg: 2.5, alt_m: 0});
   const drone = entete.catalogue.find((u) => u.id === REFERENCE.rouge.unite);
   assert.equal(drone.famille, "vecteurs/drones");
+  assert.equal(entete.catalogue.find((u) => u.id.startsWith("sites/")).famille, "sites/postes");
   assert.ok(drone.nom && "pays" in drone && "icone" in drone && drone.dimensions === null);
+});
+
+test("rejeu : la famille d'une unité rangée à un seul niveau est son dossier, pas son propre identifiant", async () => {
+  const moyen = "liaisons/radio_vhf_uhf_notionnelle";
+  const {entete} = await rejeu({"bleu.reseau.mode": "liaisons", "bleu.reseau.liaisons": [{de: "radar:0", vers: "conduite", moyen}]});
+  assert.equal(entete.catalogue.find((u) => u.id === moyen).famille, "liaisons");
 });
 
 test("rejeu : le statique décrit sites, radars, postes, centres, liaisons et zones, en géodésique et en ENU", async () => {

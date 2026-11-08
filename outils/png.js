@@ -1,6 +1,6 @@
-// Décodeur PNG minimal (8 bits, RVB ou RVBA, non entrelacé) pour lire les tuiles de relief terrarium sous Node,
-// sans dépendance : zlib de Node et les cinq filtres de ligne de la norme PNG (RFC 2083 § 6).
-import {inflateSync} from "node:zlib";
+// PNG minimal sans dépendance, avec le zlib de Node (RFC 2083) : décodeur 8 bits RVB ou RVBA non entrelacé pour lire les
+// tuiles de relief terrarium, encodeur 16 bits en niveaux de gris pour exporter les cartes de hauteur.
+import {deflateSync, inflateSync} from "node:zlib";
 
 const SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 
@@ -45,4 +45,39 @@ export function decoder_png(octets) {
     }
   }
   return {largeur, hauteur, canaux, pixels};
+}
+
+const TABLE_CRC = Array.from({length: 256}, (_, n) => {
+  let c = n;
+  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  return c >>> 0;
+});
+
+function crc32(octets) {
+  let c = 0xffffffff;
+  for (const o of octets) c = TABLE_CRC[(c ^ o) & 255] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+function bloc(type, corps) {
+  const typeEtCorps = Buffer.concat([Buffer.from(type, "ascii"), corps]);
+  const [longueur, somme] = [Buffer.alloc(4), Buffer.alloc(4)];
+  longueur.writeUInt32BE(corps.length);
+  somme.writeUInt32BE(crc32(typeEtCorps));
+  return Buffer.concat([longueur, typeEtCorps, somme]);
+}
+
+/** Rendre les octets d'un PNG 16 bits en niveaux de gris ; `valeurs` (0 à 65 535) : ligne par ligne depuis le haut de l'image. */
+export function encoder_png_gris16(largeur, hauteur, valeurs) {
+  const entete = Buffer.alloc(13);
+  entete.writeUInt32BE(largeur, 0);
+  entete.writeUInt32BE(hauteur, 4);
+  // Profondeur 16, couleur 0 (gris) ; compression, filtrage et entrelacement aux valeurs par défaut.
+  entete[8] = 16;
+  const ligne = 1 + 2 * largeur;
+  const brut = Buffer.alloc(ligne * hauteur);
+  for (let y = 0; y < hauteur; y++) {
+    for (let x = 0; x < largeur; x++) brut.writeUInt16BE(valeurs[y * largeur + x], y * ligne + 1 + 2 * x);
+  }
+  return Buffer.concat([Buffer.from(SIGNATURE), bloc("IHDR", entete), bloc("IDAT", deflateSync(brut)), bloc("IEND", Buffer.alloc(0))]);
 }

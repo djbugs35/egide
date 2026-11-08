@@ -10,6 +10,7 @@
     "encodage": "Relief : codage des altitudes dans les images ('terrarium' ou 'mapbox').",
     "couche": "Batiments : nom de la couche vectorielle qui porte les batiments.",
     "hauteur": "Batiments : attribut qui porte la hauteur, en m.",
+    "export_imagerie": "Vrai si les conditions d'usage permettent de telecharger toute une emprise pour l'exporter vers un moteur de jeu (outils/export_terrain.js) ; absent : refuse.",
     "attribution": "Mention de source et de licence, affichee en bas de carte. Obligatoire pour toute source tierce.",
     "conditions": "Conditions d'usage a respecter (volume, cle, usage commercial), a lire avant de diffuser l'outil."
   }

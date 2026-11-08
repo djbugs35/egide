@@ -34,7 +34,7 @@ function arrondi(valeur, decimales) {
 }
 
 /** Rendre la fonction qui donne le repère ENU (m) d'un point ECEF, autour de `origine`. */
-function creer_repere(origine) {
+export function creer_repere(origine) {
   const ecefOrigine = vers_ecef(origine);
   return (ecef) => vers_enu(origine, soustraire(ecef, ecefOrigine));
 }
@@ -117,7 +117,7 @@ function statique(monde, lieu) {
 function catalogue(brut, fichiers) {
   return ids_unites(brut).sort().map((id) => {
     const unite = unite_si(id, fichiers);
-    return {id, famille: id.replace(/^prive\//, "").split("/").slice(0, 2).join("/"), nom: unite.nom, pays: unite.pays ?? null, icone: unite.icone ?? null, dimensions: unite.dimensions ?? null};
+    return {id, famille: id.replace(/^prive\//, "").split("/").slice(0, -1).join("/"), nom: unite.nom, pays: unite.pays ?? null, icone: unite.icone ?? null, dimensions: unite.dimensions ?? null};
   });
 }
 

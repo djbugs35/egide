@@ -34,14 +34,14 @@ export function tuiles_emprise(lat, lon, rayonKm, zMin, zMax) {
 
 const adresse = (modele, {z, x, y}) => modele.replace("{z}", z).replace("{x}", x).replace("{y}", y);
 
-function ecrire(chemin, contenu) {
+export function ecrire(chemin, contenu) {
   mkdirSync(dirname(chemin), {recursive: true});
   writeFileSync(`${chemin}.tmp`, contenu);
   renameSync(`${chemin}.tmp`, chemin);
 }
 
 /** Télécharger les tuiles d'une source ; une tuile absente (mer, hors couverture) est sautée. Rendre le nombre écrit. */
-async function telecharger(source, tuiles, dossier) {
+export async function telecharger(source, tuiles, dossier) {
   let [suivante, ecrites] = [0, 0];
   const ouvrier = async () => {
     while (suivante < tuiles.length) {
