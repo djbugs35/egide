@@ -37,6 +37,8 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
 - **v0.11.0** : Godot devient une interface de jeu (jalons 15 et 17) : rejeu et export du terrain, partie en direct contre le
   moteur, sélection, groupes, ordres, mini-carte, brouillard, éditeurs de scénario et de relief ; couvertures par objet et
   résultante des C2, conduite de tir comme contrainte du moteur ; objets orientés ; installation automatique ; icônes privées.
+- **v0.12.0** : refonte de l'édition du théâtre (palette à onglets, consigne, gestes unifiés), liaisons au moyen choisi avec
+  refus motivé, connexions par famille de moyen dans la fiche ; menaces multiples, SER et trajectoire balistique.
 
 ## Arborescence cible
 ```
@@ -163,3 +165,6 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Jeu | **Camp rouge jouable**, dans un mode séparé qui ne fausse pas les analyses | 17 | à faire |
 | Jeu | **Confirmation avant d'abandonner un relief** non enregistré | 17 | à faire |
 | Jeu | **Brouillard masqué par le relief**, comme le calcule déjà le moteur | 17 | à faire |
+| Interface | **Connexions cliquables** : une ligne de la fiche centre et sélectionne l'autre extrémité, ou retire la liaison | 17 | à faire |
+| Jeu | **Refus motivé des liaisons trop longues dans l'éditeur Godot**, comme dans le navigateur | 17 | à faire |
+| Interface | **Choix entre unités superposées** : un clic sur plusieurs unités au même point propose la liste | 17 | à faire |

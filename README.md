@@ -185,7 +185,12 @@ clés `rouge.reaction_*` du scénario ; modèle et hypothèses : [docs/MODELE.md
 Le panneau **Scénario** règle tout par curseurs : nombre et vitesse des drones, avions par type, postes sol et
 munitions, drones défensifs, délai de réaction du CDC, réseau, terrain. Chaque réglage porte sa phrase d'aide. On y
 trouve aussi la **bibliothèque** (scénarios du dépôt et ceux rangés dans ce navigateur), les réglages enregistrés,
-l'export et l'import d'un scénario, et « Revenir à la référence ».
+l'export et l'import d'un scénario, et « Revenir à la référence ». Avec un catalogue privé, la bibliothèque propose
+aussi les scénarios de `prive/scenarios/`.
+
+L'essaim peut être accompagné d'**autres menaces** : le bloc `rouge.groupes` du scénario ajoute des groupes, chacun avec
+son unité, son départ, sa cible et son altitude ou sa trajectoire balistique. La portée d'un radar dépend de la surface
+équivalente de ce qu'il cherche (MODELE § 27), et le calque « Portée radar par menace » la trace d'une couleur par classe.
 
 Même raid fourmi, même graine, en fin de raid :
 
@@ -264,17 +269,25 @@ imagerie (teintes d'altitude), brouillard tracé en disques sans masque du relie
 ## 6 · Déployer ses forces
 
 « Éditer » au début du raid ouvre l'**éditeur de déploiement** : la palette du catalogue à gauche, la fiche de
-l'unité sélectionnée à droite, la barre d'outils en bas.
+l'unité sélectionnée à droite, la barre d'outils en bas et, au-dessus, une consigne qui dit à tout moment ce que fait
+le prochain clic.
 
-![Déploiement : deux radars de veille longue portée (R11, R12), trois batteries de moyenne portée (B1 à B3), un second C2 au sud-ouest, huit intercepteurs à l'est ; « Relier automatiquement » a tiré 32 liaisons sur les moyens communs et signale les unités hors réseau](docs/images/deploiement.png)
+![Un radar de veille longue portée posé depuis la palette, glissé à sa place sans changer d'outil, relié au CDC par satellite ; sa fiche liste alors la connexion](docs/images/edition.gif)
 
 ### Poser des unités
 
-La palette range le catalogue par famille, chaque unité avec son icône et son pays ; le filtre « Pays » n'affiche que
-les unités d'un pays (et les génériques). Pour poser une unité :
+La palette range le catalogue par onglets (Théâtre, Sites, Radars, Sol-air, Aviation, Drones, Réseau, Armes, Menace,
+Relief), avec une recherche par nom ; chaque unité porte son icône et son pays, et le filtre « Pays » n'affiche que
+les unités d'un pays (et les génériques). L'onglet Théâtre déplace le centre de la carte et règle l'étendue. Pour poser
+une unité :
 
-- **cliquez-la dans la palette, puis cliquez la carte**, autant de fois qu'il faut ; Échap pour finir ;
+- **cliquez-la dans la palette, puis cliquez la carte**, autant de fois qu'il faut ; clic droit ou Échap pour finir ;
 - **ou glissez-la** de la palette sur la carte.
+
+Tant qu'un outil de pose est armé, glisser une unité la déplace et glisser le fond déplace la carte : seul un clic sans
+mouvement pose.
+
+![Déploiement : un radar de veille longue portée (R11) relié au CDC, trois batteries de moyenne portée (B1 à B3) avec leur bulle, autour du dispositif de référence](docs/images/deploiement.png)
 
 | Famille | Ce que fait un dépôt |
 |---|---|
@@ -282,22 +295,23 @@ les unités d'un pays (et les génériques). Pour poser une unité :
 | Capteurs | Un radar **de ce modèle** : chaque radar garde sa hauteur d'antenne et sa portée. Le premier dépôt fait passer la couronne « frontière » en radars placés un à un |
 | Défense sol | Une **batterie** de ce modèle, avec sa propre bulle et ses munitions (40 par défaut) |
 | Aviation, Drones défensifs | Un vecteur en orbite au point déposé, ou plusieurs (« Vecteurs par dépôt ») en petit cercle autour. Chaque modèle forme un groupe, qui grossit à chaque dépôt |
-| Communications | À déposer **sur une unité déjà placée** : elle est équipée de ce moyen (voir plus bas) |
+| Réseau | **Cliquez un moyen**, puis les deux unités à relier ; **glissez-le sur une unité** pour l'en équiper (voir plus bas) |
 | Armements | À déposer **sur un avion ou un drone défensif** : tout son groupe change d'emport |
 | Menace, Terrain | Le modèle de drone de l'essaim, ou le relief du théâtre, où qu'on le dépose |
 
-La barre d'outils garde les outils d'avant pour les gestes rapides : **Sélection** (S) pour glisser, sélectionner au
-rectangle ou à Maj+clic, envoyer au clic droit en gardant la formation ; **Cible** (C), **Radar** (R) et **CDC** (K) pour
-poser l'unité par défaut ; **Plan de vol** (P) ; **Zone** (Z), un clic par sommet, double-clic ou Entrée pour fermer,
-qui compte les incursions. Suppr efface la sélection, Ctrl+Z annule, Ctrl+1 à 9 mémorise un groupe et 1 à 9 le rappelle.
-La vue ne bouge pas pendant l'édition, même quand un radar déposé loin agrandit le théâtre.
+La barre d'outils garde les gestes rapides : **Sélection** (S) pour choisir une unité et la glisser, Maj+glisser pour
+un cadre de sélection ; **Liaison** (L) ; **Plan de vol** (P) ; **Zone** (Z), un clic par sommet, double-clic ou Entrée
+pour fermer, qui compte les incursions ; **Règle** (M) et **Gomme** (X). Les touches **C**, **R** et **K** posent une
+cible, un radar ou un CDC par défaut. Suppr efface la sélection, Ctrl+Z annule, Ctrl+1 à 9 mémorise un groupe et 1 à 9
+le rappelle. Glisser le fond déplace la carte ; la vue ne bouge pas d'elle-même, même quand un radar déposé loin agrandit
+le théâtre. Le raid n'est recalculé qu'en quittant l'éditeur : les gestes restent immédiats.
 
 **Effacer** : pendant un dépôt, enfoncez Maj : le curseur passe de « + unité » en vert à « − Effacer » en rouge et
 l'unité visée est barrée ; Maj+clic l'efface. L'outil **Gomme** (X) fait de même à chaque clic. **Tout effacer** vide la
 carte — radars, batteries, postes, vecteurs, autres C2, liaisons, moyens, zones, plan de vol, ordres — pour repartir
 de zéro ; restent le CDC principal et un site à défendre, et Ctrl+Z ramène tout.
 
-![Éditeur : un radar déplacé, un radar ajouté (R11), une zone protégée et un plan de vol de trois points sélectionnés](docs/images/editeur.png)
+![Éditeur : le radar R11 ajouté puis sélectionné, sa bulle de portée, sa fiche à droite et la consigne au-dessus de la barre d'outils](docs/images/editeur.png)
 
 ### Aides au déploiement
 
@@ -311,12 +325,13 @@ tracé sa portée, en rouge si l'autre extrémité est trop loin. Un badge « ×
 ### Équiper et relier
 
 Chaque unité peut déclarer ses **moyens de communication** : filaire, radio V/UHF, satellite, optique (catalogue
-`unites/liaisons/`, chacun avec sa latence, sa portée et son besoin de vue directe). Déposez un moyen sur l'unité, ou
-cochez-le dans sa fiche. Une unité qui n'en déclare aucun accepte tout moyen.
+`unites/liaisons/`, chacun avec sa latence, sa portée et son besoin de vue directe). Glissez un moyen sur l'unité, ou
+cochez-le dans sa fiche. Ces cases servent à « Relier automatiquement » ; une unité qui n'en déclare aucun accepte tout moyen.
 
-- **Liaison** (L) : un clic sur une unité, un clic sur l'autre. La liaison prend le moyen choisi dans la liste s'il
-  est commun aux deux, sinon le plus rapide de leurs moyens communs ; sans moyen commun, elle est refusée et le
-  message dit pourquoi.
+- **Liaison** (L), ou clic sur un moyen de l'onglet Réseau : un clic sur une unité, un clic sur l'autre. La liaison
+  prend **le moyen choisi**, affiché à côté du bouton Liaison ; il complète au besoin l'équipement déclaré. Entre deux
+  unités au sol, elle est refusée si la distance dépasse la portée, et le message donne les deux chiffres. Un clic à
+  côté garde la première extrémité ; Échap abandonne.
 - **Relier automatiquement** : chaque unité équipée est reliée à chaque C2 avec qui elle partage un moyen à portée,
   le plus rapide ; les C2 sont reliés entre eux. La portée tient compte de l'horizon : une radio au sol, mâts de 15 m,
   ne porte qu'à une trentaine de kilomètres, alors qu'un avion à 1 000 m s'entend à 140 km. Les unités qui restent
@@ -340,7 +355,10 @@ Sélectionnez une unité (ou plusieurs, jusqu'à quatre fiches) : sa fiche s'ouv
 Pour chaque algorithme, « hérité » garde celui du modèle ; un choix le remplace pour cette unité ou ce groupe
 seulement. Les algorithmes proposés sont ceux du dossier `algos/` (et de votre catalogue privé).
 
-![Fiche de la batterie B2 : modèle de moyenne portée, 40 munitions, algorithme de tir sol hérité, équipée satellite](docs/images/fiche_unite.png)
+La fiche liste aussi les **connexions** de l'unité, rangées par famille de moyen (filaire, radio, satellite, optique) :
+l'autre extrémité, le moyen, la distance sur la portée, la latence et l'état (active, hors de portée, masquée, en panne).
+
+![Fiche du radar R11 : son modèle, ses moyens déclarés et sa connexion satellite au CDC, 156 km, 3 s, active](docs/images/fiche_unite.png)
 
 ### Enregistrer et recharger
 
@@ -620,8 +638,8 @@ navigateur, une navigation privée ou un effacement des données ne les voit pas
 **« À déposer sur une unité déjà placée ».** Un moyen de communication ou un armement se lâche sur une unité, pas
 dans le vide ; et une unité ne reçoit pas deux fois le même moyen.
 
-**Une liaison est refusée.** Les deux unités ne partagent aucun moyen : équipez-les d'un moyen commun, ou videz leurs
-moyens pour qu'elles acceptent tout.
+**Une liaison est refusée.** Le moyen choisi ne porte pas assez loin : le message donne sa portée et la distance. Une
+radio en vue directe ne dépasse guère 30 km au sol ; prenez un moyen plus long, à côté du bouton Liaison.
 
 **Une unité reste « hors réseau » après « Relier automatiquement ».** Aucun C2 ne partage avec elle un moyen à portée :
 une radio au sol ne porte qu'à l'horizon des mâts ; ajoutez le fil ou le satellite, ou rapprochez un C2.
