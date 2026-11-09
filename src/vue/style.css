@@ -372,3 +372,9 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .badge.fidelite-cinematique, .badge.fidelite-point_masse, .badge.fidelite-6ddl { border-color: var(--ami); color: var(--ami); }
 @media (max-width: 800px) { .catalogue { grid-template-columns: 1fr; } .index-catalogue { max-block-size: 40vh; } }
 
+
+/* Liste ouverte au curseur sur des unités superposées. */
+.choix-superposes { position: absolute; z-index: 5; display: grid; gap: 2px; padding: 4px; min-inline-size: 150px; background: var(--verre);
+  border: 1px solid var(--trait); border-radius: 8px; box-shadow: var(--ombre); }
+.choix-superposes button { padding: 5px 10px; text-align: start; font-size: 13px; background: transparent; border: 0; border-radius: 5px; color: inherit; cursor: pointer; }
+.choix-superposes button:hover, .choix-superposes button:focus-visible { background: rgba(255, 255, 255, 0.14); outline: none; }

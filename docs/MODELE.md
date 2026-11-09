@@ -222,7 +222,7 @@ son attribution et ses conditions d'usage ; la conformité vérifie leurs clés 
 ## 12 · Éditeur et plan de vol (jalon 3)
 
 **Gestes de préparation.** Glisser le fond déplace la carte, Maj+glisser trace le cadre de sélection. Un outil de pose agit au relâchement,
-si la souris n'a pas bougé : on peut donc déplacer la carte sans quitter l'outil, et glisser une unité la déplace même outil armé. Au même point, une unité passe avant le milieu d'une liaison. Le clic droit quitte l'outil en cours ; il n'envoie la
+si la souris n'a pas bougé : on peut donc déplacer la carte sans quitter l'outil, et glisser une unité la déplace même outil armé. Au même point, une unité passe avant le milieu d'une liaison. Si plusieurs unités se recouvrent à l'écran (moins de 6 px d'écart), un clic sans mouvement, à la sélection, à la liaison ou à l'effacement, ouvre la liste pour désigner la bonne ; le glisser prend la plus proche du curseur. Le clic droit quitte l'outil en cours ; il n'envoie la
 sélection qu'en cours de raid (mode ordres). Pendant la préparation, le raid n'est pas simulé à chaque geste : seul le monde à t = 0 est
 reconstruit, et la simulation complète a lieu en quittant l'éditeur. Ces choix ne touchent que l'interface, pas les résultats.
 ### 12.1 Positions placées

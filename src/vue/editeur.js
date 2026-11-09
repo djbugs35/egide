@@ -2,10 +2,11 @@
 // glisser pour déplacer, clic droit pour envoyer la sélection, groupes Ctrl+1–9, outils cible et plan de vol.
 // Toute la logique vit dans edition.js ; ici, seulement les gestes et leur dessin.
 import {aimanter, apercu_depot, apercu_liaison, consigne_outil, mesure, points_geodesique, regrouper, texte_distance, texte_mesure} from "./aides_edition.js";
+import {creer_choix_superposes} from "./choix_superposes.js";
 import {COULEURS} from "./couleurs.js";
 import {chemin_cercle, ecran, geo_depuis_ecran} from "./ecran.js";
 import {
-  barycentre, dans_rectangle, element_sous, elements_editables, modifications_centre_theatre, modifications_ajout_cible, modifications_ajout_passage,
+  barycentre, dans_rectangle, element_sous, elements_editables, elements_superposes, libelle_element, modifications_centre_theatre, modifications_ajout_cible, modifications_ajout_passage,
   modifications_ajout_centre, modifications_ajout_radar, modifications_panne, modifications_tout_effacer, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
 } from "./edition.js";
 import {element_visible} from "./calques.js";
@@ -37,12 +38,22 @@ export function creer_editeur(env) {
   const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null, liaison: null, depot: null, maj: false, mesure: null};
   const elements = () => elements_editables(env.monde(), env.brut(), etat.mode).filter((e) => element_visible(env.calques(), e));
   const vers_ecran = (geo) => ecran(env.camera(), geo);
+  const choix = creer_choix_superposes(env.vue);
+
+  /** Proposer les unités de `liste` superposées au point écran `p` ; rendre vrai si la liste s'est ouverte, `action` recevant l'unité choisie. */
+  function proposer_superposes(liste, p, action) {
+    const superposes = elements_superposes(liste, vers_ecran, p, RAYON_TOUCHE);
+    if (superposes.length < 2) return false;
+    choix.ouvrir(p, superposes.map((element) => ({libelle: libelle_element(env.monde(), element), valeur: element})), action);
+    return true;
+  }
   const local = (e) => {
     const cadre = env.vue.getBoundingClientRect();
     return {x: e.clientX - cadre.left, y: e.clientY - cadre.top};
   };
 
   function choisir_outil(outil) {
+    choix.fermer();
     etat.outil = outil;
     etat.liaison = null;
     if (outil !== "mesure") etat.mesure = null;
@@ -63,6 +74,7 @@ export function creer_editeur(env) {
     env.consigne.hidden = !actif;
     env.barre.querySelector("[data-champ='instant_ordres']").textContent = format_duree(env.monde().t);
     choisir_outil("selection");
+    choix.fermer();
     env.sur_activation(actif, mode);
   }
 
@@ -103,7 +115,12 @@ export function creer_editeur(env) {
 
   /** Effacer l'unité sous le point écran `p` (radar, batterie, site, C2, avion, liaison, zone, point de passage). */
   function effacer(p) {
-    const touche = element_sous(elements(), vers_ecran, p, RAYON_TOUCHE);
+    if (proposer_superposes(elements(), p, effacer_element)) return;
+    effacer_element(element_sous(elements(), vers_ecran, p, RAYON_TOUCHE));
+  }
+
+  /** Effacer `touche`, ou dire pourquoi c'est impossible. */
+  function effacer_element(touche) {
     if (!touche) return env.signaler("Rien à effacer ici : visez une unité.");
     if (touche.type === "conduite") return env.signaler("Le CDC principal ne s'efface pas : déplacez-le.");
     const modifications = modifications_suppression(env.monde(), env.brut(), [touche.cle]);
@@ -115,7 +132,13 @@ export function creer_editeur(env) {
 
   /** Outil liaison : un clic sur un premier nœud (radar, conduite, avion), un clic sur le second, et la liaison existe. */
   function relier(p) {
-    const touche = element_sous(elements().filter((element) => noeud_element(env.monde(), element)), vers_ecran, p, RAYON_TOUCHE);
+    const noeuds = elements().filter((element) => noeud_element(env.monde(), element));
+    if (proposer_superposes(noeuds, p, relier_element)) return;
+    relier_element(element_sous(noeuds, vers_ecran, p, RAYON_TOUCHE));
+  }
+
+  /** Prendre `touche` pour extrémité de la liaison en cours ; à la seconde, tirer la liaison ou dire pourquoi elle est refusée. */
+  function relier_element(touche) {
     const noeud = touche && noeud_element(env.monde(), touche);
     // Un clic à côté ne perd pas la première extrémité : on le dit, et l'utilisateur vise de nouveau.
     if (!noeud) return env.signaler("Aucune unité à cet endroit : visez un radar, un centre, un site, une batterie ou un avion.");
@@ -168,6 +191,8 @@ export function creer_editeur(env) {
   }
 
   function commencer(e) {
+    // Cliquer ailleurs referme la liste sans agir ; un clic droit ne doit pas, en plus, quitter l'outil.
+    if (choix.fermer()) return void (etat.menu_contextuel_ignore = e.button === 2);
     const p = local(e);
     if (e.button === 1 || (e.button === 0 && (e.altKey || etat.espace))) {
       etat.geste = {type: "panoramique", dernier: p};
@@ -192,7 +217,8 @@ export function creer_editeur(env) {
     if (touche) {
       if (!etat.selection.includes(touche.cle)) etat.selection = e.shiftKey ? [...etat.selection, touche.cle] : [touche.cle];
       // En mode ordres, on ne déplace pas un avion en vol : on le sélectionne, puis on l'envoie au clic droit.
-      if (etat.mode === "edition") etat.geste = touche.type === "liaison" ? geste_clic(p, () => {}) : geste_glisser(p, touche);
+      const au_clic = e.shiftKey ? null : () => proposer_superposes(elements(), p, (element) => (etat.selection = [element.cle]));
+      if (etat.mode === "edition") etat.geste = touche.type === "liaison" ? geste_clic(p, () => {}) : geste_glisser(p, touche, au_clic);
     } else if (e.shiftKey || etat.mode === "ordres") {
       // En cours de raid, le cadre reste le geste principal : c'est lui qui choisit les avions à envoyer.
       if (!e.shiftKey) etat.selection = [];
@@ -260,6 +286,8 @@ export function creer_editeur(env) {
     if (!etat.actif || e.target.closest("input, select, textarea")) return;
     const commande = e.ctrlKey || e.metaKey;
     const chiffre = /^Digit([1-9])$/.exec(e.code)?.[1];
+    // Tab et Maj parcourent la liste ; toute autre touche la referme, car elle peut changer les unités proposées.
+    if (e.key !== "Tab" && e.key !== "Shift" && choix.fermer() && e.key === "Escape") return e.preventDefault();
     if (e.key === "Escape" && etat.liaison) etat.liaison = null;
     else if (e.key === "Escape" && etat.brouillon.length) etat.brouillon = [];
     else if (e.key === "Enter" && etat.outil === "zone") fermer_zone();
@@ -291,11 +319,13 @@ export function creer_editeur(env) {
   env.toile.addEventListener("pointerup", si_actif(terminer));
   env.toile.addEventListener("contextmenu", si_actif((e) => {
     e.preventDefault();
+    if (etat.menu_contextuel_ignore) return void (etat.menu_contextuel_ignore = false);
     if (etat.mode === "ordres") envoyer(e);
     else abandonner();
   }));
   env.toile.addEventListener("wheel", si_actif((e) => {
     e.preventDefault();
+    choix.fermer();
     env.zoom(e.deltaY < 0 ? 1.2 : 1 / 1.2, local(e));
   }), {passive: false});
   addEventListener("keydown", clavier);

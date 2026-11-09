@@ -105,7 +105,7 @@ test("carte : les bornes du disque de 200 km encadrent le centre et s'élargisse
   assert.ok(e2 - o2 > e - o);
 });
 
-import {barycentre, dans_rectangle, element_sous, en_degres, modifications_ajout_cible, modifications_ajout_passage, modifications_deplacement, modifications_suppression, translater} from "../src/vue/edition.js";
+import {barycentre, dans_rectangle, element_sous, elements_superposes, en_degres, libelle_element, modifications_ajout_cible, modifications_ajout_passage, modifications_deplacement, modifications_suppression, translater} from "../src/vue/edition.js";
 import {creer_monde} from "../src/moteur/monde.js";
 import {inverse} from "../src/moteur/geodesie.js";
 import {REGISTRE, scenario} from "./aide_scenario.js";
@@ -450,4 +450,26 @@ test("element_sous : à la même position, une unité passe avant le milieu d'un
   const elements = [{cle: "radar:4", type: "radar", geo: ici}, {cle: "centre:0", type: "centre", geo: ici}, {cle: "liaison:7", type: "liaison", geo: ici}];
   assert.equal(element_sous(elements, (geo) => geo, ici).cle, "centre:0");
   assert.equal(element_sous(elements.slice(2), (geo) => geo, ici).cle, "liaison:7", "seule à cet endroit, la liaison reste sélectionnable");
+});
+
+test("elements_superposes : un radar et un centre au même point sont proposés tous les deux, sans le milieu de liaison", () => {
+  const ici = {x: 100, y: 100};
+  const elements = [{cle: "radar:4", type: "radar", geo: ici}, {cle: "centre:0", type: "centre", geo: ici}, {cle: "liaison:7", type: "liaison", geo: ici}];
+  assert.deepEqual(elements_superposes(elements, (geo) => geo, ici).map((e) => e.cle).sort(), ["centre:0", "radar:4"]);
+});
+
+test("elements_superposes : deux unités distinctes à l'écran ne se proposent pas ensemble", () => {
+  const elements = [{cle: "a", type: "radar", geo: {x: 100, y: 100}}, {cle: "b", type: "radar", geo: {x: 110, y: 100}}];
+  assert.deepEqual(elements_superposes(elements, (geo) => geo, {x: 100, y: 100}, 14).map((e) => e.cle), ["a"]);
+});
+
+test("elements_superposes : rien de visé ne rend aucune unité", () => {
+  assert.deepEqual(elements_superposes([{cle: "a", type: "radar", geo: {x: 0, y: 0}}], (geo) => geo, {x: 90, y: 90}), []);
+});
+
+test("libelle_element : chaque unité porte le nom de sa fiche", () => {
+  const monde = {scenario: {reseau: {centres: [{nom: "CDC Nord"}]}}, avions: [{groupe: {nom: "Laser"}}]};
+  const nom = (type, indice = 0) => libelle_element(monde, {type, indice});
+  assert.deepEqual([nom("radar", 4), nom("centre"), nom("conduite"), nom("batterie", 1), nom("cible", 2), nom("avion")],
+    ["Radar R5", "CDC Nord", "CDC principal", "Batterie B2", "Site C3", "Avion 0 (Laser)"]);
 });

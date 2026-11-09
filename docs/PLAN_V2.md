@@ -167,4 +167,4 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Jeu | **Brouillard masqué par le relief**, comme le calcule déjà le moteur | 17 | à faire |
 | Interface | **Connexions cliquables** : une ligne de la fiche centre et sélectionne l'autre extrémité, ou retire la liaison | 17 | à faire |
 | Jeu | **Refus motivé des liaisons trop longues dans l'éditeur Godot**, comme dans le navigateur | 17 | à faire |
-| Interface | **Choix entre unités superposées** : un clic sur plusieurs unités au même point propose la liste | 17 | à faire |
+| Interface | **Choix entre unités superposées** : un clic sur plusieurs unités au même point propose la liste | 17 | fait |

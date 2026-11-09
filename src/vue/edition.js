@@ -309,6 +309,35 @@ export function element_sous(elements, versEcran, point, rayonPx = 10) {
   return plus_proche(elements.filter((e) => e.type !== "liaison")) ?? plus_proche(elements.filter((e) => e.type === "liaison"));
 }
 
+// Choix d'interface : à moins de cet écart, deux symboles se recouvrent et le clic ne peut plus viser l'un sans l'autre.
+const SEUIL_SUPERPOSITION_PX = 6;
+
+/**
+ * Rendre l'unité visée au point écran `point` suivie de celles qu'elle recouvre (MODELE § 12), [] si rien n'est visé.
+ * Un milieu de liaison ne compte jamais comme superposé : il ne s'obtient que seul à cet endroit.
+ */
+export function elements_superposes(elements, versEcran, point, rayonPx = 10) {
+  const visee = element_sous(elements, versEcran, point, rayonPx);
+  if (!visee) return [];
+  if (visee.type === "liaison") return [visee];
+  const {x, y} = versEcran(visee.geo);
+  const recouvre = (e) => {
+    const p = versEcran(e.geo);
+    return Math.hypot(p.x - x, p.y - y) <= SEUIL_SUPERPOSITION_PX;
+  };
+  return [visee, ...elements.filter((e) => e !== visee && e.type !== "liaison" && recouvre(e))];
+}
+
+/** Rendre le nom affiché de `element`, celui de sa fiche. */
+export function libelle_element(monde, element) {
+  const rang = element.indice + 1;
+  if (element.type === "conduite") return "CDC principal";
+  if (element.type === "centre") return monde.scenario.reseau.centres[element.indice]?.nom ?? `Centre ${rang}`;
+  if (element.type === "avion") return `Avion ${element.indice} (${monde.avions[element.indice]?.groupe?.nom ?? "groupe inconnu"})`;
+  const prefixes = {radar: "Radar R", batterie: "Batterie B", cible: "Site C", passage: "Point de passage ", zone: "Zone "};
+  return prefixes[element.type] ? `${prefixes[element.type]}${rang}` : "Liaison";
+}
+
 /**
  * Rendre les modifications qui vident la carte : plus de radar, de batterie, de poste, de vecteur défensif, d'autre
  * centre, de liaison, d'équipement, de zone, de plan de vol ni d'ordre. Restent le CDC principal et un site sensible
