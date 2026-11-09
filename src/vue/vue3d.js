@@ -159,12 +159,17 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
     const [vus_points, vus_silhouettes] = [new Set(), new Set()];
     const camera = viewer.camera.positionWC;
     let tiges_drones = 0;
-    for (const d of drones) {
+    const places = drones.map((d) => {
       const sol = hauteur_sol(d.lat_deg, d.lon_deg);
       const position = Cesium.Cartesian3.fromDegrees(d.lon_deg, d.lat_deg, sol + d.alt * exageration);
+      return {d, sol, position, distance: Cesium.Cartesian3.distance(camera, position)};
+    });
+    const en_modele = modeles.placer_essaim(icone, places);
+    for (const {d, sol, position, distance} of places) {
+      if (en_modele.has(d.id)) continue;
       const teinte = d.detecte ? couleurs.hostile : couleurs.inconnu;
       const choisi = d.id === selection;
-      if (Cesium.Cartesian3.distance(camera, position) < SEUIL_SILHOUETTE) {
+      if (distance < SEUIL_SILHOUETTE) {
         vus_silhouettes.add(d.id);
         const silhouette = obtenir(pool_silhouettes, d.id, () => silhouettes.add({width: TAILLE_SILHOUETTE, height: TAILLE_SILHOUETTE, disableDepthTestDistance: SANS_TEST_PROFONDEUR}));
         Object.assign(silhouette, {show: true, position, color: teinte, scale: choisi ? 1.5 : 1, rotation: viewer.camera.heading - d.cap});
@@ -182,7 +187,6 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
 
   function placer_unites(unites, selection, exageration) {
     const vus = new Set();
-    modeles.debut();
     for (const u of unites) {
       vus.add(u.id);
       const panneau = obtenir(pool_unites, u.id, () => panneaux.add({width: TAILLE_ICONE, height: TAILLE_ICONE, disableDepthTestDistance: SANS_TEST_PROFONDEUR,
@@ -262,6 +266,7 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
         vu = {monde, t: monde.t, calques, percue, selection, exageration};
         tiges_posees = 0;
         const {drones, unites, icone_drone: icone} = entites_scene(monde, calques, montre);
+        modeles.debut();
         placer_drones(drones, icone, selection, exageration);
         placer_unites(unites, selection, exageration);
         couches.maj({monde, calques, montre, inspection, exageration, effets, traces, maintenant});

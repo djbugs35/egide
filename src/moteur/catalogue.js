@@ -84,4 +84,4 @@ export function origine_des_cles(id, fichiers) {
 export const chemin_icone = (icone) => (icone.startsWith("prive/") ? `prive/icones/${icone.slice("prive/".length)}.svg` : `icones/${icone}.svg`);
 
 /** Rendre le chemin du modèle 3D privé d'une icône `prive/…` : seuls les objets privés ont un modèle détaillé (MODELE § 23). */
-export const chemin_modele = (icone) => `prive/modeles/${icone.slice("prive/".length)}.glb`;
+export const chemin_modele = (icone) => (icone.startsWith("prive/") ? `prive/modeles/${icone.slice("prive/".length)}.glb` : `modeles/${icone}.glb`);

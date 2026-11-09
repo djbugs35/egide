@@ -21,11 +21,12 @@ test("caméra : la caméra libre n'impose rien ; commandant et dessus sont des v
   assert.equal(consigne_camera("dessus", monde, null).inclinaison, -Math.PI / 2);
 });
 
-test("caméra : le suivi annonce l'icône d'un avion, pour se rapprocher d'un modèle détaillé, et aucune pour un drone", () => {
+test("caméra : le suivi annonce l'icône de l'avion ou de l'essaim, pour se rapprocher d'un modèle détaillé", () => {
   const monde = monde_lance();
   monde.avions[0].groupe.icone = "prive/essai";
   assert.equal(consigne_camera("suivi", monde, "v0").icone, "prive/essai");
-  assert.equal(consigne_camera("suivi", monde, "d5").icone, undefined);
+  monde.scenario.rouge.icone = "prive/essaim";
+  assert.equal(consigne_camera("suivi", monde, "d5").icone, "prive/essaim");
 });
 
 test("caméra : le suivi prend l'unité sélectionnée si elle vole, sinon le premier drone, sinon un avion", () => {

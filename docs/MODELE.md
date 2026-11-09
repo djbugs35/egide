@@ -660,14 +660,17 @@ calcul, selon les mêmes calques que la 2D. Hypothèses d'affichage :
   au-dessus du relief, batteries, centres et sites posés au sol.
 - **Silhouettes** : un drone à moins de 80 km de la caméra est dessiné en silhouette orientée selon son cap vers le
   prochain point de sa route, sinon en point ; au plus 150 tiges de drones, au-delà un nuage de traits ne se lit plus.
-- **Modèles** : une unité dont l'icône privée a un fichier `prive/modeles/<icone>.glb` est dessinée en modèle 3D entre 60 m et
+- **Modèles** : une unité dont l'icône a un fichier `modeles/<icone>.glb` (classes notionnelles, `node outils/modeles3d/classes.js`) ou `prive/modeles/<icone>.glb` est dessinée en modèle 3D entre 60 m et
   400 km de la caméra, à sa taille réelle mais jamais sous 80 pixels ; le pictogramme revient au-delà. Le modèle d'un radar
   est posé au sol, la hauteur de mât restant celle du moteur. Ces fichiers sont des images d'identification. Leur peinture est
   cuite dans une texture : chaque partie est dépliée sur les six faces d'un cube, et chaque texel reçoit la couleur d'une
   fonction évaluée à sa position 3D (camouflage sans raccord, panneaux, marquages). Elle est illustrative, ni relevée sur
   photographie ni exacte. Dans le navigateur, la lumière suit la caméra et l'ambiance est neutre, pour qu'aucun point de vue
   ne laisse le modèle à contre-jour ; Godot garde sa lumière figée dans les couleurs de sommets. La caméra « Suivre la
-  sélection » se place à 70 m d'une unité à modèle, contre 12 km pour les autres.
+  sélection » se place à 70 m d'une unité à modèle, contre 12 km pour les autres. Les 40 drones les plus proches, à moins de
+  30 km, sont dessinés en modèle au moins 40 pixels ; le reste de l'essaim garde silhouettes et points. Ces modèles ne se cliquent
+  pas. Les formes viennent d'archétypes paramétrés (`outils/modeles3d/archetypes.js`) : silhouette de classe aux dimensions de
+  l'objet, pas relevé détaillé d'un système.
 - **Orientation** : toutes les vues (2D, 3D, rejeu) lisent le même cap. Celui d'un drone vise le prochain point de sa
   route. Un vecteur défensif garde l'azimut sphérique de son dernier déplacement ; immobile en orbite, il garde ce cap,
   et regarde le nord tant qu'il n'a pas bougé. Le cap n'entre dans aucun calcul de la simulation. Unités au sol non orientées.

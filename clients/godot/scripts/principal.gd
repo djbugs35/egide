@@ -44,6 +44,7 @@ var texte := Label.new()
 var _essaim: MultiMeshInstance3D = null
 var _groupes_vecteurs: Dictionary = {}
 var _modele_vecteur: Dictionary = {}
+var _essaim_detaille := false
 var _fixes: Array[Dictionary] = []
 var _radars := PackedVector3Array()
 var _tirs := MeshInstance3D.new()
@@ -199,7 +200,9 @@ func remonter() -> void:
 
 
 func _construire() -> void:
-	_essaim = _nouvelle_couche(modeles.maillage(modeles.modele_unite(rejeu.statique["drones"]["unite"])), int(rejeu.statique["drones"]["nombre"]))
+	var modele_essaim := modeles.modele_unite(rejeu.statique["drones"]["unite"])
+	_essaim_detaille = BibliothequeModeles.est_detaille(modele_essaim)
+	_essaim = _nouvelle_couche(modeles.maillage(modele_essaim), int(rejeu.statique["drones"]["nombre"]))
 	for vecteur: Dictionary in rejeu.statique["vecteurs"]:
 		var nom := modeles.modele_unite(vecteur["unite"])
 		_modele_vecteur[int(vecteur["id"])] = nom
@@ -395,6 +398,13 @@ func _matrice(position_scene: Vector3, cap_deg: float) -> Transform3D:
 	return Transform3D(Basis(Vector3.UP, deg_to_rad(-cap_deg)).scaled(Vector3.ONE * taille), position_scene)
 
 
+# Un modèle détaillé garde sa peinture, la couleur d'instance la multipliant : le drone non détecté est seulement assombri.
+func _couleur_drone(detecte: bool) -> Color:
+	if _essaim_detaille:
+		return Color.WHITE if detecte else Color(0.55, 0.55, 0.55)
+	return COULEUR_DRONE_DETECTE if detecte else COULEUR_DRONE_INCONNU
+
+
 func _dessiner_essaim(drones: PackedFloat32Array) -> void:
 	var multi := _essaim.multimesh
 	var n := 0
@@ -403,7 +413,7 @@ func _dessiner_essaim(drones: PackedFloat32Array) -> void:
 		var detecte := int(drones[k + Rejeu.ETAT]) == 1
 		if detecte or montrer_inconnus:
 			multi.set_instance_transform(n, _matrice(point_ligne(drones, k), drones[k + Rejeu.CAP]))
-			multi.set_instance_color(n, COULEUR_DRONE_DETECTE if detecte else COULEUR_DRONE_INCONNU)
+			multi.set_instance_color(n, _couleur_drone(detecte))
 			n += 1
 		k += rejeu.largeur_drones
 	multi.visible_instance_count = n

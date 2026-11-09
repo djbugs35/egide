@@ -1,8 +1,12 @@
 // Écriture des modèles 3D en glTF binaire (outils/modeles3d/maillage.js).
 import assert from "node:assert/strict";
+import {readdir} from "node:fs/promises";
 import test from "node:test";
 import {boite, couleur, cylindre, ecrire_glb, miroir, tourner_y} from "../outils/modeles3d/maillage.js";
 import {bruit, encoder_png, habiller, hasard} from "../outils/modeles3d/texture.js";
+import {ARCHETYPES} from "../outils/modeles3d/archetypes.js";
+import {CLASSES, construire_classe} from "../outils/modeles3d/classes.js";
+import {chemin_modele} from "../src/moteur/catalogue.js";
 import {decoder_png} from "../src/vue/png.js";
 
 /** Rendre la couleur [r, g, b] du texel situé au centre du triangle d'indice `i` d'une partie dépliée. */
@@ -123,4 +127,29 @@ test("un quart de tour autour de Y envoie +X sur -Z et laisse les hauteurs", () 
 test("la conversion sRGB vers linéaire conserve les extrêmes", () => {
   assert.deepEqual(couleur("#000000"), [0, 0, 0]);
   assert.deepEqual(couleur("#ffffff"), [1, 1, 1]);
+});
+
+test("une icône publique a son modèle sous modeles/, une icône privée sous prive/modeles/", () => {
+  assert.equal(chemin_modele("drone_delta"), "modeles/drone_delta.glb");
+  assert.equal(chemin_modele("prive/essai"), "prive/modeles/essai.glb");
+});
+
+test("chaque archétype rend un maillage complet, aux normales et positions finies", () => {
+  for (const [nom, reglages] of Object.entries(CLASSES)) {
+    const {forme, ...reste} = reglages;
+    const {parties} = ARCHETYPES[forme](reste);
+    const sommets = parties.flat();
+    assert.ok(sommets.length > 0 && sommets.length % 3 === 0, nom);
+    assert.ok(sommets.every(({p, n}) => [...p, ...n].every(Number.isFinite)), nom);
+  }
+});
+
+test("toutes les icônes publiques ont une classe de modèle", async () => {
+  const icones = (await readdir(new URL("../icones/", import.meta.url))).map((f) => f.slice(0, -4));
+  assert.deepEqual(icones.filter((icone) => !CLASSES[icone]), []);
+});
+
+test("une classe se cuit en .glb texturé", () => {
+  const glb = construire_classe("drone_helice");
+  assert.equal(lire_json(glb).images.length, 1);
 });

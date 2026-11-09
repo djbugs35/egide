@@ -20,11 +20,15 @@ const LUMIERE_AMBIANTE := 0.55
 var _table: Dictionary = {}
 var _catalogue: Dictionary = {}
 var _maillages: Dictionary = {}
+static var _detailles: Dictionary = {}
 
 
-## Rendre vrai si `nom` désigne un modèle privé détaillé, à montrer dans ses propres couleurs (docs/FORMATS.md § 7.4).
+## Rendre vrai si `nom` désigne un modèle détaillé, à montrer dans ses propres couleurs (docs/FORMATS.md § 7.4).
 static func est_detaille(nom: String) -> bool:
-	return nom.begins_with(PREFIXE_PRIVE)
+	# Interrogée par véhicule à chaque image : on ne touche au disque qu'une fois par nom.
+	if not _detailles.has(nom):
+		_detailles[nom] = FileAccess.file_exists(_chemin_detaille(nom))
+	return _detailles[nom]
 
 
 ## Lire la table `chemin` et indexer le catalogue de l'en-tête du rejeu ; rendre "" ou le message d'erreur.
@@ -51,6 +55,8 @@ func modele_unite(id: String) -> String:
 
 ## Rendre le nom du modèle d'une icône (sites et centres n'ont pas d'unité).
 func modele_icone(icone: String) -> String:
+	if FileAccess.file_exists(_chemin_detaille(icone)):
+		return icone
 	return _table["icones"].get(icone, MODELE_SECOURS)
 
 
@@ -75,9 +81,8 @@ static func _construire(nom: String) -> Mesh:
 
 
 static func _chemin_detaille(icone: String) -> String:
-	if not icone.begins_with(PREFIXE_PRIVE):
-		return ""
-	return ProjectSettings.globalize_path("res://").path_join("../../prive/modeles/%s.glb" % icone.trim_prefix(PREFIXE_PRIVE)).simplify_path()
+	var relatif := "../../prive/modeles/%s.glb" % icone.trim_prefix(PREFIXE_PRIVE) if icone.begins_with(PREFIXE_PRIVE) else "../../modeles/%s.glb" % icone
+	return ProjectSettings.globalize_path("res://").path_join(relatif).simplify_path()
 
 
 # Ramené à une unité de long et retourné : le fichier met l'avant sur +Z, le client sur -Z.
