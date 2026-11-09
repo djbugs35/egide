@@ -11,5 +11,6 @@ resultats/
 _to_delete/
 # Catalogue prive (unites et algorithmes reels) : jamais dans le depot public. Peut etre un lien vers un depot prive.
 prive/
+/prive.zip
 # Tuiles preparees pour la vue 3D sans reseau (outils/hors_ligne.js) : licences propres a chaque source.
 hors_ligne/
