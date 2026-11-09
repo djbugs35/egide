@@ -159,6 +159,9 @@ export function fenetre_tuile(x, y, niveau, zoomMax) {
   return {z, x: Math.floor(x / echelle), y: Math.floor(y / echelle), echelle, dx: x % echelle, dy: y % echelle};
 }
 
+/** Rendre l'altitude affichée (m) du pixel `k` : la bathymétrie est ramenée au niveau de la mer, où les unités naviguent. */
+const sol_affiche = (rgba, k) => Math.max(0, hauteur_terrarium(rgba[k], rgba[k + 1], rgba[k + 2]));
+
 /** Rendre la grille `taille` × `taille` des altitudes (m), au plus proche voisin, lue dans les pixels RGBA d'une tuile carrée. */
 export function grille_hauteurs(rgba, cote, taille, {echelle, dx, dy}) {
   const grille = new Float32Array(taille * taille);
@@ -166,8 +169,53 @@ export function grille_hauteurs(rgba, cote, taille, {echelle, dx, dy}) {
   for (let ligne = 0; ligne < taille; ligne++) {
     for (let colonne = 0; colonne < taille; colonne++) {
       const k = 4 * (indice(ligne / (taille - 1), dy) * cote + indice(colonne / (taille - 1), dx));
-      grille[ligne * taille + colonne] = hauteur_terrarium(rgba[k], rgba[k + 1], rgba[k + 2]);
+      grille[ligne * taille + colonne] = sol_affiche(rgba, k);
     }
   }
   return grille;
+}
+
+const CIRCONFERENCE_TERRE = 40_075_016.686;
+// Lumière du nord-ouest, à 45° au-dessus de l'horizon : la convention des cartes ombrées, où le relief se lit en bosse.
+const AZIMUT_LUMIERE = (315 * Math.PI) / 180;
+const HAUTEUR_LUMIERE = Math.PI / 4;
+const LUMIERE = {est: Math.sin(AZIMUT_LUMIERE) * Math.cos(HAUTEUR_LUMIERE), nord: Math.cos(AZIMUT_LUMIERE) * Math.cos(HAUTEUR_LUMIERE), haut: Math.sin(HAUTEUR_LUMIERE)};
+// Une maille large moyenne les pentes : au-delà de 30 m par pixel, on les renforce un peu pour garder le relief lisible de
+// loin. En racine carrée, les tuiles lointaines ressortaient en rectangles sombres à côté de leurs voisines plus fines.
+const MAILLE_SANS_RENFORT = 30;
+const EXPOSANT_RENFORT = 0.25;
+const CONTRASTE_OMBRAGE = 2;
+// Opacité maximale : le fond de carte doit rester lisible sur les versants les plus marqués.
+const OPACITE_OMBRAGE_MAX = 0.6;
+
+/** Rendre la taille (m) d'un pixel au milieu de la tuile Web Mercator de rangée `y` au zoom `z`. */
+export function metres_par_pixel_tuile(y, z, cote) {
+  const latitude = Math.atan(Math.sinh(Math.PI * (1 - (2 * (y + 0.5)) / 2 ** z)));
+  return (CIRCONFERENCE_TERRE * Math.cos(latitude)) / (cote * 2 ** z);
+}
+
+/**
+ * Rendre l'ombrage (MODELE § 23) d'une tuile terrarium en RGBA, à superposer au fond : noir sur les versants à l'ombre,
+ * blanc sur les versants éclairés, transparent sur le plat.
+ *
+ * @param {Uint8ClampedArray} rgba pixels de la tuile carrée.
+ * @param {number} cote côté de la tuile (pixels).
+ * @param {number} metres_pixel taille d'un pixel (m).
+ */
+export function ombrage_tuile(rgba, cote, metres_pixel) {
+  const sortie = new Uint8ClampedArray(rgba.length);
+  const sol = (ligne, colonne) => sol_affiche(rgba, 4 * (Math.max(0, Math.min(cote - 1, ligne)) * cote + Math.max(0, Math.min(cote - 1, colonne))));
+  const facteur = Math.max(1, (metres_pixel / MAILLE_SANS_RENFORT) ** EXPOSANT_RENFORT) / (2 * metres_pixel);
+  for (let ligne = 0; ligne < cote; ligne++) {
+    for (let colonne = 0; colonne < cote; colonne++) {
+      const pente_est = (sol(ligne, colonne + 1) - sol(ligne, colonne - 1)) * facteur;
+      const pente_nord = (sol(ligne - 1, colonne) - sol(ligne + 1, colonne)) * facteur;
+      const eclairement = (LUMIERE.haut - pente_est * LUMIERE.est - pente_nord * LUMIERE.nord) / Math.hypot(pente_est, pente_nord, 1);
+      const ecart = (eclairement - LUMIERE.haut) * CONTRASTE_OMBRAGE;
+      const k = 4 * (ligne * cote + colonne);
+      sortie.fill(ecart > 0 ? 255 : 0, k, k + 3);
+      sortie[k + 3] = Math.min(OPACITE_OMBRAGE_MAX, Math.abs(ecart)) * 255;
+    }
+  }
+  return sortie;
 }

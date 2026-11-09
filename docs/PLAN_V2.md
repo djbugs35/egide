@@ -162,6 +162,9 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Essaim réactif | **Couper le maillage de l'essaim** : brouillage de ses liaisons, l'essaim n'apprend plus ses pertes (ou plus tard) | 16 | à faire |
 | Essaim réactif | **Meilleure réponse rouge** : l'auto-configuration cherche les réglages de réaction qui maximisent les frappes contre un dispositif donné, pour éprouver la défense au pire cas | 16 | à faire |
 | Jeu | **Silhouettes 3D des unités** dans Godot, selon leur classe, au lieu de formes génériques | 17 | à faire |
+| Jeu | **Modèles 3D privés étendus à tout le catalogue**, après validation du pilote à cinq unités, dans le navigateur comme dans Godot | 17 | à faire |
+| Jeu | **Import de modèles 3D tiers** (licence compatible, sous `prive/`), à côté des modèles générés par code, pour un rendu photoréaliste | 17 | à faire |
+| Jeu | **Suivre une unité au sol** (radar, batterie) avec la caméra de suivi, comme les avions | 17 | à faire |
 | Jeu | **Camp rouge jouable**, dans un mode séparé qui ne fausse pas les analyses | 17 | à faire |
 | Jeu | **Confirmation avant d'abandonner un relief** non enregistré | 17 | à faire |
 | Jeu | **Brouillard masqué par le relief**, comme le calcule déjà le moteur | 17 | à faire |

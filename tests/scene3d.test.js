@@ -6,7 +6,7 @@ import {horizon_radar} from "../src/moteur/geometrie.js";
 import {portee_site} from "../src/moteur/radars.js";
 import {creer_monde} from "../src/moteur/monde.js";
 import {calques_par_defaut} from "../src/vue/calques.js";
-import {bulles_scene, couvertures_scene, liaisons_scene, entite_depuis_id, entites_scene, fenetre_tuile, grille_hauteurs, hauteur_terrarium, id_depuis_inspection} from "../src/vue/scene3d.js";
+import {bulles_scene, couvertures_scene, liaisons_scene, entite_depuis_id, entites_scene, fenetre_tuile, grille_hauteurs, hauteur_terrarium, id_depuis_inspection, metres_par_pixel_tuile, ombrage_tuile} from "../src/vue/scene3d.js";
 import {REGISTRE, scenario} from "./aide_scenario.js";
 
 const monde_lance = () => {
@@ -129,4 +129,39 @@ test("liaisons 3D : réseau complet, chaque radar relié au CDC à sa position ;
   const satellite = liaisons_scene(avecSatellite).find((l) => l.type === "satellite");
   assert.equal(satellite.points.length, 3);
   assert.ok(satellite.points[1].alt > 100_000);
+});
+
+/** Rendre une tuile terrarium carrée dont l'altitude de chaque pixel vaut `altitude(ligne, colonne)` (m). */
+function tuile_terrarium(cote, altitude) {
+  const rgba = new Uint8ClampedArray(cote * cote * 4).fill(255);
+  for (let ligne = 0; ligne < cote; ligne++) {
+    for (let colonne = 0; colonne < cote; colonne++) {
+      const code = Math.round(altitude(ligne, colonne)) + 32768;
+      rgba.set([code >> 8, code & 255, 0], 4 * (ligne * cote + colonne));
+    }
+  }
+  return rgba;
+}
+
+test("la grille de hauteurs ramène le fond marin au niveau de la mer", () => {
+  const rgba = tuile_terrarium(2, (ligne) => (ligne === 0 ? -4000 : 300));
+  assert.deepEqual([...grille_hauteurs(rgba, 2, 2, {echelle: 1, dx: 0, dy: 0})], [0, 0, 300, 300]);
+});
+
+test("l'ombrage laisse un terrain plat transparent", () => {
+  const sortie = ombrage_tuile(tuile_terrarium(4, () => 500), 4, 30);
+  assert.ok(sortie.every((_, i) => i % 4 !== 3 || sortie[i] === 0));
+});
+
+test("l'ombrage assombrit un versant au sud-est et éclaire un versant au nord-ouest", () => {
+  // Le sol monte vers l'est puis redescend : à l'ouest de la crête, le versant regarde la lumière ; à l'est, il lui tourne le dos.
+  const sortie = ombrage_tuile(tuile_terrarium(9, (_, colonne) => 400 - 50 * Math.abs(colonne - 4)), 9, 30);
+  const pixel = (colonne) => sortie.subarray(4 * (4 * 9 + colonne), 4 * (4 * 9 + colonne) + 4);
+  assert.equal(pixel(2)[0], 255);
+  assert.equal(pixel(6)[0], 0);
+  assert.ok(pixel(2)[3] > 0 && pixel(6)[3] > 0);
+});
+
+test("la taille d'un pixel de tuile vaut 156 km au zoom 0, côté de 256 pixels, à l'équateur", () => {
+  assert.ok(Math.abs(metres_par_pixel_tuile(0, 0, 256) - 156_543) < 1);
 });

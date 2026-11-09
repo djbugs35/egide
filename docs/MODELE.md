@@ -660,17 +660,34 @@ calcul, selon les mêmes calques que la 2D. Hypothèses d'affichage :
   au-dessus du relief, batteries, centres et sites posés au sol.
 - **Silhouettes** : un drone à moins de 80 km de la caméra est dessiné en silhouette orientée selon son cap vers le
   prochain point de sa route, sinon en point ; au plus 150 tiges de drones, au-delà un nuage de traits ne se lit plus.
+- **Modèles** : une unité dont l'icône privée a un fichier `prive/modeles/<icone>.glb` est dessinée en modèle 3D entre 60 m et
+  400 km de la caméra, à sa taille réelle mais jamais sous 80 pixels ; le pictogramme revient au-delà. Le modèle d'un radar
+  est posé au sol, la hauteur de mât restant celle du moteur. Ces fichiers sont des images d'identification. Leur peinture est
+  cuite dans une texture : chaque partie est dépliée sur les six faces d'un cube, et chaque texel reçoit la couleur d'une
+  fonction évaluée à sa position 3D (camouflage sans raccord, panneaux, marquages). Elle est illustrative, ni relevée sur
+  photographie ni exacte. Dans le navigateur, la lumière suit la caméra et l'ambiance est neutre, pour qu'aucun point de vue
+  ne laisse le modèle à contre-jour ; Godot garde sa lumière figée dans les couleurs de sommets. La caméra « Suivre la
+  sélection » se place à 70 m d'une unité à modèle, contre 12 km pour les autres.
 - **Orientation** : toutes les vues (2D, 3D, rejeu) lisent le même cap. Celui d'un drone vise le prochain point de sa
   route. Un vecteur défensif garde l'azimut sphérique de son dernier déplacement ; immobile en orbite, il garde ce cap,
   et regarde le nord tant qu'il n'a pas bougé. Le cap n'entre dans aucun calcul de la simulation. Unités au sol non orientées.
 - **Relief** : tuiles « terrarium », `h = 256 R + G + B / 256 − 32768` (m), au plus proche voisin sur une grille de
   65 × 65, sans correction du géoïde (environ 50 m en France), sans effet puisque tout est dessiné au-dessus de ce même
-  sol. Les symboles restent visibles à travers le terrain, pour ne pas perdre une unité derrière une crête. Le relief du moteur (§ 16) reste celui du scénario ; celui de cette vue ne sert qu'à l'image.
+  sol. Les altitudes négatives sont ramenées à 0 : le fond marin n'est pas montré, et les terres sous le niveau de la mer
+  sont affichées à ce niveau. Les PNG sont décodés sans canvas, parce qu'une relecture de canvas peut être bruitée par la
+  protection anti-pistage du navigateur : un bit de rouge vaut 256 m.
+- **Ombrage** : une couche calculée sur les mêmes tuiles, jusqu'au zoom 12, rend le relief lisible de haut. Lumière du
+  nord-ouest à 45° d'élévation ; `pente = Δh / (2 m) × max(1, (m / 30) ^ 0,25)`, `m` la taille du pixel en mètres, ce
+  renfort compensant le lissage des tuiles lointaines ; opacité `min(0,6 ; 2 |e − e_plat|)`, noire à l'ombre, blanche
+  au soleil, nulle sur le plat. Ces pentes renforcées sont un choix d'image, sans valeur de mesure.
+- **Exagération** : le facteur choisi étire le relief comme les hauteurs de vol ; à 1, tout est à l'échelle. Les symboles restent visibles à travers le terrain, pour ne pas perdre une unité derrière une crête. Le relief du moteur (§ 16) reste celui du scénario ; celui de cette vue ne sert qu'à l'image.
 - **Couvertures** : un contour à la hauteur de l'essaim, puis à 1 500 et 5 000 m au-dessus du sol pour ceux qui sont
   plus hauts que lui. Sur relief, chaque contour vient de `couverture_reelle` (§ 16.2) ; sans relief, de la portée du
   moteur (§ 2), `min(horizon(h, z), portée instrumentée)`. Hypothèse d'image : un contour est tracé à niveau, au sol du
   radar plus sa hauteur, sans épouser le relief point par point.
-- **Bulles** : demi-sphères de la portée du poste, dont l'opacité suit les munitions restantes.
+- **Bulles** : demi-sphères de la portée du poste, centrées au sol sous le poste (arrondi à 20 m), dont l'opacité suit
+  les munitions restantes. Leur bord descend de `r / (2 R) + 0,02` rad sous l'horizontale, `r` le rayon et `R` = 6 371 km,
+  pour rester enterré malgré la courbure de la Terre et le relief.
 - **Satellite** : le sommet de l'arc (120 km) est figuratif, à l'échelle du théâtre, sans rapport avec l'orbite réelle.
 - **Caméras** : une caméra posée sur un radar ou sur un site regarde le barycentre des drones en vol (moyenne de leurs
   latitudes et longitudes, sans rôle dans le calcul) ; le site observé est la cible que visent le plus de drones en vol,

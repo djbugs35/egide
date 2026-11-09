@@ -45,13 +45,13 @@ function radar_observateur(monde, selection, essaim) {
 
 /**
  * Rendre la consigne de caméra : null (libre), {type: "fixe", inclinaison (rad), recul (× rayon de détection)},
- * {type: "suivi", geo} ou {type: "poste", geo, hauteur (m au-dessus du sol), vers (geo visé)}.
+ * {type: "suivi", geo, icone (celle d'un avion, absente pour un drone)} ou {type: "poste", geo, hauteur (m au-dessus du sol), vers (geo visé)}.
  */
 export function consigne_camera(mode, monde, selection) {
   if (VUES_FIXES[mode]) return {type: "fixe", ...VUES_FIXES[mode]};
   if (mode === "suivi") {
     const unite = a_suivre(monde, selection);
-    return unite ? {type: "suivi", geo: unite.geo} : null;
+    return unite ? {type: "suivi", geo: unite.geo, icone: unite.groupe?.icone} : null;
   }
   const essaim = barycentre_essaim(monde);
   if (mode === "radar") {

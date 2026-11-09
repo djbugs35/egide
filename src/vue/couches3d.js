@@ -13,6 +13,11 @@ const PALIERS = 5;
 const palier = (alpha) => Math.max(0, Math.min(PALIERS, Math.round(alpha * PALIERS))) / PALIERS;
 const OPACITE_REMPLISSAGE = 0.08;
 const COULEURS_TIR = {air: COULEURS.ami, sol: COULEURS.sol, brouillage: "#b48ee8"};
+// Le sol d'une bulle est arrondi à ce pas (m) : le relief s'affine en se chargeant, et chaque variation reconstruirait le volume.
+const PAS_SOL_BULLE = 20;
+const RAYON_TERRE = 6_371_000;
+// Le bord de la bulle descend sous l'horizontale (rad) : la Terre s'incurve et le relief varie, il doit rester enterré.
+const MARGE_BORD_BULLE = 0.02;
 
 /** Rendre un jeu de lignes réutilisées d'une image à l'autre : debut(), poser(positions, couleur, alpha, largeur), fin(). */
 function creer_traits(Cesium, collection) {
@@ -106,14 +111,15 @@ export function creer_couches3d(Cesium, viewer, hauteur_sol) {
     for (const b of visible ? bulles_scene(monde) : []) {
       vues.add(b.id);
       const opacite = 0.04 + 0.16 * palier(b.part);
-      const cle = `${b.lat_deg},${b.lon_deg},${b.rayon}`;
+      const sol = Math.round(hauteur_sol(b.lat_deg, b.lon_deg) / PAS_SOL_BULLE) * PAS_SOL_BULLE;
+      const cle = `${b.lat_deg},${b.lon_deg},${b.rayon},${sol}`;
       let entite = bulles.get(b.id);
       if (entite?.cle !== cle) {
         if (entite) viewer.entities.remove(entite);
         entite = viewer.entities.add({
-          position: Cesium.Cartesian3.fromDegrees(b.lon_deg, b.lat_deg, 0),
-          // Demi-sphère : la bulle d'engagement au-dessus du sol.
-          ellipsoid: {radii: new Cesium.Cartesian3(b.rayon, b.rayon, b.rayon), maximumCone: Cesium.Math.PI_OVER_TWO, heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND},
+          // Centre posé au sol à la main : avec un heightReference, Cesium soulève l'ellipsoïde pour le poser sur son bas, et la demi-sphère flotte.
+          position: Cesium.Cartesian3.fromDegrees(b.lon_deg, b.lat_deg, sol),
+          ellipsoid: {radii: new Cesium.Cartesian3(b.rayon, b.rayon, b.rayon), maximumCone: Cesium.Math.PI_OVER_TWO + b.rayon / (2 * RAYON_TERRE) + MARGE_BORD_BULLE},
         });
         Object.assign(entite, {cle, opacite: null});
         bulles.set(b.id, entite);

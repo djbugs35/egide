@@ -351,6 +351,10 @@ imagerie (`"uv": "grille"`), ils suivent la carte de hauteur.
 
 ### 7.4 Modèles 3D
 
+Modèles détaillés, facultatifs : une icône `prive/<nom>` qui a un fichier `prive/modeles/<nom>.glb` (répertorié dans
+`prive/modeles/index.json` pour le navigateur) s'affiche avec lui plutôt qu'avec un modèle générique. Le fichier contient
+un seul maillage en mètres, Y vers le haut, +Z vers l'avant, couleurs dans `COLOR_0`, multipliées par la texture `baseColorTexture` (PNG embarqué, `TEXCOORD_0`) si elle existe. Ces fichiers restent sous `prive/`.
+
 `clients/modeles.json` donne le modèle générique de chaque icône (`icones`) et, à défaut, de chaque famille (`familles`).
 Un client part de l'unité citée par le statique, lit son icône et sa famille dans le catalogue de l'en-tête du rejeu, puis
 affiche son propre modèle pour ce nom. Sites et centres n'ont pas d'unité : icônes `site` et `c2`. Égide ne livre

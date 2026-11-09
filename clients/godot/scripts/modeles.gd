@@ -12,10 +12,19 @@ const AU_SOL := {
 	"vehicule_arme": Vector3(0.6, 0.4, 1.1), "vehicule_brouilleur": Vector3(0.6, 0.5, 1.0), "vehicule_lanceur": Vector3(0.7, 0.5, 1.3), "vehicule_radar": Vector3(0.6, 0.8, 1.1),
 }
 const MODELE_SECOURS := "batiment_site"
+const PREFIXE_PRIVE := "prive/"
+# Lumière figée dans les couleurs des sommets : les entités du client sont dessinées sans éclairage de scène.
+const DIRECTION_LUMIERE := Vector3(-0.5, 0.71, 0.5)
+const LUMIERE_AMBIANTE := 0.55
 
 var _table: Dictionary = {}
 var _catalogue: Dictionary = {}
 var _maillages: Dictionary = {}
+
+
+## Rendre vrai si `nom` désigne un modèle privé détaillé, à montrer dans ses propres couleurs (docs/FORMATS.md § 7.4).
+static func est_detaille(nom: String) -> bool:
+	return nom.begins_with(PREFIXE_PRIVE)
 
 
 ## Lire la table `chemin` et indexer le catalogue de l'en-tête du rejeu ; rendre "" ou le message d'erreur.
@@ -33,6 +42,8 @@ func charger(chemin: String, catalogue: Array) -> String:
 func modele_unite(id: String) -> String:
 	var fiche: Dictionary = _catalogue.get(id, {})
 	var icone: Variant = fiche.get("icone")
+	if icone != null and FileAccess.file_exists(_chemin_detaille(icone)):
+		return icone
 	if icone != null and _table["icones"].has(icone):
 		return _table["icones"][icone]
 	return _table["familles"].get(fiche.get("famille", ""), MODELE_SECOURS)
@@ -51,11 +62,68 @@ func maillage(nom: String) -> Mesh:
 
 
 static func _construire(nom: String) -> Mesh:
+	if est_detaille(nom):
+		var detaille := _lire_detaille(_chemin_detaille(nom))
+		if detaille != null:
+			return detaille
+		nom = MODELE_SECOURS
 	if VOLANTS.has(nom):
 		return _fleche(VOLANTS[nom][0], VOLANTS[nom][1])
 	var boite := BoxMesh.new()
 	boite.size = AU_SOL.get(nom, Vector3.ONE)
 	return boite
+
+
+static func _chemin_detaille(icone: String) -> String:
+	if not icone.begins_with(PREFIXE_PRIVE):
+		return ""
+	return ProjectSettings.globalize_path("res://").path_join("../../prive/modeles/%s.glb" % icone.trim_prefix(PREFIXE_PRIVE)).simplify_path()
+
+
+# Ramené à une unité de long et retourné : le fichier met l'avant sur +Z, le client sur -Z.
+static func _lire_detaille(chemin: String) -> Mesh:
+	var document := GLTFDocument.new()
+	var etat := GLTFState.new()
+	if document.append_from_file(chemin, etat) != OK:
+		return null
+	var scene: Node = document.generate_scene(etat)
+	var mailles := scene.find_children("*", "MeshInstance3D", true, false)
+	var lue: Mesh = null if mailles.is_empty() else mailles[0].mesh
+	var sortie: Mesh = null if lue == null else _preparer_detaille(lue)
+	scene.free()
+	return sortie
+
+
+static func _preparer_detaille(lue: Mesh) -> ArrayMesh:
+	var tableaux := lue.surface_get_arrays(0)
+	var taille := lue.get_aabb().size
+	var echelle := 1.0 / maxf(taille.x, taille.z)
+	var sommets: PackedVector3Array = tableaux[Mesh.ARRAY_VERTEX]
+	var normales: PackedVector3Array = tableaux[Mesh.ARRAY_NORMAL]
+	var couleurs: PackedColorArray = tableaux[Mesh.ARRAY_COLOR]
+	var lumiere := DIRECTION_LUMIERE.normalized()
+	for i in sommets.size():
+		sommets[i] = Vector3(-sommets[i].x, sommets[i].y, -sommets[i].z) * echelle
+		var eclairement := LUMIERE_AMBIANTE + (1.0 - LUMIERE_AMBIANTE) * maxf(normales[i].dot(lumiere), 0.0)
+		normales[i] = Vector3(-normales[i].x, normales[i].y, -normales[i].z)
+		couleurs[i] = Color(couleurs[i].r * eclairement, couleurs[i].g * eclairement, couleurs[i].b * eclairement)
+	var resultat: Array = []
+	resultat.resize(Mesh.ARRAY_MAX)
+	resultat[Mesh.ARRAY_VERTEX] = sommets
+	resultat[Mesh.ARRAY_NORMAL] = normales
+	resultat[Mesh.ARRAY_COLOR] = couleurs
+	resultat[Mesh.ARRAY_TEX_UV] = tableaux[Mesh.ARRAY_TEX_UV]
+	resultat[Mesh.ARRAY_INDEX] = tableaux[Mesh.ARRAY_INDEX]
+	var maillage_final := ArrayMesh.new()
+	maillage_final.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, resultat)
+	maillage_final.surface_set_material(0, lue.surface_get_material(0))
+	return maillage_final
+
+
+# Texture d'un modèle détaillé ; null pour une forme simple, qui n'a que des couleurs.
+static func texture_maillage(maille: Mesh) -> Texture2D:
+	var matiere := maille.surface_get_material(0) as BaseMaterial3D
+	return null if matiere == null else matiere.albedo_texture
 
 
 # Pointe vers -Z : au cap 0, une entité regarde le nord (FORMATS § 6.3).

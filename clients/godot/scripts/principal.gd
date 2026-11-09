@@ -236,7 +236,9 @@ func _nouvelle_couche(maille: Mesh, capacite: int) -> MultiMeshInstance3D:
 	var couche := MultiMeshInstance3D.new()
 	couche.multimesh = multi
 	couche.custom_aabb = AABB_THEATRE
-	couche.material_override = _matiere_entite()
+	var matiere := _matiere_entite()
+	matiere.albedo_texture = BibliothequeModeles.texture_maillage(maille)
+	couche.material_override = matiere
 	partie.add_child(couche)
 	return couche
 
@@ -266,8 +268,11 @@ func _ajouter_fixe(lieu: Dictionary, nom: String, couleur: Color) -> Vector3:
 	var instance := MeshInstance3D.new()
 	var matiere := StandardMaterial3D.new()
 	matiere.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	matiere.albedo_color = couleur
+	var detaille := BibliothequeModeles.est_detaille(nom)
+	matiere.albedo_color = Color.WHITE if detaille else couleur
+	matiere.vertex_color_use_as_albedo = detaille
 	instance.mesh = modeles.maillage(nom)
+	matiere.albedo_texture = BibliothequeModeles.texture_maillage(instance.mesh)
 	instance.material_override = matiere
 	instance.position = point_lieu(lieu)
 	partie.add_child(instance)
@@ -414,7 +419,8 @@ func _dessiner_vecteurs(vecteurs: PackedFloat32Array) -> void:
 		var n: int = remplis.get(nom, 0)
 		var est_perdu := int(vecteurs[k + Rejeu.ETAT]) == perdu
 		multi.set_instance_transform(n, _matrice(point_ligne(vecteurs, k), vecteurs[k + Rejeu.CAP]))
-		multi.set_instance_color(n, COULEUR_PERDU if est_perdu else COULEUR_AMI)
+		var couleur_vive := Color.WHITE if BibliothequeModeles.est_detaille(nom) else COULEUR_AMI
+		multi.set_instance_color(n, COULEUR_PERDU if est_perdu else couleur_vive)
 		remplis[nom] = n + 1
 		k += rejeu.largeur_vecteurs
 	for nom: String in remplis:

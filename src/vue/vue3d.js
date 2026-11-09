@@ -5,10 +5,14 @@ import {consigne_camera} from "./cameras3d.js";
 import {chemin_icone} from "../moteur/catalogue.js";
 import {creer_couches3d} from "./couches3d.js";
 import {COULEURS} from "./couleurs.js";
-import {entites_scene, fenetre_tuile, grille_hauteurs} from "./scene3d.js";
+import {creer_modeles3d, lire_modeles_disponibles} from "./modeles3d.js";
+import {pixels_tuile} from "./relief.js";
+import {entites_scene, fenetre_tuile, grille_hauteurs, metres_par_pixel_tuile, ombrage_tuile} from "./scene3d.js";
 
 const TAILLE_GRILLE = 65;
 const COTE_TUILE = 256;
+// Zoom 12 : environ 26 m par pixel en France, assez fin pour un versant ; au-delà, l'ombrage serait agrandi sans détail utile.
+const NIVEAU_OMBRAGE_MAX = 12;
 const TAILLE_ICONE = 30;
 const INCLINAISON_CAMERA = -0.87;
 // Plus près que ceci, un drone est dessiné en silhouette orientée ; plus loin, en point (MODELE § 23).
@@ -22,6 +26,8 @@ const VIE_CACHE_SOL = 180;
 // En pause, on ne recalcule la scène qu'une image sur tant, pour suivre le relief qui se charge.
 const PERIODE_SCENE_AU_REPOS = 30;
 const RECUL_SUIVI = 12_000;
+// Une unité à modèle détaillé se suit de près : à 12 km elle n'occupe que sa taille minimale à l'écran et sa peinture ne se voit pas.
+const RECUL_SUIVI_MODELE = 70;
 const INCLINAISON_SUIVI = -0.45;
 // Regard légèrement relevé depuis un poste au sol : on voit arriver l'essaim au-dessus de l'horizon.
 const INCLINAISON_POSTE = 0.08;
@@ -35,28 +41,28 @@ async function charger_cesium() {
   return import("../../vendor/cesium/index.js");
 }
 
-/** Rendre les pixels RGBA d'une image de tuile, ou null si elle n'existe pas (mer, hors couverture). */
-async function pixels_tuile(url) {
-  const reponse = await fetch(url);
-  if (!reponse.ok) return null;
-  const image = await createImageBitmap(await reponse.blob());
-  const toile = new OffscreenCanvas(image.width, image.height);
-  const ctx = toile.getContext("2d", {willReadFrequently: true});
-  ctx.drawImage(image, 0, 0);
-  return ctx.getImageData(0, 0, image.width, image.height).data;
-}
+const url_tuile = (relief, {z, x, y}) => relief.tuiles[0].replace("{z}", z).replace("{x}", x).replace("{y}", y);
 
 function fournisseur_relief(Cesium, relief) {
-  const modele = relief.tuiles[0];
   return new Cesium.CustomHeightmapTerrainProvider({
     width: TAILLE_GRILLE, height: TAILLE_GRILLE, tilingScheme: new Cesium.WebMercatorTilingScheme(), credit: relief.attribution,
     callback: async (x, y, niveau) => {
       const fenetre = fenetre_tuile(x, y, niveau, relief.zoom_max);
-      const url = modele.replace("{z}", fenetre.z).replace("{x}", fenetre.x).replace("{y}", fenetre.y);
-      const rgba = await pixels_tuile(url).catch(() => null);
+      const rgba = await pixels_tuile(url_tuile(relief, fenetre)).catch(() => null);
       return rgba ? grille_hauteurs(rgba, COTE_TUILE, TAILLE_GRILLE, fenetre) : new Float32Array(TAILLE_GRILLE * TAILLE_GRILLE);
     },
   });
+}
+
+/** Rendre la couche d'ombrage du relief, calculée ici depuis les tuiles d'altitude : sans elle, le relief ne se voit pas de haut. */
+function couche_ombrage(Cesium, relief) {
+  const fournisseur = new Cesium.UrlTemplateImageryProvider({url: relief.tuiles[0], maximumLevel: Math.min(NIVEAU_OMBRAGE_MAX, relief.zoom_max), tileWidth: COTE_TUILE, tileHeight: COTE_TUILE, hasAlphaChannel: true});
+  fournisseur.requestImage = async (x, y, z) => {
+    const rgba = await pixels_tuile(url_tuile(relief, {z, x, y})).catch(() => null);
+    const image = rgba ? new ImageData(ombrage_tuile(rgba, COTE_TUILE, metres_par_pixel_tuile(y, z, COTE_TUILE)), COTE_TUILE, COTE_TUILE) : new ImageData(COTE_TUILE, COTE_TUILE);
+    return createImageBitmap(image);
+  };
+  return new Cesium.ImageryLayer(fournisseur);
 }
 
 function couche_fond(Cesium, fond) {
@@ -101,6 +107,7 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
   function appliquer_fond(source) {
     viewer.imageryLayers.removeAll();
     if (source?.tuiles) viewer.imageryLayers.add(couche_fond(Cesium, source));
+    if (relief) viewer.imageryLayers.add(couche_ombrage(Cesium, relief));
   }
 
   function cadrer(monde) {
@@ -175,19 +182,22 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
 
   function placer_unites(unites, selection, exageration) {
     const vus = new Set();
+    modeles.debut();
     for (const u of unites) {
       vus.add(u.id);
       const panneau = obtenir(pool_unites, u.id, () => panneaux.add({width: TAILLE_ICONE, height: TAILLE_ICONE, disableDepthTestDistance: SANS_TEST_PROFONDEUR,
         heightReference: u.sol ? Cesium.HeightReference.RELATIVE_TO_GROUND : Cesium.HeightReference.NONE}));
-      panneau.show = true;
+      const sol_unite = hauteur_sol(u.lat_deg, u.lon_deg);
+      // Un modèle a sa propre hauteur : le camion d'un radar roule au sol, c'est son antenne qui porte le mât.
+      const place = Cesium.Cartesian3.fromDegrees(u.lon_deg, u.lat_deg, sol_unite + (u.sol ? 0 : u.alt * exageration));
+      panneau.show = !modeles.placer(u, place, u.cap);
       panneau.scale = u.id === selection ? 1.5 : 1;
       if (u.sol) {
         const signature = `${u.lat_deg},${u.lon_deg},${u.alt}`;
         if (panneau.signature !== signature) Object.assign(panneau, {signature, position: Cesium.Cartesian3.fromDegrees(u.lon_deg, u.lat_deg, u.alt)});
       } else {
-        const sol = hauteur_sol(u.lat_deg, u.lon_deg);
-        panneau.position = Cesium.Cartesian3.fromDegrees(u.lon_deg, u.lat_deg, sol + u.alt * exageration);
-        poser_tige(u.lat_deg, u.lon_deg, sol, panneau.position);
+        panneau.position = place;
+        poser_tige(u.lat_deg, u.lon_deg, sol_unite, place);
       }
       const image = chemin_icone(u.icone);
       if (panneau.icone !== image) Object.assign(panneau, {icone: image, image});
@@ -195,6 +205,7 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
       if (!u.sol) panneau.rotation = viewer.camera.heading - u.cap;
     }
     masquer_absents(pool_unites, vus);
+    modeles.fin();
   }
 
   /** Placer la caméra selon `mode` ; rendre vrai si elle doit être replacée à chaque image. */
@@ -215,7 +226,7 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
     const {geo} = consigne;
     const sol = hauteur_sol(vers_degres(geo.lat), vers_degres(geo.lon));
     if (consigne.type === "suivi") {
-      camera.lookAt(Cesium.Cartesian3.fromRadians(geo.lon, geo.lat, sol + (geo.alt ?? 0) * exageration), new Cesium.HeadingPitchRange(camera.heading, INCLINAISON_SUIVI, RECUL_SUIVI));
+      camera.lookAt(Cesium.Cartesian3.fromRadians(geo.lon, geo.lat, sol + (geo.alt ?? 0) * exageration), new Cesium.HeadingPitchRange(camera.heading, INCLINAISON_SUIVI, modeles.existe(consigne.icone) ? RECUL_SUIVI_MODELE : RECUL_SUIVI));
       camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
     } else {
       camera.setView({
@@ -226,6 +237,7 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
     return true;
   }
 
+  const modeles = creer_modeles3d(Cesium, viewer, await lire_modeles_disponibles());
   appliquer_fond(local?.fond ?? fond);
   const couches = creer_couches3d(Cesium, viewer, hauteur_sol);
   return {
@@ -238,6 +250,10 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
     rendre({monde, calques, montre, percue, selection, inspection, exageration, camera, effets, traces, maintenant}) {
       const debut = performance.now();
       cadrer(monde);
+      if (exageration !== viewer.scene.verticalExaggeration) {
+        viewer.scene.verticalExaggeration = exageration;
+        sols.clear();
+      }
       if (++images % VIE_CACHE_SOL === 0) sols.clear();
       const continu = placer_camera(monde, camera, selection, exageration);
       // En pause, rien ne bouge : ni recalcul ni image, sauf pour suivre le relief qui se charge.

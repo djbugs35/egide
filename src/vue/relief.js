@@ -2,6 +2,7 @@
 // Le calcul (tuile, pixel, décodage, échantillonnage d'un chemin) est pur et testé ; seul le chargement des images
 // dépend du navigateur.
 import {direct, inverse, vers_degres} from "../moteur/geodesie.js";
+import {decoder_png} from "./png.js";
 
 // Zoom 10 : environ 150 m par pixel à l'équateur, assez fin pour un profil sur des centaines de km.
 export const ZOOM_RELIEF = 10;
@@ -35,19 +36,24 @@ export function echantillonner_chemin(points, pas) {
   return echantillons;
 }
 
+// 256 tuiles de 256 × 256 pixels RGBA : 67 Mo au plus, de quoi couvrir la vue 3D sans gonfler pendant la navigation.
+const TUILES_EN_MEMOIRE = 256;
 const tuiles = new Map();
 
-async function pixels_tuile(url) {
+async function telecharger_pixels(url) {
+  const reponse = await fetch(url);
+  if (!reponse.ok) throw new Error(`${reponse.status} sur ${url}`);
+  return (await decoder_png(new Uint8Array(await reponse.arrayBuffer()))).rgba;
+}
+
+/** Rendre les pixels RGBA exacts d'une tuile PNG, gardés en mémoire ; un échec n'est pas retenu, la tuile sera redemandée. */
+export function pixels_tuile(url) {
   if (!tuiles.has(url)) {
-    tuiles.set(url, (async () => {
-      const reponse = await fetch(url);
-      if (!reponse.ok) throw new Error(`${reponse.status} sur ${url}`);
-      const image = await createImageBitmap(await reponse.blob());
-      const toile = new OffscreenCanvas(image.width, image.height);
-      const ctx = toile.getContext("2d");
-      ctx.drawImage(image, 0, 0);
-      return ctx.getImageData(0, 0, image.width, image.height).data;
-    })());
+    if (tuiles.size >= TUILES_EN_MEMOIRE) tuiles.delete(tuiles.keys().next().value);
+    tuiles.set(url, telecharger_pixels(url).catch((erreur) => {
+      tuiles.delete(url);
+      throw erreur;
+    }));
   }
   return tuiles.get(url);
 }
