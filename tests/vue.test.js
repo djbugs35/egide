@@ -245,7 +245,7 @@ import {modifications_ajout_radar} from "../src/vue/edition.js";
 import {positions_radars, sites_frontiere} from "../src/moteur/radars.js";
 import {CALQUES, calques_par_defaut, element_visible, lire_calques, memoriser_calques} from "../src/vue/calques.js";
 import {trouver_sous_curseur} from "../src/vue/scope.js";
-import {ecran} from "../src/vue/ecran.js";
+import {echelle_symboles, ecran, noms_lisibles} from "../src/vue/ecran.js";
 
 test("radars : la couverture frontière se matérialise en radars espacés de √3 d au plus, sur la frontière", () => {
   const s = scenario();
@@ -472,4 +472,17 @@ test("libelle_element : chaque unité porte le nom de sa fiche", () => {
   const nom = (type, indice = 0) => libelle_element(monde, {type, indice});
   assert.deepEqual([nom("radar", 4), nom("centre"), nom("conduite"), nom("batterie", 1), nom("cible", 2), nom("avion")],
     ["Radar R5", "CDC Nord", "CDC principal", "Batterie B2", "Site C3", "Avion 0 (Laser)"]);
+});
+
+test("echelle_symboles : pleine taille jusqu'à 1 km par pixel, réduite au-delà, bornée à 30 %", () => {
+  const facteur = (metres_par_pixel) => echelle_symboles({type: "scope", echelle: 1 / metres_par_pixel});
+  assert.equal(facteur(500), 1, "zoomer ne grossit pas les symboles");
+  assert.equal(facteur(1000), 1);
+  assert.equal(facteur(4000), 0.4);
+  assert.equal(facteur(1_000_000), 0.3);
+});
+
+test("noms_lisibles : les noms disparaissent sous 50 % de la taille des symboles", () => {
+  assert.equal(noms_lisibles(0.5), true);
+  assert.equal(noms_lisibles(0.4), false);
 });

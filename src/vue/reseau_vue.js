@@ -1,6 +1,6 @@
 // Synoptique du réseau d'information (MODELE § 15.2) : centre de conduite, liaisons entre radars, conduite et
 // groupes d'avions, état de chaque liaison. Positions et libellés purs ; le tracé lit le monde sans le modifier.
-import {chemin_cercle, ecran} from "./ecran.js";
+import {a_l_echelle, chemin_cercle, echelle_symboles, ecran, noms_lisibles} from "./ecran.js";
 import {COULEURS} from "./couleurs.js";
 import {echapper_html, format_decimal} from "./format.js";
 import {inverse} from "../moteur/geodesie.js";
@@ -150,25 +150,30 @@ function trait(ctx, type, actif) {
  * (APP-6) ; « CDC » pour le centre principal, le nom des autres en dessous.
  */
 function dessiner_centres(ctx, camera, monde) {
+  const k = echelle_symboles(camera);
   monde.reseau.centres.forEach((centre, c) => {
     const p = ecran(camera, centre.geo);
     ctx.setLineDash([]);
     ctx.fillStyle = COULEURS.fond;
     ctx.strokeStyle = COULEURS.ami;
-    ctx.lineWidth = 2;
-    ctx.fillRect(p.x - 13, p.y - 7, 26, 14);
-    ctx.strokeRect(p.x - 13, p.y - 7, 26, 14);
-    ctx.beginPath();
-    ctx.moveTo(p.x - 13, p.y + 7);
-    ctx.lineTo(p.x - 13, p.y + 16);
-    ctx.stroke();
+    a_l_echelle(ctx, p, k, () => {
+      ctx.lineWidth = 2;
+      ctx.fillRect(p.x - 13, p.y - 7, 26, 14);
+      ctx.strokeRect(p.x - 13, p.y - 7, 26, 14);
+      ctx.beginPath();
+      ctx.moveTo(p.x - 13, p.y + 7);
+      ctx.lineTo(p.x - 13, p.y + 16);
+      ctx.stroke();
+    });
+    // Le sigle n'entre plus dans le cadre réduit : on ne garde que le symbole.
+    if (!noms_lisibles(k)) return;
     ctx.fillStyle = COULEURS.ami;
     ctx.font = "bold 10px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(c === 0 ? "CDC" : `CDC${c + 1}`, p.x, p.y + 4);
     if (c > 0) {
       ctx.font = "11px system-ui, sans-serif";
-      ctx.fillText(centre.nom, p.x, p.y + 20);
+      ctx.fillText(centre.nom, p.x, p.y + 7 + 13 * k);
     }
     ctx.textAlign = "start";
   });
@@ -192,7 +197,8 @@ function dessiner_liaison(ctx, camera, a, b, type, actif, texte) {
     ctx.lineTo(m.x - 5, m.y + 5);
     ctx.stroke();
   }
-  if (texte) {
+  // Une latence normale s'efface au grand dézoom ; un lien rompu reste annoncé.
+  if (texte && (!actif || noms_lisibles(echelle_symboles(camera)))) {
     ctx.fillStyle = actif ? COULEURS.texte_secondaire : COULEURS.hostile;
     ctx.font = "10px system-ui, sans-serif";
     ctx.fillText(texte, m.x + 6, m.y - 4);

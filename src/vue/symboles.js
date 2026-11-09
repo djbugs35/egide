@@ -3,7 +3,7 @@
 import {ecrire_nom} from "./libelles.js";
 import {enveloppe_poste} from "../moteur/couvertures.js";
 import {cap_drone} from "../moteur/menace.js";
-import {chemin_cercle, ecran as projeter_ecran, rotation_ecran} from "./ecran.js";
+import {a_l_echelle, chemin_cercle, echelle_symboles, ecran as projeter_ecran, noms_lisibles, rotation_ecran} from "./ecran.js";
 import {COULEURS} from "./couleurs.js";
 import {avancement} from "./effets.js";
 import {dessiner_icone, dessiner_silhouette} from "./icones.js";
@@ -14,6 +14,7 @@ const TAILLE = 6;
 export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques) {
   const {sol} = monde.scenario;
   const munitionsInitiales = monde.postes.length ? sol.munitions : 0;
+  const k = echelle_symboles(camera);
   monde.cibles.forEach((cible, indice) => {
     const ecran = projeter_ecran(camera, cible.geo);
     // Les batteries placées ont leur propre bulle, tracée à leur position (dessiner_batteries).
@@ -42,11 +43,11 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
     ctx.fillStyle = frappe ? COULEURS.hostile : COULEURS.fond;
     ctx.strokeStyle = COULEURS.texte;
     ctx.lineWidth = 1.5;
-    ctx.fillRect(ecran.x - 5, ecran.y - 5, 10, 10);
-    ctx.strokeRect(ecran.x - 5, ecran.y - 5, 10, 10);
+    ctx.fillRect(ecran.x - 5 * k, ecran.y - 5 * k, 10 * k, 10 * k);
+    ctx.strokeRect(ecran.x - 5 * k, ecran.y - 5 * k, 10 * k, 10 * k);
     ctx.font = "12px system-ui, sans-serif";
     ctx.fillStyle = COULEURS.texte;
-    ecrire_nom(ctx, `C${indice + 1}`, ecran.x + 9, ecran.y - 6);
+    if (noms_lisibles(k)) ecrire_nom(ctx, `C${indice + 1}`, ecran.x + 9, ecran.y - 6);
     if (monde.fuites[indice]) {
       ctx.fillStyle = COULEURS.hostile;
       ctx.fillText(`${monde.fuites[indice]} frappes`, ecran.x + 9, ecran.y + 9);
@@ -59,6 +60,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
 /** Tracer les batteries placées (MODELE § 21.2) : bulle de leur propre portée, opacité selon leurs munitions, symbole et nom. */
 function dessiner_batteries(ctx, camera, monde, calques) {
   const initiales = monde.scenario.sol.batteries ?? [];
+  const k = echelle_symboles(camera);
   for (const poste of monde.postes) {
     if (poste.batterie === undefined) continue;
     const part = poste.munitions / Math.max(1, initiales[poste.batterie]?.munitions ?? 1);
@@ -69,25 +71,27 @@ function dessiner_batteries(ctx, camera, monde, calques) {
     ctx.fill();
     ctx.stroke();
     const p = projeter_ecran(camera, poste.geo);
-    if (calques.icones && poste.unite.icone && dessiner_icone(ctx, p.x, p.y, {icone: poste.unite.icone, pays: poste.unite.pays, camp: COULEURS.sol, taille: 22})) {
+    if (calques.icones && poste.unite.icone && dessiner_icone(ctx, p.x, p.y, {icone: poste.unite.icone, pays: poste.unite.pays, camp: COULEURS.sol, taille: 22 * k})) {
       ctx.font = "11px system-ui, sans-serif";
       ctx.fillStyle = COULEURS.sol;
-      ecrire_nom(ctx, `B${poste.batterie + 1}`, p.x + 13, p.y + 4);
+      if (noms_lisibles(k)) ecrire_nom(ctx, `B${poste.batterie + 1}`, p.x + 13, p.y + 4);
       continue;
     }
     // Symbole de batterie sol-air : socle et rampe dressée.
     ctx.fillStyle = COULEURS.fond;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(p.x - 7, p.y + 5);
-    ctx.lineTo(p.x + 7, p.y + 5);
-    ctx.lineTo(p.x, p.y - 7);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    a_l_echelle(ctx, p, k, () => {
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(p.x - 7, p.y + 5);
+      ctx.lineTo(p.x + 7, p.y + 5);
+      ctx.lineTo(p.x, p.y - 7);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    });
     ctx.font = "11px system-ui, sans-serif";
     ctx.fillStyle = COULEURS.sol;
-    ecrire_nom(ctx, `B${poste.batterie + 1}`, p.x + 9, p.y + 4);
+    if (noms_lisibles(k)) ecrire_nom(ctx, `B${poste.batterie + 1}`, p.x + 9, p.y + 4);
   }
 }
 
@@ -109,6 +113,7 @@ function dessiner_impacts(ctx, camera, monde, effets, maintenant) {
  * `montre(drone)` : filtre facultatif (vue du CDC : seulement les drones que la conduite connaît).
  */
 export function dessiner_drones(ctx, camera, monde, traces, calques, montre = () => true) {
+  const k = echelle_symboles(camera);
   for (const [id, plots] of calques.plots ? traces.plots : []) {
     if (!montre(monde.drones[id])) continue;
     plots.forEach((plot, rang) => {
@@ -123,11 +128,12 @@ export function dessiner_drones(ctx, camera, monde, traces, calques, montre = ()
     const ecran = projeter_ecran(camera, drone.geo);
     const couleur = drone.detection === null ? COULEURS.inconnu : COULEURS.hostile;
     const rotation = rotation_ecran(camera, drone.geo, cap_drone(drone));
-    if (calques.icones && monde.scenario.rouge.icone && dessiner_silhouette(ctx, ecran.x, ecran.y, monde.scenario.rouge.icone, couleur, undefined, rotation)) continue;
+    if (calques.icones && monde.scenario.rouge.icone && dessiner_silhouette(ctx, ecran.x, ecran.y, monde.scenario.rouge.icone, couleur, 12 * k, rotation)) continue;
     ctx.fillStyle = couleur;
     ctx.save();
     ctx.translate(ecran.x, ecran.y);
     ctx.rotate(rotation);
+    ctx.scale(k, k);
     ctx.beginPath();
     ctx.moveTo(0, -TAILLE * 0.8);
     ctx.lineTo(TAILLE * 0.8, 0);
@@ -146,29 +152,30 @@ export const calque_vecteur = (avion) => (avion.type && avion.type !== "avion" ?
  * intercepteur à usage unique, cercle barré d'un zigzag pour un brouilleur, avec son rayon d'effet en pointillés.
  */
 function dessiner_drone_defensif(ctx, camera, avion, ecran) {
+  const k = echelle_symboles(camera);
   ctx.strokeStyle = COULEURS.ami;
   ctx.fillStyle = COULEURS.ami;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   if (avion.type === "drone_arme") {
-    ctx.moveTo(ecran.x, ecran.y - 5);
-    ctx.lineTo(ecran.x + 5, ecran.y);
-    ctx.lineTo(ecran.x, ecran.y + 5);
-    ctx.lineTo(ecran.x - 5, ecran.y);
+    ctx.moveTo(ecran.x, ecran.y - 5 * k);
+    ctx.lineTo(ecran.x + 5 * k, ecran.y);
+    ctx.lineTo(ecran.x, ecran.y + 5 * k);
+    ctx.lineTo(ecran.x - 5 * k, ecran.y);
     ctx.closePath();
     ctx.fill();
   } else if (avion.type === "kamikaze") {
-    ctx.moveTo(ecran.x, ecran.y - 5);
-    ctx.lineTo(ecran.x + 4.5, ecran.y + 4);
-    ctx.lineTo(ecran.x - 4.5, ecran.y + 4);
+    ctx.moveTo(ecran.x, ecran.y - 5 * k);
+    ctx.lineTo(ecran.x + 4.5 * k, ecran.y + 4 * k);
+    ctx.lineTo(ecran.x - 4.5 * k, ecran.y + 4 * k);
     ctx.closePath();
     ctx.stroke();
   } else {
-    ctx.arc(ecran.x, ecran.y, 5, 0, 2 * Math.PI);
-    ctx.moveTo(ecran.x - 4, ecran.y);
-    ctx.lineTo(ecran.x - 1.5, ecran.y - 2.5);
-    ctx.lineTo(ecran.x + 1.5, ecran.y + 2.5);
-    ctx.lineTo(ecran.x + 4, ecran.y);
+    ctx.arc(ecran.x, ecran.y, 5 * k, 0, 2 * Math.PI);
+    ctx.moveTo(ecran.x - 4 * k, ecran.y);
+    ctx.lineTo(ecran.x - 1.5 * k, ecran.y - 2.5 * k);
+    ctx.lineTo(ecran.x + 1.5 * k, ecran.y + 2.5 * k);
+    ctx.lineTo(ecran.x + 4 * k, ecran.y);
     ctx.stroke();
     ctx.setLineDash([2, 4]);
     ctx.globalAlpha *= 0.5;
@@ -180,6 +187,7 @@ function dessiner_drone_defensif(ctx, camera, avion, ecran) {
 
 /** Tracer les avions et les drones défensifs : symbole ami, ligne pointillée vers le point de mise à poste, estompés une fois vides. */
 export function dessiner_avions(ctx, camera, monde, calques) {
+  const k = echelle_symboles(camera);
   for (const avion of monde.avions) {
     if (avion.perdu || !calques[calque_vecteur(avion)]) continue;
     const ecran = projeter_ecran(camera, avion.geo);
@@ -195,7 +203,7 @@ export function dessiner_avions(ctx, camera, monde, calques) {
       ctx.stroke();
       ctx.setLineDash([]);
     }
-    if (calques.icones && avion.groupe.icone && dessiner_icone(ctx, ecran.x, ecran.y, {icone: avion.groupe.icone, pays: avion.groupe.pays, taille: avion.type && avion.type !== "avion" ? 18 : 22, rotation: rotation_ecran(camera, avion.geo, avion.cap)})) {
+    if (calques.icones && avion.groupe.icone && dessiner_icone(ctx, ecran.x, ecran.y, {icone: avion.groupe.icone, pays: avion.groupe.pays, taille: (avion.type && avion.type !== "avion" ? 18 : 22) * k, rotation: rotation_ecran(camera, avion.geo, avion.cap)})) {
       ctx.globalAlpha = 1;
       continue;
     }
@@ -205,9 +213,9 @@ export function dessiner_avions(ctx, camera, monde, calques) {
       continue;
     }
     ctx.beginPath();
-    ctx.arc(ecran.x, ecran.y + 3, TAILLE + 1, Math.PI, 2 * Math.PI);
+    ctx.arc(ecran.x, ecran.y + 3 * k, (TAILLE + 1) * k, Math.PI, 2 * Math.PI);
     ctx.closePath();
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2 * k;
     ctx.strokeStyle = COULEURS.ami;
     ctx.fillStyle = COULEURS.ami;
     if (avion.guidage === "ir") ctx.fill();
@@ -247,27 +255,30 @@ export function dessiner_tirs(ctx, camera, effets, maintenant) {
  */
 export function dessiner_radars(ctx, camera, positions, icones = () => null) {
   ctx.font = "11px system-ui, sans-serif";
+  const k = echelle_symboles(camera);
   positions.forEach((geo, i) => {
     const p = projeter_ecran(camera, geo);
     const icone = icones(i);
-    if (icone && dessiner_icone(ctx, p.x, p.y, {...icone, taille: 24})) {
+    if (icone && dessiner_icone(ctx, p.x, p.y, {...icone, taille: 24 * k})) {
       ctx.fillStyle = COULEURS.ami;
-      ecrire_nom(ctx, `R${i + 1}`, p.x + 14, p.y + 4);
+      if (noms_lisibles(k)) ecrire_nom(ctx, `R${i + 1}`, p.x + 14, p.y + 4);
       return;
     }
     ctx.fillStyle = COULEURS.fond;
     ctx.strokeStyle = COULEURS.ami;
-    ctx.lineWidth = 1.5;
-    ctx.fillRect(p.x - 8, p.y - 6, 16, 12);
-    ctx.strokeRect(p.x - 8, p.y - 6, 16, 12);
-    // Parabole : un arc ouvert vers le haut et son mât.
-    ctx.beginPath();
-    ctx.arc(p.x, p.y - 3, 5, 0.15 * Math.PI, 0.85 * Math.PI);
-    ctx.moveTo(p.x, p.y + 2);
-    ctx.lineTo(p.x, p.y + 5);
-    ctx.stroke();
+    a_l_echelle(ctx, p, k, () => {
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(p.x - 8, p.y - 6, 16, 12);
+      ctx.strokeRect(p.x - 8, p.y - 6, 16, 12);
+      // Parabole : un arc ouvert vers le haut et son mât.
+      ctx.beginPath();
+      ctx.arc(p.x, p.y - 3, 5, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.moveTo(p.x, p.y + 2);
+      ctx.lineTo(p.x, p.y + 5);
+      ctx.stroke();
+    });
     ctx.fillStyle = COULEURS.ami;
-    ecrire_nom(ctx, `R${i + 1}`, p.x + 11, p.y + 4);
+    if (noms_lisibles(k)) ecrire_nom(ctx, `R${i + 1}`, p.x + 11, p.y + 4);
   });
 }
 

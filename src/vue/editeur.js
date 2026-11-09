@@ -4,7 +4,7 @@
 import {aimanter, apercu_depot, apercu_liaison, consigne_outil, mesure, points_geodesique, regrouper, texte_distance, texte_mesure} from "./aides_edition.js";
 import {creer_choix_superposes} from "./choix_superposes.js";
 import {COULEURS} from "./couleurs.js";
-import {chemin_cercle, ecran, geo_depuis_ecran} from "./ecran.js";
+import {chemin_cercle, echelle_symboles, ecran, geo_depuis_ecran, noms_lisibles} from "./ecran.js";
 import {
   barycentre, dans_rectangle, element_sous, elements_editables, elements_superposes, libelle_element, modifications_centre_theatre, modifications_ajout_cible, modifications_ajout_passage,
   modifications_ajout_centre, modifications_ajout_radar, modifications_panne, modifications_tout_effacer, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
@@ -469,8 +469,10 @@ export function creer_editeur(env) {
 
   /** Porter le nombre d'avions superposés à l'écran, dont les symboles se cachent les uns les autres. */
   function dessiner_groupes(ctx, camera) {
+    const k = echelle_symboles(camera);
+    if (!noms_lisibles(k)) return;
     const avions = elements().filter((element) => element.type === "avion").map((element) => ecran(camera, element.geo));
-    for (const {x, y, nombre} of regrouper(avions)) etiquette(ctx, `×${nombre}`, x + 12, y - 12, COULEURS.texte);
+    for (const {x, y, nombre} of regrouper(avions, 14 * k)) etiquette(ctx, `×${nombre}`, x + 12, y - 12, COULEURS.texte);
   }
 
   /** Montrer, avant de poser : portée du radar ou bulle de la batterie au point visé, portée de la liaison en cours. */

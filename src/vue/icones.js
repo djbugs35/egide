@@ -49,7 +49,8 @@ export function dessiner_icone(ctx, x, y, {icone, pays, camp = COULEURS.ami, tai
   ctx.arc(x, y, taille / 2, 0, 2 * Math.PI);
   ctx.fillStyle = couleur_pays(pays, "#24384f");
   ctx.fill();
-  ctx.lineWidth = 2;
+  // Un liseré de 2 px mangerait une pastille réduite par le dézoom.
+  ctx.lineWidth = Math.min(2, Math.max(1, taille / 11));
   ctx.strokeStyle = camp;
   ctx.stroke();
   poser_tournee(ctx, silhouette, x, y, taille * 0.62, rotation);

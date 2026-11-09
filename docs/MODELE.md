@@ -225,6 +225,8 @@ son attribution et ses conditions d'usage ; la conformité vérifie leurs clés 
 si la souris n'a pas bougé : on peut donc déplacer la carte sans quitter l'outil, et glisser une unité la déplace même outil armé. Au même point, une unité passe avant le milieu d'une liaison. Si plusieurs unités se recouvrent à l'écran (moins de 6 px d'écart), un clic sans mouvement, à la sélection, à la liaison ou à l'effacement, ouvre la liste pour désigner la bonne ; le glisser prend la plus proche du curseur. Le clic droit quitte l'outil en cours ; il n'envoie la
 sélection qu'en cours de raid (mode ordres). Pendant la préparation, le raid n'est pas simulé à chaque geste : seul le monde à t = 0 est
 reconstruit, et la simulation complète a lieu en quittant l'éditeur. Ces choix ne touchent que l'interface, pas les résultats.
+
+**Taille des symboles.** Au-delà de 1 km par pixel, les symboles se réduisent en puissance 3/4 de l'échelle, jusqu'à 30 % ; sous 50 %, les noms, les latences des liaisons actives et les badges de groupe s'effacent, les liens rompus et les frappes restent écrits. Le survol et la fiche donnent toujours les valeurs. Cela ne touche que l'affichage.
 ### 12.1 Positions placées
 Le scénario peut fixer des cibles (`theatre.cibles_placees`) et des orbites d'avions (`bleu.avions[].orbites_placees`)
 en {lat_deg, lon_deg}. Les éléments placés passent d'abord ; le complément jusqu'au nombre demandé est tiré au hasard

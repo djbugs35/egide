@@ -43,6 +43,33 @@ export function metres_par_pixel(camera) {
   return (CIRCONFERENCE * Math.cos((centre.lat * Math.PI) / 180)) / (TUILE_MONDE * 2 ** camera.carte.getZoom());
 }
 
+// Choix d'interface (MODELE § 12) : jusqu'à ce zoom, les symboles gardent leur taille ; la vue d'un théâtre régional y reste.
+const METRES_PAR_PIXEL_PLEINE_TAILLE = 1000;
+const ECHELLE_SYMBOLE_MINIMALE = 0.3;
+const ECHELLE_NOMS_LISIBLES = 0.5;
+
+/**
+ * Rendre le facteur (0,3 à 1, par pas de 0,1) des symboles au zoom de `camera`, en puissance 3/4 de l'échelle : essayé en
+ * racine, 40 avions sur 60 px de rayon restaient une tache. Le pas borne le cache des silhouettes teintées (icones.js) à huit tailles.
+ */
+export function echelle_symboles(camera) {
+  const facteur = (METRES_PAR_PIXEL_PLEINE_TAILLE / metres_par_pixel(camera)) ** 0.75;
+  return Math.round(Math.max(ECHELLE_SYMBOLE_MINIMALE, Math.min(1, facteur)) * 10) / 10;
+}
+
+/** Rendre vrai si, au facteur `echelle` des symboles, les noms ont encore la place d'être écrits. */
+export const noms_lisibles = (echelle) => echelle >= ECHELLE_NOMS_LISIBLES;
+
+/** Exécuter `dessin`, tracé en coordonnées écran autour du point `p`, réduit d'un facteur `echelle` autour de ce point. */
+export function a_l_echelle(ctx, p, echelle, dessin) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.scale(echelle, echelle);
+  ctx.translate(-p.x, -p.y);
+  dessin();
+  ctx.restore();
+}
+
 const cercles = new Map();
 
 /** Rendre les sommets géographiques (mis en cache) du cercle géodésique de `rayon` m autour de `centre`. */
