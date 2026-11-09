@@ -20,3 +20,6 @@ export const format_distance = (metres) => (metres < 1000 ? `${ENTIER.format(met
 
 /** Rendre une moyenne et son intervalle de confiance : « 187,2 ± 10,5 ». */
 export const format_intervalle = (resume) => `${DECIMAL.format(resume.moyenne)} ± ${DECIMAL.format(resume.ic95)}`;
+
+/** Rendre `texte` sans danger dans du HTML. */
+export const echapper_html = (texte) => texte.replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);

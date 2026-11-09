@@ -91,3 +91,28 @@ export function regrouper(points, seuilPx = 14) {
   }
   return groupes.filter((g) => g.nombre >= 2).map((g) => ({x: g.sx / g.nombre, y: g.sy / g.nombre, nombre: g.nombre}));
 }
+
+const CONSIGNES = {
+  selection: "Clic : choisir une unité · glisser une unité : la déplacer · glisser le fond : déplacer la carte · Maj+glisser : cadre de sélection",
+  plan: "Clic : ajouter un point au plan de vol · clic droit : terminer",
+  zone: "Clic : ajouter un sommet · double-clic ou Entrée : fermer la zone · Échap : abandonner",
+  mesure: "Glisser : mesurer distance et cap",
+  gomme: "Clic sur une unité : l'effacer · clic droit : terminer",
+  theatre: "Cliquez le futur centre du théâtre · clic droit : abandonner",
+  cible: "Clic : ajouter un site à défendre · clic droit : terminer",
+  radar: "Clic : ajouter un radar · clic droit : terminer",
+  centre: "Clic : ajouter un centre C2 · clic droit : terminer",
+};
+
+/** Rendre la consigne de l'outil en cours, en une ligne ; `etat` : {outil, mode, nom_depot, efface, liaison, nom_moyen, origine, sommets, choisis}. */
+export function consigne_outil({outil, mode, nom_depot, efface, liaison, nom_moyen = "Liaison", origine = "", sommets = 0, choisis = 0}) {
+  if (mode === "ordres") return choisis ? `${choisis} unité${choisis > 1 ? "s" : ""} : clic droit pour envoyer · Suppr pour mettre hors service` : "Cliquez ou encadrez des avions, puis clic droit pour les envoyer";
+  if (outil === "depot") return efface ? "Clic sur une unité : l'effacer" : `${nom_depot} : clic pour poser · glisser une unité : la déplacer · glisser le fond : déplacer la carte · clic droit pour terminer`;
+  if (outil === "liaison") {
+    const moyen = nom_moyen.replace(/ \(notionnelle?\)$/, "");
+    return liaison ? `${moyen} depuis ${origine} : cliquez la seconde unité · Échap : abandonner` : `${moyen} : cliquez la première unité à relier · le moyen se change à côté du bouton Liaison`;
+  }
+  if (outil === "zone" && sommets) return `${sommets} sommet${sommets > 1 ? "s" : ""} · ${CONSIGNES.zone}`;
+  if (outil === "selection" && choisis) return `${choisis} unité${choisis > 1 ? "s" : ""} sélectionnée${choisis > 1 ? "s" : ""} · Suppr : effacer · ${CONSIGNES.selection}`;
+  return CONSIGNES[outil] ?? "";
+}

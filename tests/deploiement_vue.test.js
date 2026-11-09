@@ -6,7 +6,8 @@ import {geo_deg} from "../src/moteur/geodesie.js";
 import {creer_monde} from "../src/moteur/monde.js";
 import {modifier_scenario, resoudre_scenario} from "../src/moteur/scenario.js";
 import {elements_editables, modifications_deplacement, modifications_suppression} from "../src/vue/edition.js";
-import {MUNITIONS_BATTERIE, choisir_moyen, famille_de, modifications_depot, modifications_reseau_auto, palette} from "../src/vue/deploiement.js";
+import {MUNITIONS_BATTERIE, choisir_moyen, famille_de, modifications_depot, modifications_reseau_auto, palette, preparer_liaison} from "../src/vue/deploiement.js";
+import {connexions_html, connexions_noeud} from "../src/vue/reseau_vue.js";
 import {FICHIERS, REFERENCE, REGISTRE} from "./aide_scenario.js";
 
 const INDEX = JSON.parse(readFileSync(new URL("../unites/index.json", import.meta.url)));
@@ -117,7 +118,7 @@ test("réseau automatique : chaque unité équipée vers les centres à portée 
   assert.doesNotThrow(() => monde_de(modifier_scenario(brut, modifications)));
 });
 
-import {fiches} from "../src/vue/fiche.js";
+import {fiche_perimee, fiches} from "../src/vue/fiche.js";
 const ALGOS = JSON.parse(readFileSync(new URL("../algos/index.json", import.meta.url)));
 const CTX = {index: INDEX, algos: ALGOS, nom: (id) => id};
 
@@ -165,4 +166,58 @@ test("tout effacer : carte vide sauf le CDC et un site ; le raid tourne, rien n'
   assert.equal(brut.bleu.radar.sites.length, 1, "le premier radar redéposé est seul sur la carte");
   ({brut, monde} = deposer(brut, "vecteurs/avions/turbopropulseur_ir_notionnel", {quantite: 3}));
   assert.equal(monde.avions.length, 3);
+});
+
+const FILAIRE = "liaisons/filaire_notionnelle";
+const RADIO = "liaisons/radio_vhf_uhf_notionnelle";
+
+test("liaison à la main : le moyen choisi n'est pas remplacé par un moyen commun, et complète l'équipement déclaré", () => {
+  // L'éditeur prenait en silence le moyen du CDC : on demandait du filaire, on obtenait autre chose.
+  const brut = modifier_scenario(REFERENCE, {"bleu.reseau.equipements": [{noeud: "conduite", moyens: ["liaisons/satellite_notionnelle"]}]});
+  const {modifications, refus} = preparer_liaison(monde_de(brut), brut, FICHIERS, "radar:0", "conduite", FILAIRE);
+  assert.equal(refus, undefined);
+  const suivant = modifier_scenario(brut, modifications);
+  assert.equal(suivant.bleu.reseau.liaisons.find((l) => l.de === "radar:0" && l.vers === "conduite").moyen, FILAIRE);
+  assert.ok(suivant.bleu.reseau.equipements[0].moyens.includes(FILAIRE));
+});
+
+test("liaison à la main : au-delà de la portée, refus qui donne les deux distances ; aucune modification", () => {
+  const FIBRE_COURTE = {...FICHIERS[FILAIRE], portee_km: 1};
+  const fichiers = {...FICHIERS, [FILAIRE]: FIBRE_COURTE};
+  const {refus, modifications} = preparer_liaison(monde_de(REFERENCE), REFERENCE, fichiers, "radar:0", "conduite", FILAIRE);
+  assert.match(refus, /porte 1 km.*R1 et CDC sont à \d+ km/);
+  assert.equal(modifications, undefined);
+});
+
+test("liaison à la main : une unité ne se relie pas à elle-même", () => {
+  assert.match(preparer_liaison(monde_de(REFERENCE), REFERENCE, FICHIERS, "radar:0", "radar:0", FILAIRE).refus, /même unité/);
+});
+
+test("connexions : rangées par famille de moyen, avec l'autre extrémité vue des deux bouts", () => {
+  const brut = modifier_scenario(REFERENCE, {"bleu.reseau.mode": "liaisons", "bleu.reseau.liaisons": [
+    {de: "radar:0", vers: "conduite", moyen: FILAIRE},
+    {de: "radar:1", vers: "conduite", moyen: FILAIRE},
+    {de: "conduite", vers: "avions:0", moyen: RADIO},
+  ]});
+  const monde = monde_de(brut);
+  const familles = connexions_noeud(monde, "conduite");
+  assert.deepEqual(familles.map((f) => f.famille), ["filaire", "radio"]);
+  assert.deepEqual(familles[0].liens.map((l) => l.nom), ["R1", "R2"]);
+  assert.equal(connexions_noeud(monde, "radar:0")[0].liens[0].nom, "CDC");
+  assert.match(connexions_html(monde, "radar:0"), /Filaire \(1\)/);
+  assert.match(connexions_html(monde, "radar:2"), /Aucune liaison/);
+});
+
+test("connexions : en réseau complet, aucune liste, une phrase qui l'explique", () => {
+  const monde = monde_de(REFERENCE);
+  assert.equal(connexions_noeud(monde, "radar:0"), null);
+  assert.match(connexions_html(monde, "radar:0"), /Réseau complet/);
+});
+
+test("la fiche se refait quand le monde est reconstruit, même sélection et même scénario", () => {
+  // La fiche d'un radar affichait « Réseau complet » après sa première liaison : rendue avant la reconstruction du monde, jamais refaite.
+  const [ancien, nouveau] = [{}, {}];
+  assert.equal(fiche_perimee({signature: "R11", monde: ancien}, {signature: "R11", monde: nouveau}), true);
+  assert.equal(fiche_perimee({signature: "R11", monde: nouveau}, {signature: "R11", monde: nouveau}), false);
+  assert.equal(fiche_perimee(undefined, {signature: "R11", monde: nouveau}), true);
 });

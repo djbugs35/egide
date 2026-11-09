@@ -1,6 +1,6 @@
 // Point d'entrée de l'interface : charge le scénario, branche réglages, scope, lecture, tableau et balayage.
 import {AlgoInvalide, charger_algos, ids_algos} from "../moteur/algos.js";
-import {CatalogueInvalide, charger_unites, chemin_icone} from "../moteur/catalogue.js";
+import {CatalogueInvalide, charger_unites} from "../moteur/catalogue.js";
 import {positions_radars} from "../moteur/radars.js";
 import {en_v2, ids_unites, modifier_scenario, resoudre_scenario, ScenarioInvalide} from "../moteur/scenario.js";
 import {brancher_balayage, montrer} from "./balayage.js";
@@ -14,10 +14,10 @@ import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./cart
 import {aide_chemin, valeur_effective} from "./chemins.js";
 import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./calques.js";
 import {creer_editeur} from "./editeur.js";
-import {choisir_moyen, modifications_reseau_auto, palette} from "./deploiement.js";
-import {fiches} from "./fiche.js";
-import {couleur_pays, PAYS} from "./pays.js";
-import {libelle_noeud, MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
+import {modifications_reseau_auto} from "./deploiement.js";
+import {fiche_perimee, fiches} from "./fiche.js";
+import {brancher_panneau_deploiement} from "./panneau_deploiement.js";
+import {connexions_html, libelle_noeud, MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
 import {connu_du_pc, resume_situation} from "./situation.js";
 import {FAMILLES, lignes_journal} from "./journal.js";
 import {brancher_autoconfig} from "./autoconfig_panneau.js";
@@ -27,7 +27,7 @@ import {dessiner_profil} from "./profil.js";
 import {altitudes_relief, echantillonner_chemin} from "./relief.js";
 import {publier_couleurs} from "./couleurs.js";
 import {absorber, creer_effets, sauter} from "./effets.js";
-import {format_duree} from "./format.js";
+import {echapper_html, format_duree} from "./format.js";
 import {decrire} from "./infobulles.js";
 import {MULTIPLICATEURS, aller_a, avancer_temps_reel, creer_lecteur} from "./lecteur.js";
 import {creer_rejeu, texte_rejeu} from "../moteur/rejeu.js";
@@ -45,7 +45,7 @@ const VITESSE_BALAYAGE = (2 * Math.PI) / 4;
 
 const etat = {base: null, modifications: {}, fichiers: {}, registre: {}, lecteur: null, traces: creer_traces(), effets: creer_effets(),
   camera: null, survol: null, angle: 0, dernierTableau: 0, afficher_reglages: null,
-  carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null, editeur: null, historique: [], inspection: null, derniereInspection: 0,
+  carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null, editeur: null, historique: [], retablis: [], inspection: null, derniereInspection: 0,
   calques: lire_calques(), panneaux: null, vue_pc: false, familles: new Set(Object.keys(FAMILLES)), dernierJournal: 0, journal: []};
 
 const brut_courant = () => modifier_scenario(etat.base, etat.modifications);
@@ -99,7 +99,8 @@ async function charger() {
     await completer_catalogue(brut);
     const scenario = resoudre_scenario(brut, etat.fichiers);
     await completer_registre(scenario);
-    etat.lecteur = creer_lecteur(scenario, etat.registre);
+    // En préparation, le raid ne se simule qu'à la sortie de l'éditeur : chaque geste reste immédiat.
+    etat.lecteur = creer_lecteur(scenario, etat.registre, {differe: Boolean(etat.editeur?.est_actif()) && etat.editeur.mode() === "edition"});
   } catch (erreur) {
     if (!(erreur instanceof ScenarioInvalide || erreur instanceof CatalogueInvalide || erreur instanceof AlgoInvalide)) throw erreur;
     $("[data-champ='message']").textContent = `Scénario refusé : ${erreur.message}`;
@@ -113,7 +114,8 @@ async function charger() {
   const nombres = {avion: monde.avions.length, drone: monde.drones.length, cible: monde.cibles.length, radar: positions_radars(monde.scenario).length, conduite: 1, centre: monde.scenario.reseau.centres.length};
   const existe = etat.inspection && etat.inspection.id < nombres[etat.inspection.type];
   if (etat.inspection && !existe) inspecter(null);
-  $("[name='temps']").max = Math.ceil(etat.lecteur.duree);
+  if (Number.isFinite(etat.lecteur.duree)) $("[name='temps']").max = Math.ceil(etat.lecteur.duree);
+  etat.panneau_deploiement?.rafraichir();
   $("[name='graine']").value = brut.simulation.graine;
   cadrer();
   rafraichir_profil();
@@ -194,14 +196,15 @@ function rafraichir_fiche() {
   const editeur = etat.editeur;
   const cles = editeur?.est_actif() && editeur.mode() === "edition" ? editeur.selection() : [];
   const signature = `${cles.join(",")}|${etat.historique.length}|${JSON.stringify(etat.modifications).length}|${Boolean(etat.lecteur)}`;
-  if (signature === etat.signature_fiche) return;
-  etat.signature_fiche = signature;
+  const courante = {signature, monde: etat.lecteur?.monde};
+  if (!fiche_perimee(etat.fiche_affichee, courante)) return;
+  etat.fiche_affichee = courante;
   $(".fiche").hidden = !cles.length;
   if (!cles.length || !etat.lecteur) return;
   const nom = (id) => etat.noms_unites?.[id] ?? id;
   etat.fiches = fiches(cles, etat.lecteur.monde, brut_courant(), {index: etat.index_unites ?? [], algos: etat.index_algos ?? [], nom});
   $("[data-zone='fiche']").innerHTML = etat.fiches.map((f, i) => `<section><h3>${echapper_html(f.titre)}</h3>${f.note ? `<p class="note">${echapper_html(f.note)}</p>` : ""}
-    ${f.controles.map((c, j) => controle_html(c, i, j)).join("")}</section>`).join("");
+    ${f.controles.map((c, j) => controle_html(c, i, j)).join("")}${f.noeud ? connexions_html(etat.lecteur.monde, f.noeud) : ""}</section>`).join("");
 }
 
 /** Rendre le HTML d'un contrôle de fiche, repéré par sa fiche `i` et son rang `j`. */
@@ -211,7 +214,7 @@ function controle_html(c, i, j) {
   if (c.type === "choix") return `<label>${c.libelle}<select ${repere}>${c.options.map(option).join("")}</select></label>`;
   if (c.type === "nombre") return `<label>${c.libelle}<input type="number" ${repere} value="${c.valeur}" min="${c.min}" step="${c.pas}"></label>`;
   if (c.type === "texte") return `<label>${c.libelle}<input ${repere} value="${echapper_html(c.valeur)}"></label>`;
-  return `<fieldset ${repere}><legend>${c.libelle} (aucun : tout moyen accepté)</legend>${c.options.map((o) =>
+  return `<fieldset ${repere}><legend>${c.libelle} (lus par « Relier automatiquement »)</legend>${c.options.map((o) =>
     `<label><input type="checkbox" value="${echapper_html(o.valeur)}" ${c.valeur.includes(o.valeur) ? "checked" : ""}>${echapper_html(o.libelle.replace(/ \(notionnel(le)?\)$/, ""))}</label>`).join("")}</fieldset>`;
 }
 
@@ -338,6 +341,8 @@ function brancher_transport() {
   addEventListener("keydown", (e) => {
     if (e.target.closest("input, select, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
     const edition = etat.editeur?.est_actif();
+    // En préparation, Espace et les flèches servent à la carte ; en cours de raid (ordres), ils restent à la lecture.
+    const preparation = edition && etat.editeur.mode() === "edition";
     const panneau = /^Digit([1-7])$/.exec(e.code)?.[1];
     if (panneau && !edition) etat.panneaux.basculer(etat.panneaux.ids()[Number(panneau) - 1]);
     if (e.key.toLowerCase() === "e" && !edition) etat.editeur.activer(true);
@@ -345,6 +350,7 @@ function brancher_transport() {
     if (e.key.toLowerCase() === "o" && !edition) basculer_3d();
     if (e.key.toLowerCase() === "r" && !edition) $("[name='essaim_reactif']").click();
     if (e.key === "Escape" && !edition && !etat.inspection) etat.panneaux.fermer();
+    if (preparation) return;
     if (e.code === "Space") (e.preventDefault(), basculer_lecture());
     if (e.code === "ArrowRight") sauter_a(etat.lecteur.monde.t + 30);
     if (e.code === "ArrowLeft") sauter_a(Math.max(0, etat.lecteur.monde.t - 30));
@@ -561,7 +567,8 @@ function survoler_3d(e, infobulle) {
 
 /** Charger au besoin le fichier de l'unité `id`, pour en montrer l'aperçu avant de la poser. */
 async function preparer_unite(id) {
-  if (id && !(id in etat.fichiers)) Object.assign(etat.fichiers, await charger_unites([id], lire_json));
+  // Site sensible et centre C2 de la palette (« special/… ») n'ont pas de fichier : les charger finit en 404.
+  if (id && !id.startsWith("special/") && !(id in etat.fichiers)) Object.assign(etat.fichiers, await charger_unites([id], lire_json));
 }
 
 /**
@@ -582,13 +589,25 @@ function preparer_carte() {
 async function appliquer_edition(modifications) {
   if (!Object.keys(modifications).length) return;
   etat.historique.push(structuredClone(etat.modifications));
+  etat.retablis = [];
+  etat.edition_modifiee = true;
   Object.assign(etat.modifications, modifications);
   await recharger_au_meme_instant();
 }
 
 async function annuler_edition() {
   if (!etat.historique.length) return;
+  etat.retablis.push(structuredClone(etat.modifications));
   etat.modifications = etat.historique.pop();
+  etat.edition_modifiee = true;
+  await recharger_au_meme_instant();
+}
+
+async function retablir_edition() {
+  if (!etat.retablis.length) return;
+  etat.historique.push(structuredClone(etat.modifications));
+  etat.modifications = etat.retablis.pop();
+  etat.edition_modifiee = true;
   await recharger_au_meme_instant();
 }
 
@@ -631,14 +650,18 @@ function brancher_editeur() {
     aimantation: () => $("[name='aimantation']").value,
     fichiers: () => etat.fichiers,
     preparer_unite,
-    appliquer: appliquer_edition, annuler: annuler_edition,
+    appliquer: appliquer_edition, annuler: annuler_edition, retablir: retablir_edition,
+    consigne: $("[data-champ='consigne']"),
     quantite: () => Number($("[name='quantite_depot']").value) || 1,
     nom: (id) => etat.noms_unites?.[id] ?? id,
     signaler: (texte) => ($("[data-champ='message']").textContent = texte),
-    choisir_moyen: (de, vers) => choisir_moyen(brut_courant(), etat.fichiers, de, vers, $("[name='moyen_liaison']").value),
+    choisir_moyen: (id) => {
+      $("[name='moyen_liaison']").value = id;
+      preparer_unite(id);
+    },
     reseau_auto: async () => {
       const {modifications, liaisons, isoles} = modifications_reseau_auto(etat.lecteur.monde, brut_courant(), etat.fichiers);
-      if (!liaisons) return void ($("[data-champ='message']").textContent = "Aucune liaison possible : équipez les unités et au moins un centre C2 d'un même moyen (palette, Communications).");
+      if (!liaisons) return void ($("[data-champ='message']").textContent = "Aucune liaison possible : équipez les unités et au moins un centre C2 d'un même moyen (onglet Réseau de la palette).");
       await appliquer_edition(modifications);
       $("[data-champ='message']").textContent = `${liaisons} liaison${liaisons > 1 ? "s" : ""} créée${liaisons > 1 ? "s" : ""}${isoles.length ? ` ; hors réseau : ${isoles.map((n) => libelle_noeud(etat.lecteur.monde, n)).join(", ")}` : ""}.`;
     },
@@ -659,7 +682,11 @@ function brancher_editeur() {
       $(".palette").hidden = !(actif && mode === "edition");
       if (actif && etat.en_3d) basculer_3d(false);
       synchroniser_verrou();
-      if (!actif) return;
+      if (!actif) {
+        if (etat.edition_modifiee) charger();
+        etat.edition_modifiee = false;
+        return;
+      }
       // Pour éditer, on dégage la vue : les panneaux se replient.
       etat.panneaux.fermer();
       etat.lecteur.enLecture = false;
@@ -667,6 +694,8 @@ function brancher_editeur() {
     },
   });
   bouton.addEventListener("click", () => etat.editeur.activer(!etat.editeur.est_actif()));
+  // Un menu de la barre se referme dès qu'on revient à la carte.
+  $("#scope").addEventListener("pointerdown", () => document.querySelectorAll(".menu-edition[open]").forEach((menu) => (menu.open = false)));
 }
 
 // Pastille de légende de chaque calque (classes définies dans style.css).
@@ -691,48 +720,6 @@ function brancher_calques() {
   afficher();
 }
 
-// Pastille de chaque famille de la palette, aux couleurs des entités sur la carte.
-const PASTILLES_PALETTE = {infrastructures: "var(--texte)", capteurs: "var(--ami)", sol: "var(--sol)", avions: "var(--ami)", drones_defensifs: "var(--ami)",
-  liaisons: "var(--texte-secondaire)", effecteurs: "var(--sol)", menace: "var(--hostile)", terrains: "var(--inconnu)"};
-const echapper_html = (texte) => texte.replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
-
-/** Rendre le nom court d'une unité : sans la mention « (notionnel) » ni le pays, montré à part. */
-const nom_court = (nom) => nom.replace(/ \((?:[A-Z]{3}, )?notionnel(le)?\)$/, "");
-
-/** Rendre le bouton d'une unité de la palette : son icône de jeu sur la pastille de son pays, son nom, son pays. */
-function bouton_palette(e, famille) {
-  const fond = couleur_pays(e.pays, PASTILLES_PALETTE[famille]);
-  const vignette = e.icone ? `<i class="vignette" style="background: ${fond}"><img src="${echapper_html(chemin_icone(e.icone).replace(/\.svg$/, ""))}.svg" alt=""></i>` : `<i style="--pastille: ${PASTILLES_PALETTE[famille]}"></i>`;
-  const pays = e.pays ? `<small title="${echapper_html(PAYS[e.pays]?.nom ?? e.pays)}">${e.pays}</small>` : "";
-  return `<button class="unite-palette" draggable="true" data-unite="${echapper_html(e.id)}" aria-pressed="false" title="${echapper_html(e.nom)}">${vignette}<span>${echapper_html(nom_court(e.nom))}</span>${pays}</button>`;
-}
-
-/** Remplir la palette du déploiement (MODELE § 21) : une famille par rubrique, chaque unité à cliquer ou à glisser sur la carte. */
-function remplir_palette(index) {
-  etat.noms_unites = Object.fromEntries(palette(index).flatMap((f) => f.elements.map((e) => [e.id, nom_court(e.nom)])));
-  const zone = $("[data-zone='palette']");
-  const choixPays = $("[name='pays_palette']");
-  const presents = [...new Set(index.map((u) => u.pays).filter(Boolean))].sort((a, b) => (PAYS[a]?.nom ?? a).localeCompare(PAYS[b]?.nom ?? b));
-  choixPays.innerHTML = `<option value="">Tous les pays</option>${presents.map((p) => `<option value="${p}">${PAYS[p]?.nom ?? p}</option>`).join("")}`;
-  const dessiner = () => {
-    const ouvertes = new Set([...zone.querySelectorAll("details[open]")].map((d) => d.dataset.famille));
-    zone.innerHTML = palette(index, choixPays.value).map((f, i) => `<details data-famille="${f.id}" ${(ouvertes.size ? ouvertes.has(f.id) : i < 5) ? "open" : ""}><summary>${f.libelle}</summary><p class="famille-aide">${f.aide}</p>
-      ${f.elements.map((e) => bouton_palette(e, f.id)).join("")}</details>`).join("");
-  };
-  dessiner();
-  choixPays.addEventListener("change", dessiner);
-  zone.addEventListener("click", (e) => {
-    const choix = e.target.closest("[data-unite]");
-    if (choix) etat.editeur.armer_depot(choix.dataset.unite);
-  });
-  zone.addEventListener("dragstart", (e) => {
-    const choix = e.target.closest("[data-unite]");
-    if (!choix) return;
-    e.dataTransfer.setData("text/egide-unite", choix.dataset.unite);
-    e.dataTransfer.effectAllowed = "copy";
-  });
-}
-
 /** Proposer dans la barre d'édition les moyens de liaison du catalogue (unites/liaisons/), radio par défaut. */
 async function remplir_moyens() {
   // Catalogue privé importé depuis la page Catalogue : fusionné au public ou à sa place, selon le mode retenu.
@@ -740,13 +727,16 @@ async function remplir_moyens() {
   if (erreur) console.warn(`Catalogue privé : ${erreur}`);
   etat.index_unites = index;
   etat.index_algos = await lire_json("algos/index.json");
-  remplir_palette(index);
+  etat.panneau_deploiement = brancher_panneau_deploiement({racine: $(".palette"), index, armer: (id) => etat.editeur.armer_depot(id), brut: brut_courant, appliquer: appliquer_edition, placer_theatre: () => etat.editeur.choisir_outil("theatre")});
+  etat.noms_unites = etat.panneau_deploiement.noms;
   const moyens = index.filter((u) => u.famille === "liaisons" && !u.base);
   const choix = $("[name='moyen_liaison']");
   choix.innerHTML = moyens.map((u) => `<option value="${u.id}">${u.nom.replace(/ \(notionnelle?\)$/, "")}</option>`).join("");
   // En remplacement, la radio publique par défaut peut manquer : on prend alors une radio V/UHF, sinon le premier moyen.
   const repli = moyens.find((u) => /UHF/i.test(u.nom)) ?? moyens[0];
   choix.value = moyens.some((u) => u.id === MOYENS_PAR_DEFAUT.avions) ? MOYENS_PAR_DEFAUT.avions : repli?.id ?? "";
+  // Chargé dès le choix : l'aperçu de portée et le refus d'une liaison trop longue en ont besoin au second clic.
+  choix.addEventListener("change", () => preparer_unite(choix.value));
   const terrains = index.filter((u) => u.famille === "terrains" && !u.base);
   $("[name='terrain']").insertAdjacentHTML("beforeend", terrains.map((u) => `<option value="${u.id}">${u.nom}</option>`).join(""));
 }

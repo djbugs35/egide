@@ -226,52 +226,78 @@
 
   <aside class="palette" aria-label="Palette du catalogue : unités à déployer" hidden>
     <h2>Déployer</h2>
-    <p class="aide-palette">Cliquez une unité puis la carte (autant de fois qu'il faut, Échap pour finir), ou glissez-la sur la carte.
-      Moyens de communication et armements se déposent sur une unité déjà placée.</p>
-    <div class="sauvegarde-deploiement">
-      <input name="nom_deploiement" placeholder="Nom du déploiement" aria-label="Nom du déploiement à enregistrer">
-      <div class="ligne">
-        <button data-action="ranger_deploiement" class="principal" title="Ranger le scénario complet dans la bibliothèque de ce navigateur (panneau Scénario pour le recharger)">Enregistrer</button>
-        <button data-action="exporter_deploiement" title="Télécharger le scénario complet (JSON), à recharger par « Importer »">Exporter</button>
-        <label class="bouton-fichier" title="Recharger un scénario exporté">Importer<input type="file" name="importer_deploiement" accept=".json,application/json" hidden></label>
-      </div>
+    <input type="search" name="recherche_palette" placeholder="Chercher une unité…" aria-label="Chercher une unité dans le catalogue">
+    <div class="onglets-palette" role="tablist" aria-label="Familles d'unités" data-zone="onglets_palette"></div>
+    <section data-zone="theatre" hidden>
+      <p class="famille-aide">Le théâtre est le disque que défendent vos unités ; l'essaim l'attaque depuis l'extérieur.</p>
+      <button data-action="placer_theatre" class="principal">Choisir le centre sur la carte</button>
+      <label class="quantite">Latitude (°)<input type="number" name="theatre_lat" step="0.01"></label>
+      <label class="quantite">Longitude (°)<input type="number" name="theatre_lon" step="0.01"></label>
+      <label class="quantite">Rayon (km)<input type="number" name="theatre_rayon" step="10" min="1"></label>
+      <label class="quantite">Cibles<input type="number" name="theatre_cibles" step="1" min="1"></label>
+    </section>
+    <div data-zone="filtres_palette">
+      <label class="quantite">Pays <select name="pays_palette" aria-label="Pays des unités proposées"></select></label>
+      <label class="quantite">Vecteurs par dépôt <input type="number" name="quantite_depot" value="1" min="1" max="200" step="1"></label>
     </div>
-    <label class="quantite">Pays <select name="pays_palette" aria-label="Pays des unités proposées"></select></label>
-    <label class="quantite">Vecteurs par dépôt <input type="number" name="quantite_depot" value="1" min="1" max="200" step="1"></label>
     <div data-zone="palette"></div>
   </aside>
 
   <div class="bas">
+    <p class="consigne-edition" data-champ="consigne" aria-live="polite" hidden></p>
     <div class="barre-edition" role="toolbar" aria-label="Outils d'édition" hidden>
-      <button data-outil="selection" aria-pressed="true" title="Sélectionner et déplacer (S)">Sélection</button>
-      <button data-outil="cible" aria-pressed="false" title="Ajouter une cible (C)">Cible</button>
-      <button data-outil="radar" aria-pressed="false" title="Ajouter un radar (R)">Radar</button>
-      <button data-outil="centre" aria-pressed="false" title="Ajouter un centre de détection et de contrôle (K)">CDC</button>
-      <button data-outil="liaison" aria-pressed="false" title="Relier deux unités : clic sur un radar, un CDC, une cible (ses postes sol) ou un avion, puis sur l'autre (L)">Liaison</button>
-      <select name="moyen_liaison" aria-label="Moyen de la liaison" title="Moyen de communication des nouvelles liaisons"></select>
-      <button data-action="reseau_complet" title="Revenir au réseau complet : tout le monde parle avec tout le monde, sans délai">Réseau complet</button>
-      <button data-action="reseau_auto" title="Relier chaque unité équipée aux centres C2 avec qui elle partage un moyen à portée (le plus rapide)">Relier automatiquement</button>
-      <button data-outil="plan" aria-pressed="false" title="Ajouter un point au plan de vol de l'essaim (P)">Plan de vol</button>
-      <button data-outil="gomme" aria-pressed="false" title="Gomme : effacer l'unité cliquée (X). Pendant un dépôt, Maj+clic efface aussi">Gomme</button>
-      <button data-action="tout_effacer" title="Vider la carte : radars, batteries, avions, drones, C2, liaisons, zones (Ctrl+Z pour revenir)">Tout effacer</button>
-      <button data-outil="zone" aria-pressed="false" title="Dessiner une zone protégée : un clic par sommet, double-clic ou Entrée pour fermer (Z)">Zone</button>
-      <button data-action="mettre_hors_service" class="seulement-ordres" title="Mettre hors service, à cet instant, les radars, le CDC ou les liaisons sélectionnés (Suppr)">Mettre hors service</button>
-      <button data-outil="mesure" aria-pressed="false" title="Règle : glisser pour mesurer distance et cap (M)">Règle</button>
-      <select name="aimantation" class="seulement-edition" aria-label="Aimantation" title="Aimanter les poses à une grille ou aux unités proches">
-        <option value="aucune">Sans aimant</option>
-        <option value="unites">Aimant : unités</option>
-        <option value="1000">Grille 1 km</option>
-        <option value="5000">Grille 5 km</option>
-        <option value="10000">Grille 10 km</option>
-        <option value="25000">Grille 25 km</option>
-      </select>
-      <button data-action="annuler_edition" title="Annuler le dernier geste (Ctrl+Z)">Annuler</button>
+      <span class="seulement-ordres">Ordres à <b data-champ="instant_ordres">0:00</b></span>
+      <div class="groupe-edition">
+        <button data-outil="selection" aria-pressed="true" title="Sélectionner et déplacer (S)">Sélection</button>
+        <button data-outil="liaison" aria-pressed="false" class="seulement-edition" title="Relier deux unités (L)">Liaison</button>
+        <label class="choix-moyen" title="Moyen de la prochaine liaison ; il prime sur l'équipement déclaré des unités">Moyen<select name="moyen_liaison" aria-label="Moyen de la liaison"></select></label>
+        <button data-outil="plan" aria-pressed="false" class="seulement-edition" title="Tracer le plan de vol de l'essaim (P)">Plan de vol</button>
+        <button data-outil="zone" aria-pressed="false" class="seulement-edition" title="Dessiner une zone protégée (Z)">Zone</button>
+        <button data-outil="mesure" aria-pressed="false" title="Mesurer distance et cap (M)">Règle</button>
+        <button data-outil="gomme" aria-pressed="false" class="seulement-edition" title="Effacer l'unité cliquée (X)">Gomme</button>
+        <button data-action="mettre_hors_service" class="seulement-ordres" title="Mettre hors service, à cet instant, la sélection (Suppr)">Mettre hors service</button>
+      </div>
+      <div class="groupe-edition">
+        <button data-action="annuler_edition" title="Annuler le dernier geste (Ctrl+Z)">Annuler</button>
+        <button data-action="retablir_edition" title="Rétablir le geste annulé (Ctrl+Y)">Rétablir</button>
+      </div>
+      <div class="groupe-edition seulement-edition">
+        <select name="aimantation" aria-label="Aimantation" title="Aimanter les poses à une grille ou aux unités proches">
+          <option value="aucune">Sans aimant</option>
+          <option value="unites">Aimant : unités</option>
+          <option value="1000">Grille 1 km</option>
+          <option value="5000">Grille 5 km</option>
+          <option value="10000">Grille 10 km</option>
+          <option value="25000">Grille 25 km</option>
+        </select>
+        <details class="menu-edition" name="menu_edition">
+          <summary>Réseau</summary>
+          <div>
+            <button data-action="reseau_auto" title="Relier chaque unité équipée aux centres C2 avec qui elle partage un moyen à portée">Relier automatiquement</button>
+            <button data-action="reseau_complet" title="Tout le monde parle avec tout le monde, sans délai">Réseau complet</button>
+          </div>
+        </details>
+        <details class="menu-edition" name="menu_edition">
+          <summary>Fichier</summary>
+          <div>
+            <input name="nom_deploiement" placeholder="Nom du déploiement" aria-label="Nom du déploiement à enregistrer">
+            <button data-action="ranger_deploiement" title="Ranger le scénario complet dans la bibliothèque de ce navigateur">Enregistrer</button>
+            <button data-action="exporter_deploiement" title="Télécharger le scénario complet (JSON)">Exporter</button>
+            <label class="bouton-fichier" title="Recharger un scénario exporté">Importer<input type="file" name="importer_deploiement" accept=".json,application/json" hidden></label>
+            <button data-action="tout_effacer" title="Vider la carte (Ctrl+Z pour revenir)">Tout effacer</button>
+          </div>
+        </details>
+        <details class="menu-edition" name="menu_edition">
+          <summary aria-label="Aide de l'éditeur">?</summary>
+          <div class="aide-gestes">
+            <p><b>Déplacer la carte</b> : glisser le fond, ou flèches, ou Espace + glisser. <b>Zoomer</b> : molette.</p>
+            <p><b>Poser</b> : cliquer une unité du panneau, puis la carte ; clic droit pour finir.</p>
+            <p><b>Sélectionner</b> : clic ; Maj+glisser pour un cadre ; Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle.</p>
+            <p><b>Équiper</b> : déposer un moyen ou une arme sur une unité déjà placée. <b>Effacer</b> : Suppr, Gomme (X) ou Maj+clic pendant une pose.</p>
+          </div>
+        </details>
+      </div>
       <button data-action="terminer_edition" class="principal">Terminer</button>
-      <p class="aide-edition seulement-edition">Glisser pour déplacer, rectangle pour sélectionner, clic droit pour envoyer la sélection.
-        Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle, Suppr efface la sélection ; Gomme (X) ou Maj+clic pendant un dépôt efface l'unité visée. Molette : zoom ; bouton du milieu ou Alt+glisser : déplacer la vue. Règle (M) : glisser pour mesurer ; l'aimant cale les poses sur une grille ou sur les unités.</p>
-      <p class="aide-edition seulement-ordres">Ordres à <b data-champ="instant_ordres">0:00</b> : sélectionner des avions (clic, Maj+clic, rectangle),
-        puis clic droit pour les envoyer depuis le CDC ; sélectionner un radar, le CDC ou une liaison, puis Suppr pour le mettre hors service.
-        Tout est enregistré dans le scénario et rejoué à l'identique.</p>
     </div>
     <div class="transport">
       <button data-action="lire" class="principal">Lire</button>

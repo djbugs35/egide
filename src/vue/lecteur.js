@@ -7,14 +7,15 @@ export const MULTIPLICATEURS = [0.25, 0.5, 1, 2, 4, 8, 16];
 
 /**
  * Rendre un lecteur pour `scenario` et le `registre` de ses algorithmes, au début du raid, à l'arrêt.
- * Sa durée totale est connue d'avance (rejeu).
+ * Sa durée totale est connue d'avance (rejeu), sauf si `differe` : l'éditeur la laisse infinie, car simuler tout le raid
+ * à chaque geste coûtait 1,5 s sur le scénario de référence, bien plus sur un théâtre national.
  */
-export function creer_lecteur(scenario, registre) {
+export function creer_lecteur(scenario, registre, {differe = false} = {}) {
   return {
     scenario,
     registre,
     monde: creer_monde(scenario, {registre}),
-    duree: simuler(scenario, {registre, journal: false}).t,
+    duree: differe ? Infinity : simuler(scenario, {registre, journal: false}).t,
     enLecture: false,
     multiplicateur: 1,
     reserve: 0,

@@ -295,14 +295,18 @@ export function dans_rectangle(elements, versEcran, rectangle) {
 
 /** Rendre l'élément le plus proche du point écran `point` à moins de `rayonPx`, ou null. */
 export function element_sous(elements, versEcran, point, rayonPx = 10) {
-  let retenu = null;
-  let meilleure = rayonPx;
-  for (const element of elements) {
-    const p = versEcran(element.geo);
-    const ecart = Math.hypot(p.x - point.x, p.y - point.y);
-    if (ecart <= meilleure) [meilleure, retenu] = [ecart, element];
-  }
-  return retenu;
+  const plus_proche = (liste) => {
+    let retenu = null;
+    let meilleure = rayonPx;
+    for (const element of liste) {
+      const p = versEcran(element.geo);
+      const ecart = Math.hypot(p.x - point.x, p.y - point.y);
+      if (ecart <= meilleure) [meilleure, retenu] = [ecart, element];
+    }
+    return retenu;
+  };
+  // Une liaison n'est qu'un point milieu : entre un radar et un centre colocalisés, il masquait le centre.
+  return plus_proche(elements.filter((e) => e.type !== "liaison")) ?? plus_proche(elements.filter((e) => e.type === "liaison"));
 }
 
 /**
@@ -322,3 +326,16 @@ export function modifications_tout_effacer(brut) {
     ...("ordres" in brut.bleu ? {"bleu.ordres": []} : {}),
   };
 }
+
+/** Rendre les modifications qui placent le centre du théâtre en `geo` (arrondi à 0,001°, soit environ 100 m). */
+export const modifications_centre_theatre = (geo) => ({
+  "theatre.origine_lat_deg": Math.round(vers_degres(geo.lat) * 1000) / 1000, "theatre.origine_lon_deg": Math.round(vers_degres(geo.lon) * 1000) / 1000,
+});
+
+/** Rendre les modifications d'un réglage du théâtre ; {} si la valeur n'a pas de sens, le champ gardant alors l'ancienne. */
+export function modifications_reglage_theatre(chemin, valeur) {
+  const bornes = {"theatre.origine_lat_deg": [-80, 80], "theatre.origine_lon_deg": [-180, 180], "theatre.zone_rayon_km": [1, 3000], "theatre.cibles_nombre": [1, 50]};
+  if (!bornes[chemin] || !Number.isFinite(valeur) || valeur < bornes[chemin][0] || valeur > bornes[chemin][1]) return {};
+  return {[chemin]: chemin === "theatre.cibles_nombre" ? Math.round(valeur) : valeur};
+}
+

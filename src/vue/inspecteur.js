@@ -8,7 +8,7 @@ import {format_decimal, format_duree, format_entier} from "./format.js";
 import {ms_vers_kmh} from "../moteur/unites.js";
 import {positions_radars} from "../moteur/radars.js";
 import {couverture_reelle} from "../moteur/terrain.js";
-import {libelle_noeud} from "./reseau_vue.js";
+import {connexions_html, libelle_noeud} from "./reseau_vue.js";
 import {chaine_drone} from "./journal.js";
 import {NOMS_VECTEURS} from "./infobulles.js";
 
@@ -201,12 +201,28 @@ function inspection_radar(indice, monde) {
 }
 
 export function inspection(cible, monde) {
+  if (cible.type === "drone") return inspection_drone(monde.drones[cible.id], monde);
+  const noeud = noeud_inspecte(cible, monde);
+  // En réseau complet, la fiche dit déjà que tout est relié : la liste n'apporterait rien pendant le raid.
+  return corps_inspection(cible, monde) + (monde.reseau.mode === "complet" ? "" : connexions_html(monde, noeud));
+}
+
+/** Rendre le corps de la fiche d'une entité du réseau (tout sauf un drone). */
+function corps_inspection(cible, monde) {
   if (cible.type === "radar") return inspection_radar(cible.id, monde);
   if (cible.type === "conduite") return inspection_centre(monde, 0);
   if (cible.type === "centre") return inspection_centre(monde, cible.id + 1);
   if (cible.type === "avion") return inspection_avion(monde.avions[cible.id], monde);
-  if (cible.type === "drone") return inspection_drone(monde.drones[cible.id], monde);
   return inspection_cible(cible.id, monde);
+}
+
+/** Rendre le nœud réseau de l'entité inspectée. */
+function noeud_inspecte(cible, monde) {
+  if (cible.type === "radar") return `radar:${cible.id}`;
+  if (cible.type === "conduite") return "conduite";
+  if (cible.type === "centre") return `centre:${cible.id}`;
+  if (cible.type === "avion") return `avions:${monde.scenario.avions.indexOf(monde.avions[cible.id].groupe)}`;
+  return `sol:${cible.id}`;
 }
 
 /** Rendre la position géographique de l'entité inspectée, ou null si elle n'est plus visible (drone détruit ou arrivé). */

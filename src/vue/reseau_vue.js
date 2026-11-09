@@ -2,7 +2,8 @@
 // groupes d'avions, état de chaque liaison. Positions et libellés purs ; le tracé lit le monde sans le modifier.
 import {chemin_cercle, ecran} from "./ecran.js";
 import {COULEURS} from "./couleurs.js";
-import {format_decimal} from "./format.js";
+import {echapper_html, format_decimal} from "./format.js";
+import {inverse} from "../moteur/geodesie.js";
 import {portee_liaison} from "../moteur/reseau.js";
 import {positions_radars} from "../moteur/radars.js";
 
@@ -81,6 +82,60 @@ export function liaisons_par_defaut(monde) {
     ...ciblesDefendues.map((i) => ({de: "conduite", vers: `sol:${i}`, moyen: MOYENS_PAR_DEFAUT.radars})),
     ...monde.scenario.reseau.centres.map((_, k) => ({de: `centre:${k}`, vers: "conduite", moyen: MOYENS_PAR_DEFAUT.radars})),
   ];
+}
+
+/** Ordre et titre des familles de moyens dans la liste des connexions. */
+const FAMILLES_LIENS = [["filaire", "Filaire"], ["radio", "Radio"], ["satellite", "Satellite"], ["optique", "Optique"]];
+/** Au-delà (m), un moyen n'a pas de limite pratique à l'échelle d'un théâtre : on n'affiche ni disque ni chiffre. */
+const PORTEE_SANS_LIMITE = 2_000_000;
+
+/** Rendre la liaison `l` d'un groupe de vecteurs, jugée à l'orbite moyenne du groupe (MODELE § 15.2), ou null. */
+function lien_vecteurs(monde, l) {
+  const [a, b] = [position_noeud(monde, l.de), position_noeud(monde, l.vers)];
+  if (!a || !b) return null;
+  const groupe = monde.scenario.avions[Number((l.de.startsWith("avions:") ? l.de : l.vers).slice(7))];
+  const distance = inverse(a, b).distance;
+  const portee = portee_liaison(l.moyen, l.moyen.hauteur_antenne, groupe.altitude);
+  return {...l, distance, portee, active: distance <= portee};
+}
+
+/** Rendre le mot qui dit pourquoi la liaison `l` porte ou non. */
+function etat_lien(l) {
+  if (l.active) return "active";
+  if (l.en_panne) return "en panne";
+  return l.masquee ? "masquée par le relief" : "hors portée";
+}
+
+/**
+ * Rendre les connexions du nœud `noeud`, rangées par famille de moyen (MODELE § 21.4) :
+ * [{famille, titre, liens: [{noeud, nom, moyen, distance (m), portee (m), latence (s), etat, active}]}], familles vides
+ * ôtées ; null en réseau complet, où aucune liaison n'est déclarée.
+ */
+export function connexions_noeud(monde, noeud) {
+  if (monde.reseau.mode === "complet") return null;
+  const vecteurs = monde.scenario.reseau.liaisons.filter((l) => l.de.startsWith("avions:") || l.vers.startsWith("avions:")).map((l) => lien_vecteurs(monde, l));
+  const liens = [...monde.reseau.fixes, ...vecteurs].filter((l) => l && l.distance !== null && (l.de === noeud || l.vers === noeud)).map((l) => {
+    const autre = l.de === noeud ? l.vers : l.de;
+    return {famille: l.moyen.type, noeud: autre, nom: libelle_noeud(monde, autre), moyen: l.moyen.nom, distance: l.distance, portee: l.portee, latence: l.moyen.latence, etat: etat_lien(l), active: l.active};
+  }).sort((x, y) => x.nom.localeCompare(y.nom, "fr", {numeric: true}));
+  return FAMILLES_LIENS.map(([famille, titre]) => ({famille, titre, liens: liens.filter((l) => l.famille === famille)})).filter((f) => f.liens.length);
+}
+
+/** Rendre le texte chiffré d'une connexion : moyen, distance sur portée, latence, état. */
+function detail_lien(l) {
+  const km = (m) => `${Math.round(m / 1000)} km`;
+  const portee = l.portee >= PORTEE_SANS_LIMITE || l.etat === "en panne" ? "" : ` / ${km(l.portee)}`;
+  return `${l.moyen.replace(/ \(notionnelle?\)$/, "")} · ${km(l.distance)}${portee} · ${format_decimal(l.latence)} s · ${l.etat}`;
+}
+
+/** Rendre le HTML de la liste des connexions du nœud `noeud`, par famille de moyen. */
+export function connexions_html(monde, noeud) {
+  const familles = connexions_noeud(monde, noeud);
+  const titre = "<h4>Connexions</h4>";
+  if (!familles) return `${titre}<p class="note">Réseau complet : chacun parle à tous, sans liaison déclarée. Tirer une première liaison (outil Liaison) détaille tout le réseau.</p>`;
+  if (!familles.length) return `${titre}<p class="note"><b>Aucune liaison</b> : cette unité est hors réseau.</p>`;
+  return titre + familles.map((f) => `<p class="connexions-famille" style="--trait-lien: ${TRAITS[f.famille].couleur}"><i></i>${f.titre} (${f.liens.length})</p>
+    <ul class="connexions">${f.liens.map((l) => `<li class="${l.active ? "" : "coupee"}"><b>${echapper_html(l.nom)}</b> <small>${echapper_html(detail_lien(l))}</small></li>`).join("")}</ul>`).join("");
 }
 
 function trait(ctx, type, actif) {
@@ -176,7 +231,7 @@ function dessiner_acces(ctx, camera, monde) {
     for (const acces of uniques.values()) {
       if (ancre) dessiner_liaison(ctx, camera, acces.position, ancre, acces.moyen.type, true, `${format_decimal(acces.latence)} s`);
       const portee = portee_liaison(acces.moyen, acces.moyen.hauteur_antenne, groupe.altitude);
-      if (portee > 2_000_000) continue;
+      if (portee > PORTEE_SANS_LIMITE) continue;
       trait(ctx, acces.moyen.type, true);
       ctx.globalAlpha = 0.5;
       chemin_cercle(ctx, camera, acces.position, portee, 96);

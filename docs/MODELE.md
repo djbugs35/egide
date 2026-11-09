@@ -220,6 +220,11 @@ Les sources (fonds, relief, bâtiments) sont des fichiers de `cartes/` au format
 son attribution et ses conditions d'usage ; la conformité vérifie leurs clés et la présence de l'attribution.
 
 ## 12 · Éditeur et plan de vol (jalon 3)
+
+**Gestes de préparation.** Glisser le fond déplace la carte, Maj+glisser trace le cadre de sélection. Un outil de pose agit au relâchement,
+si la souris n'a pas bougé : on peut donc déplacer la carte sans quitter l'outil, et glisser une unité la déplace même outil armé. Au même point, une unité passe avant le milieu d'une liaison. Le clic droit quitte l'outil en cours ; il n'envoie la
+sélection qu'en cours de raid (mode ordres). Pendant la préparation, le raid n'est pas simulé à chaque geste : seul le monde à t = 0 est
+reconstruit, et la simulation complète a lieu en quittant l'éditeur. Ces choix ne touchent que l'interface, pas les résultats.
 ### 12.1 Positions placées
 Le scénario peut fixer des cibles (`theatre.cibles_placees`) et des orbites d'avions (`bleu.avions[].orbites_placees`)
 en {lat_deg, lon_deg}. Les éléments placés passent d'abord ; le complément jusqu'au nombre demandé est tiré au hasard
@@ -545,7 +550,12 @@ qu'ils citent, comme chez une unité fille (§ 10.1). Un centre secondaire peut 
 
 ### 21.4 Équipements de communication
 `bleu.reseau.equipements[]` déclare les moyens dont chaque nœud est équipé (radio, satellite, filaire, optique…).
-L'éditeur ne tire une liaison que sur un moyen commun aux deux bouts, en préférant le plus rapide. « Relier
+Dans le navigateur, la liaison tirée à la main (outil Liaison, ou clic sur un moyen de la palette) prend le moyen
+choisi, même absent de l'équipement déclaré d'un bout, qui en est alors complété ; entre deux nœuds au sol, elle est
+refusée, raison affichée, si la distance dépasse la portée. Le client Godot garde la règle du moyen commun, le plus
+rapide à défaut du choix. La portée d'une liaison de vecteurs se juge à la simulation, avion par avion (§ 15.2).
+La fiche de chaque unité liste ses connexions par famille de moyen : autre extrémité, moyen, distance sur portée
+(à l'orbite moyenne pour des vecteurs), latence et état. « Relier
 automatiquement » relie toute paire de nœuds qui partagent un moyen, si la distance tient dans sa portée et, pour un
 moyen à vue directe, si l'horizon (et le relief) le permet. Le moteur ne lit que les liaisons qui en résultent (§ 15.2).
 

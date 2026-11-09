@@ -52,7 +52,7 @@ label:has(input:focus-visible) { outline: 2px solid var(--texte); outline-offset
 .maplibregl-ctrl-bottom-right { inset-block-end: 64px; }
 
 /* Éléments flottants : verre sombre. */
-.barre-haut, .rail, .tiroir, .hud, .inspecteur, .transport, .barre-edition, .palette, .commandes-3d {
+.barre-haut, .rail, .tiroir, .hud, .inspecteur, .transport, .barre-edition, .palette, .commandes-3d, .menu-edition > div, .consigne-edition {
   background: var(--verre); border: 1px solid var(--trait); border-radius: 10px; box-shadow: var(--ombre);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 3; }
 
@@ -178,13 +178,19 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .graine { font-size: 12px; color: var(--texte-secondaire); }
 .graine input { inline-size: 6em; margin-inline-start: 4px; }
 .palette { position: absolute; inset-block-start: calc(var(--marge) * 2 + var(--haut-barre)); inset-inline-start: calc(var(--marge) * 2 + var(--rail));
-  inline-size: 250px; max-block-size: calc(100% - var(--haut-barre) - 250px); overflow-y: auto; padding: 0 12px 12px; z-index: 3; }
+  inline-size: 280px; /* Marge du bas : hauteur de la barre d'édition et de la consigne, que la palette ne doit pas recouvrir. */
+  max-block-size: calc(100% - var(--haut-barre) - 3 * var(--marge) - 100px); display: flex; flex-direction: column; padding: 0 12px 12px; z-index: 3; }
 .palette[hidden] { display: none; }
+.palette [data-zone="palette"] { flex: 1; min-block-size: 0; overflow-y: auto; margin-block-start: 6px; }
+.palette [data-zone="theatre"]:not([hidden]) { display: grid; gap: 8px; margin-block-start: 8px; }
+.palette input[type="search"] { inline-size: 100%; box-sizing: border-box; }
+.onglets-palette { display: flex; flex-wrap: wrap; gap: 3px; margin-block-start: 8px; }
+.onglets-palette button { padding: 3px 7px; font-size: 12px; }
+.onglets-palette [aria-selected="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
+.palette .famille-titre { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; margin: 8px 0 2px; }
+.palette .quantite[hidden] { display: none; }
 .palette h2 { font-size: 15px; margin: 12px 0 4px; }
 .palette .aide-palette { font-size: 12px; color: var(--texte-secondaire); margin: 0 0 8px; }
-.sauvegarde-deploiement { display: grid; gap: 6px; margin-block-end: 10px; }
-.sauvegarde-deploiement input { inline-size: 100%; box-sizing: border-box; }
-.sauvegarde-deploiement .ligne { display: flex; gap: 6px; flex-wrap: wrap; }
 .bouton-fichier { background: var(--panneau); border: 1px solid var(--trait); border-radius: 6px; padding: 5px 11px; cursor: pointer; font-size: 13.3px; }
 .bouton-fichier:focus-within { outline: 2px solid var(--ami); }
 .fiche label { display: grid; gap: 3px; font-size: 12px; color: var(--texte-secondaire); margin-block: 6px; }
@@ -211,7 +217,24 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .vue[data-outil="depot"] #scope { cursor: copy; }
 .vue[data-outil="gomme"] #scope { cursor: not-allowed; }
 .barre-edition [data-action="tout_effacer"] { color: var(--hostile); border-color: var(--hostile); }
-.barre-edition { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; padding: 7px 10px; max-inline-size: min(1040px, calc(100vw - 32px)); }
+.barre-edition { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px; padding: 7px 10px; max-inline-size: calc(100vw - 32px); }
+.groupe-edition { display: flex; align-items: center; gap: 4px; }
+.choix-moyen { display: none; align-items: center; gap: 4px; font-size: 12px; color: var(--texte-secondaire); }
+.choix-moyen select { max-inline-size: 11em; }
+.groupe-edition:has([data-outil="liaison"][aria-pressed="true"]) .choix-moyen { display: inline-flex; }
+.consigne-edition { margin: 0; padding: 4px 12px; font-size: 13px; }
+.consigne-edition[hidden] { display: none; }
+.vue.edition[data-mode="edition"] .transport { display: none; }
+.vue.edition[data-outil="selection"] #scope { cursor: grab; }
+.menu-edition { position: relative; }
+.menu-edition summary { list-style: none; cursor: pointer; padding: 5px 10px; border: 1px solid var(--trait); border-radius: 6px; font-size: 13px; }
+.menu-edition summary::-webkit-details-marker { display: none; }
+.menu-edition[open] summary { background: var(--texte); color: var(--fond); }
+.menu-edition > div { position: absolute; inset-block-end: calc(100% + 10px); inset-inline-end: 0; display: grid; gap: 6px; inline-size: 260px; padding: 10px; background: var(--fond); z-index: 5; }
+.menu-edition label { display: grid; gap: 3px; font-size: 12px; }
+.menu-edition [data-action="tout_effacer"] { margin-block-start: 6px; }
+.aide-gestes { inline-size: 340px !important; font-size: 12px; }
+.aide-gestes p { margin: 0; }
 .barre-edition[hidden] { display: none; }
 .barre-edition [aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
 .vue[data-mode="ordres"] .barre-edition :is([data-outil]:not([data-outil="selection"]), [name="moyen_liaison"], [data-action="reseau_complet"], [data-action="reseau_auto"], [data-action="tout_effacer"]),
@@ -280,6 +303,12 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .inspecteur ul, .inspecteur ol { padding-inline-start: 18px; }
 .inspecteur .chaine li { margin-block: 2px; }
 .inspecteur a { color: var(--ami); }
+.connexions-famille { font-size: 12px; font-weight: 500; margin-block: 8px 2px; display: flex; align-items: center; gap: 6px; }
+.connexions-famille i { inline-size: 18px; border-block-start: 2px solid var(--trait-lien); }
+.connexions { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+.inspecteur ul.connexions { padding-inline-start: 0; }
+.connexions small { color: var(--texte-secondaire); font-size: 11px; }
+.connexions .coupee small { color: var(--hostile); }
 
 /* Écrans étroits : barre et bilan en haut sur toute la largeur, rail d'icônes au-dessus de la lecture,
    panneaux en pleine largeur entre les deux. */

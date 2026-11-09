@@ -443,3 +443,11 @@ test("bibliothèque du navigateur : protégée si la mémoire manque ; stratégi
   assert.match(decrire_strategie({avions: 0.6, drones: 0.1, radars: 0.5}), /60 % .* 5 % .* poussés de 50 %/);
   assert.deepEqual([duree_lisible(44.6), duree_lisible(60), duree_lisible(190), duree_lisible(-3)], ["45 s", "1 min", "3 min 10 s", "0 s"]);
 });
+
+test("element_sous : à la même position, une unité passe avant le milieu d'une liaison", () => {
+  // Radar et CDC colocalisés : le milieu de leur liaison, listé en dernier, prenait le clic et le CDC devenait inatteignable.
+  const ici = {x: 50, y: 50};
+  const elements = [{cle: "radar:4", type: "radar", geo: ici}, {cle: "centre:0", type: "centre", geo: ici}, {cle: "liaison:7", type: "liaison", geo: ici}];
+  assert.equal(element_sous(elements, (geo) => geo, ici).cle, "centre:0");
+  assert.equal(element_sous(elements.slice(2), (geo) => geo, ici).cle, "liaison:7", "seule à cet endroit, la liaison reste sélectionnable");
+});

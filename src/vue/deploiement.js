@@ -6,8 +6,8 @@ import {direct, inverse} from "../moteur/geodesie.js";
 import {positions_radars} from "../moteur/radars.js";
 import {portee_liaison} from "../moteur/reseau.js";
 import {sans_prive} from "./catalogue_prive.js";
-import {en_degres, modifications_ajout_centre, modifications_ajout_cible, modifications_ajout_radar, noeud_element} from "./edition.js";
-import {position_noeud} from "./reseau_vue.js";
+import {en_degres, modifications_ajout_centre, modifications_ajout_cible, modifications_ajout_liaison, modifications_ajout_radar, noeud_element} from "./edition.js";
+import {libelle_noeud, position_noeud} from "./reseau_vue.js";
 
 // Munitions d'une batterie déposée ; modifiables ensuite dans sa fiche.
 export const MUNITIONS_BATTERIE = 40;
@@ -24,7 +24,7 @@ export const FAMILLES_PALETTE = [
   {id: "sol", libelle: "Défense sol", prefixe: "sites/", cible: "carte", aide: "Batteries sol-air, posées une à une, rattachées au site le plus proche."},
   {id: "avions", libelle: "Aviation", prefixe: "vecteurs/avions/", cible: "carte", aide: "Intercepteurs : un avion par dépôt (ou la quantité choisie), en orbite au point déposé."},
   {id: "drones_defensifs", libelle: "Drones défensifs", prefixe: "vecteurs/drones_defensifs/", cible: "carte", aide: "Essaims défensifs : armés, intercepteurs kamikazes, brouilleurs."},
-  {id: "liaisons", libelle: "Communications", prefixe: "liaisons/", cible: "unite", aide: "À déposer sur une unité (radar, C2, site, batterie, avion) pour l'équiper de ce moyen."},
+  {id: "liaisons", libelle: "Communications", prefixe: "liaisons/", cible: "unite", aide: "Cliquez un moyen, puis les deux unités à relier. Glisser un moyen sur une unité l'en équipe, pour « Relier automatiquement »."},
   {id: "effecteurs", libelle: "Armements", prefixe: "effecteurs/", cible: "unite", aide: "À déposer sur un avion ou un drone défensif : son groupe change d'emport."},
   {id: "menace", libelle: "Menace", prefixe: "vecteurs/drones/", cible: "carte", aide: "Modèle de drone de l'essaim adverse (où qu'on le dépose)."},
   {id: "terrains", libelle: "Terrain", prefixe: "terrains/", cible: "carte", aide: "Relief du théâtre (où qu'on le dépose)."},
@@ -45,6 +45,15 @@ export function palette(index, pays = "") {
     elements: famille.id === "infrastructures" ? SPECIAUX
       : index.filter((u) => !u.base && sans_prive(u.id).startsWith(famille.prefixe) && garde(u)).sort(ordre).map(({id, nom, pays: p = null, icone = null}) => ({id, nom, pays: p, icone})),
   })).filter((famille) => famille.elements.length);
+}
+
+const sans_accents = (texte) => texte.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/** Rendre les familles à montrer : avec `texte`, ce qui le contient dans toutes les familles, sinon toute la famille `famille`. */
+export function filtrer_palette(familles, {texte = "", famille = null} = {}) {
+  const cherche = sans_accents(texte.trim());
+  if (!cherche) return familles.filter((f) => f.id === famille);
+  return familles.map((f) => ({...f, elements: f.elements.filter((e) => sans_accents(`${e.nom} ${e.pays ?? ""}`).includes(cherche))})).filter((f) => f.elements.length);
 }
 
 /** Rendre la famille de la palette d'un identifiant déposé, public ou privé. */
@@ -112,6 +121,44 @@ export function choisir_moyen(brut, fichiers, de, vers, prefere) {
   const communs = !a ? b : !b ? a : a.filter((m) => b.includes(m));
   if (communs.includes(prefere)) return prefere;
   return [...communs].sort((x, y) => unite_si(x, fichiers).latence - unite_si(y, fichiers).latence)[0] ?? null;
+}
+
+/** Rendre `{"bleu.reseau.equipements": …}` où les nœuds `noeuds` qui déclarent des moyens gagnent `moyen`, ou {} si rien ne change. */
+function modifications_equipement_liaison(brut, noeuds, moyen) {
+  const equipements = brut.bleu.reseau.equipements ?? [];
+  const concerne = (e) => noeuds.includes(e.noeud) && !e.moyens.includes(moyen);
+  if (!equipements.some(concerne)) return {};
+  return {"bleu.reseau.equipements": equipements.map((e) => (concerne(e) ? {...e, moyens: [...e.moyens, moyen]} : e))};
+}
+
+/** Rendre le texte du refus d'une liaison entre deux nœuds au sol trop éloignés pour `unite`, ou null si elle porte. */
+function refus_portee(monde, de, vers, unite) {
+  // Un groupe de vecteurs bouge : sa portée se juge avion par avion à la simulation (MODELE § 15.2), pas ici.
+  if (de.startsWith("avions:") || vers.startsWith("avions:")) return null;
+  const [a, b] = [position_noeud(monde, de), position_noeud(monde, vers)];
+  if (!a || !b) return null;
+  const distance = inverse(a, b).distance;
+  const portee = portee_liaison(unite, unite.hauteur_antenne, unite.hauteur_antenne);
+  if (distance <= portee) return null;
+  return `${unite.nom} porte ${Math.round(portee / 1000)} km ; ${libelle_noeud(monde, de)} et ${libelle_noeud(monde, vers)} sont à ${Math.round(distance / 1000)} km. Choisissez un moyen de plus longue portée, ou passez par un relais.`;
+}
+
+/**
+ * Rendre {modifications, resume} de la liaison que l'utilisateur tire de `de` à `vers` par `moyen`, ou {refus} avec
+ * la raison à lui montrer (MODELE § 21.4). Le moyen choisi est respecté : les nœuds qui déclarent un équipement en
+ * sont complétés. Le relief n'est pas regardé ici : la simulation marque la liaison masquée.
+ */
+export function preparer_liaison(monde, brut, fichiers, de, vers, moyen) {
+  if (de === vers) return {refus: "C'est la même unité : cliquez l'autre extrémité de la liaison."};
+  // Fichier du moyen encore en chargement : la portée reste vérifiée par la simulation, qui marquera « hors portée ».
+  const unite = moyen in fichiers ? unite_si(moyen, fichiers) : null;
+  const refus = unite && refus_portee(monde, de, vers, unite);
+  if (refus) return {refus};
+  const liens = `${libelle_noeud(monde, de)} ↔ ${libelle_noeud(monde, vers)}`;
+  return {
+    modifications: {...modifications_ajout_liaison(monde, brut, de, vers, moyen), ...modifications_equipement_liaison(brut, [de, vers], moyen)},
+    resume: unite ? `${liens} : ${unite.nom}` : liens,
+  };
 }
 
 /** Rendre les nœuds du réseau qui existent : centres, radars, postes de chaque cible défendue, groupes de vecteurs non vides. */
