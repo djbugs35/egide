@@ -24,6 +24,39 @@ export function dessiner_pannes(ctx, camera, monde) {
     ctx.lineTo(p.x - 11, p.y + 11);
     ctx.stroke();
   }
+  dessiner_incidents(ctx, camera, monde);
+}
+
+/** Dessiner les incidents sans arrêt (MODELE § 29) : radar à portée réduite (anneau et pourcentage), batterie hors service. */
+function dessiner_incidents(ctx, camera, monde) {
+  const {reseau} = monde;
+  ctx.font = "600 11px system-ui, sans-serif";
+  reseau.radars.forEach((geo, i) => {
+    const facteur = reseau.facteurs_portee?.[i] ?? 1;
+    if (facteur >= 1 || reseau.radars_hs[i]) return;
+    const p = ecran(camera, geo);
+    ctx.strokeStyle = "#e8b04a";
+    ctx.fillStyle = "#e8b04a";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 15, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText(`${Math.round(100 * facteur)} %`, p.x + 17, p.y - 10);
+  });
+  ctx.strokeStyle = COULEURS.hostile;
+  ctx.lineWidth = 2.5;
+  for (const poste of monde.postes) {
+    if (poste.batterie === undefined || !monde.hs?.has(`batterie:${poste.batterie}`)) continue;
+    const p = ecran(camera, poste.geo);
+    ctx.beginPath();
+    ctx.moveTo(p.x - 8, p.y - 8);
+    ctx.lineTo(p.x + 8, p.y + 8);
+    ctx.moveTo(p.x + 8, p.y - 8);
+    ctx.lineTo(p.x - 8, p.y + 8);
+    ctx.stroke();
+  }
 }
 
 /** Moyens proposés par défaut quand le réseau passe en liaisons : radars → conduite au fil, conduite → avions par radio. */

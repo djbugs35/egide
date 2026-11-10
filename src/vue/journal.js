@@ -1,6 +1,7 @@
 // Journal de l'information (MODELE § 17) : le journal du moteur traduit en phrases — qui a vu quoi, qui a informé
 // qui, quand, qui est parti, qui a tiré. Pur, testé ; le panneau Journal et l'inspecteur le lisent.
 import {format_decimal, format_duree} from "./format.js";
+import {recit_incident} from "./incidents.js";
 
 /** Familles de lignes, pour les filtres du panneau. */
 export const FAMILLES = {detection: "Détections", mission: "Missions", contact: "Contacts", tir: "Tirs", essaim: "Réactions de l'essaim", autre: "Réseau et ordres"};
@@ -61,6 +62,7 @@ function ligne(monde, e) {
     case "impact": return {famille: "tir", texte: `Un drone frappe ${monde.cibles[e.cible]?.conduite ? "le CDC" : `C${e.cible + 1}`}.`, cible: {type: "cible", id: e.cible}};
     case "ordre": return {famille: "autre", texte: `Ordre de l'éditeur, parti du CDC : avion${e.avions.length > 1 ? "s" : ""} ${e.avions.map((a) => a + 1).join(", ") || "aucun joignable"}.`, cible: e.avions.length ? {type: "avion", id: e.avions[0]} : null};
     case "panne": return {famille: "autre", texte: "Le CDC est détruit par l'essaim : plus rien n'est connu, plus personne n'est affecté.", cible: {type: "conduite", id: 0}};
+    case "incident": return {famille: "autre", texte: recit_incident(monde, e), cible: e.element.startsWith("radar:") ? {type: "radar", id: Number(e.element.slice(6))} : null};
     case "reseau": return {famille: "autre", texte: e.hs.length ? `Hors service : ${e.hs.map((h) => (h.startsWith("liaison:") ? `liaison ${Number(h.slice(8)) + 1}` : noeud(h))).join(", ")}.` : "Tout le réseau est de nouveau en service.", cible: null};
     default: return null;
   }

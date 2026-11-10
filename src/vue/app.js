@@ -39,6 +39,7 @@ import {mettre_a_jour_tableau} from "./tableau.js";
 import {debriefer} from "./debriefing.js";
 import {est_termine} from "../moteur/monde.js";
 import {afficher_debriefing} from "./debriefing_vue.js";
+import {generer_incidents, recit_incident} from "./incidents.js";
 import {creer_traces, echantillonner} from "./traces.js";
 
 const $ = (selecteur) => document.querySelector(selecteur);
@@ -170,6 +171,7 @@ function image(maintenant, precedent) {
     const fini = avancer_temps_reel(lecteur, (maintenant - precedent) / 1000, (monde) => echantillonner(etat.traces, monde));
     if (lecteur.enLecture) etat.angle = (lecteur.monde.t * VITESSE_BALAYAGE) % (2 * Math.PI);
     absorber(etat.effets, lecteur.monde, maintenant);
+    annoncer_incidents(lecteur.monde);
     if (etat.en_3d) {
       const {monde} = lecteur;
       etat.vue3d.rendre({monde, calques: etat.calques, montre: etat.vue_pc ? (drone) => connu_du_pc(monde, drone) : () => true, percue: etat.vue_pc, camera: $("[name='camera_3d']").value,
@@ -289,6 +291,29 @@ function brancher_journal() {
     const ligne = etat.journal[Number(e.target.closest("[data-ligne]")?.dataset.ligne)];
     if (ligne?.cible) inspecter(ligne.cible);
   });
+}
+
+// Une annonce reste 6 s à l'écran ; au-delà de 4 à la fois, la plus ancienne s'efface.
+const DUREE_ANNONCE_MS = 6000;
+const ANNONCES_MAX = 4;
+// Après un saut dans le temps, seuls les incidents des 30 dernières secondes simulées s'annoncent : pas d'avalanche.
+const FENETRE_ANNONCE_S = 30;
+
+/** Annoncer à l'écran, en 2D comme en 3D, les débuts et fins d'incident apparus au journal (MODELE § 29). */
+function annoncer_incidents(monde) {
+  const evenements = monde.evenements ?? [];
+  if (etat.annonces_monde !== monde || etat.annonces_lues > evenements.length) [etat.annonces_monde, etat.annonces_lues] = [monde, 0];
+  const zone = $(".annonces");
+  for (; etat.annonces_lues < evenements.length; etat.annonces_lues++) {
+    const e = evenements[etat.annonces_lues];
+    if (e.type !== "incident" || e.t < monde.t - FENETRE_ANNONCE_S) continue;
+    const annonce = document.createElement("li");
+    annonce.className = e.debut ? "debut" : "fin";
+    annonce.textContent = recit_incident(monde, e);
+    zone.append(annonce);
+    while (zone.children.length > ANNONCES_MAX) zone.firstElementChild.remove();
+    setTimeout(() => annonce.remove(), DUREE_ANNONCE_MS);
+  }
 }
 
 /** Remplir le tiroir de débriefing, et l'ouvrir si `ouvrir` : rien à lire tant que le raid n'est pas fini (MODELE § 28). */
@@ -487,6 +512,14 @@ function brancher_prereglages() {
   });
   $("[data-action='exporter']").addEventListener("click", () => exporter_scenario(brut_courant(), "egide-scenario.json"));
   $("[data-action='exporter_rejeu']").addEventListener("click", telecharger_rejeu);
+  $("[data-action='incidents_hasard']").addEventListener("click", () => {
+    const brut = brut_courant();
+    const {lecteur} = etat;
+    // L'éditeur ne connaît pas la durée du raid : on borne alors les incidents à 30 min.
+    const duree = Number.isFinite(lecteur?.duree) ? lecteur.duree : 1800;
+    modifier(generer_incidents(brut, lecteur?.monde.reseau.radars.length ?? 0, duree, brut.simulation.graine));
+  });
+  $("[data-action='incidents_retirer']").addEventListener("click", () => modifier({"bleu.reseau.pannes": []}));
   $("[data-action='reinitialiser']").addEventListener("click", () => {
     etat.modifications = {};
     charger().then(rafraichir_reglages);

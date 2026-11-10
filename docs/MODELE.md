@@ -844,3 +844,20 @@ frappes.
 Au plus cinq constats, chacun chiffré, dans cet ordre : cause dominante de toutes les frappes ; cible la plus frappée et
 sa cause dominante ; postes épuisés avant la fin du raid, avec le premier instant d'épuisement ; radars sans aucune
 détection ; plus de la moitié des munitions air restantes alors que des menaces ont frappé (aviation sous-employée).
+
+## 29 · Incidents de scénario
+Un incident est une panne datée (§ 15.4) que le concepteur du scénario pose, avec une cause qui se lit à l'écran. Aucun
+adversaire ne le provoque : il raconte ce qui arrive à un dispositif réel (usure, entretien, ciel, transmissions).
+
+- **Cause** (`pannes[].cause`) : `panne` (défaut), `maintenance`, `meteo` ou `coupure`. Elle ne change que le récit :
+  journal, annonce à l'écran, débriefing.
+- **Portée réduite** (`pannes[].portee`, radar seulement) : facteur f dans ]0, 1[. Le radar reste en service mais ne voit
+  qu'à f fois sa portée (distance oblique au drone). Sans `portee`, l'élément est hors service. Avec la couverture
+  frontière (§ 15.1), qui ne désigne pas de radar, le drone vu est attribué au radar en état le plus proche, qui doit
+  encore le voir à sa portée réduite.
+- **Batterie** (`batterie:<j>`, j-ième batterie placée, § 21.2) : hors service, elle ne tire ni n'acquiert pendant
+  l'incident ; ses munitions restent.
+- **Récit** : chaque début et chaque fin d'incident s'inscrit au journal (`incident` : élément, cause, portée, début ou
+  fin) et s'annonce à l'écran, en 2D comme en 3D.
+- **Tirage au hasard** : l'éditeur peut poser des incidents tirés à graine (`src/vue/incidents.js`) ; le tirage ne
+  touche pas au générateur du raid, il écrit des pannes dans le scénario comme un geste de l'éditeur.

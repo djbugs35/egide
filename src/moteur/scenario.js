@@ -146,6 +146,8 @@ function resoudre_sol(sol, fichiers) {
 
 /** Modes du réseau d'information (MODELE § 15.2). */
 export const MODES_RESEAU = ["complet", "liaisons"];
+// Causes d'un incident (MODELE § 29) : elles ne changent que le récit.
+export const CAUSES_INCIDENT = ["panne", "maintenance", "meteo", "coupure"];
 
 /**
  * Rendre vrai si `noeud` nomme un nœud du réseau : « conduite » (CDC principal), « centre:<k> » (k existant),
@@ -164,14 +166,16 @@ function resoudre_reseau(reseau, theatre, groupes, fichiers) {
     for (const noeud of [de, vers]) if (!noeud_valide(noeud, groupes, centres.length)) throw new ScenarioInvalide(`liaison : nœud inconnu « ${noeud} »`);
     if (de === vers) throw new ScenarioInvalide(`liaison de « ${de} » vers lui-même`);
   }
-  for (const {element} of pannes) {
-    if (!(element === "conduite" || /^(radar|liaison|centre):\d+$/.test(element))) throw new ScenarioInvalide(`panne : élément inconnu « ${element} »`);
+  for (const {element, cause = "panne", portee = null} of pannes) {
+    if (!(element === "conduite" || /^(radar|liaison|centre|batterie):\d+$/.test(element))) throw new ScenarioInvalide(`panne : élément inconnu « ${element} »`);
+    if (!CAUSES_INCIDENT.includes(cause)) throw new ScenarioInvalide(`panne : cause inconnue « ${cause} » (${CAUSES_INCIDENT.join(", ")})`);
+    if (portee !== null && !(element.startsWith("radar:") && portee > 0 && portee < 1)) throw new ScenarioInvalide(`panne : portée ${portee} réservée à un radar, dans ]0, 1[`);
   }
   const centre = lat === null || lon === null ? geo_deg(theatre.origine_lat_deg, theatre.origine_lon_deg, 0) : geo_deg(lat, lon, 0);
   return {
     mode, centre, conduite_ciblee, centres: centres.map((c) => ({nom: c.nom, geo: geo_deg(c.lat_deg, c.lon_deg, 0), ...(c.allocation ? {allocation: c.allocation} : {})})), liaisons: liaisons.map(({de, vers, moyen}) => ({de, vers, moyen: unite_si(moyen, fichiers)})),
     // Pannes triées par instant ; fin null : définitive.
-    pannes: pannes.map((p) => ({t: p.t_s, element: p.element, fin: p.duree_s === null || p.duree_s === undefined ? null : p.t_s + p.duree_s})).sort((a, b) => a.t - b.t),
+    pannes: pannes.map((p) => ({t: p.t_s, element: p.element, fin: p.duree_s === null || p.duree_s === undefined ? null : p.t_s + p.duree_s, cause: p.cause ?? "panne", portee: p.portee ?? null})).sort((a, b) => a.t - b.t),
   };
 }
 

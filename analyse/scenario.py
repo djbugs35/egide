@@ -180,6 +180,19 @@ def _resoudre_sol(sol: dict, fichiers: dict) -> dict:
 
 
 MODES_RESEAU = ("complet", "liaisons")
+CAUSES_INCIDENT = ("panne", "maintenance", "meteo", "coupure")
+
+
+def _valider_panne(panne: dict) -> None:
+    """Lever ScenarioInvalideError si la panne nomme un element, une cause ou une portee invalides (MODELE § 29)."""
+    element = panne["element"]
+    if not (element == "conduite" or re.fullmatch(r"(radar|liaison|centre|batterie):\d+", element)):
+        raise ScenarioInvalideError(f"panne : element inconnu « {element} »")
+    if panne.get("cause", "panne") not in CAUSES_INCIDENT:
+        raise ScenarioInvalideError(f"panne : cause inconnue « {panne['cause']} »")
+    portee = panne.get("portee")
+    if portee is not None and not (element.startswith("radar:") and 0 < portee < 1):
+        raise ScenarioInvalideError(f"panne : portee {portee} reservee a un radar, dans ]0, 1[")
 
 
 def _noeud_valide(noeud: str, groupes: int, centres: int) -> bool:
@@ -206,8 +219,7 @@ def _resoudre_reseau(reseau: dict | None, theatre: dict, groupes: int, fichiers:
             raise ScenarioInvalideError(f"liaison de « {liaison['de']} » vers lui-meme")
     pannes = reseau.get("pannes", [])
     for panne in pannes:
-        if not (panne["element"] == "conduite" or re.fullmatch(r"(radar|liaison|centre):\d+", panne["element"])):
-            raise ScenarioInvalideError(f"panne : element inconnu « {panne['element']} »")
+        _valider_panne(panne)
     lat, lon = reseau.get("centre_lat_deg"), reseau.get("centre_lon_deg")
     if lat is None or lon is None:
         lat, lon = theatre["origine_lat_deg"], theatre["origine_lon_deg"]
@@ -228,6 +240,8 @@ def _resoudre_reseau(reseau: dict | None, theatre: dict, groupes: int, fichiers:
                     "t": p["t_s"],
                     "element": p["element"],
                     "fin": None if p.get("duree_s") is None else p["t_s"] + p["duree_s"],
+                    "cause": p.get("cause", "panne"),
+                    "portee": p.get("portee"),
                 }
                 for p in pannes
             ),

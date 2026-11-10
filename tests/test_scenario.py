@@ -129,3 +129,19 @@ def test_reseau_refuse_un_noeud_inconnu():
 def test_resolution_des_menaces_multiples_identique_au_jumeau_javascript():
     brut, attendu = _variante("variante_menaces")
     assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), attendu)
+
+
+@pytest.mark.parametrize(
+    ("panne", "message"),
+    [
+        ({"t_s": 0, "element": "radar:0", "cause": "ovni", "duree_s": None}, "cause inconnue"),
+        ({"t_s": 0, "element": "conduite", "portee": 0.5, "duree_s": None}, "reservee a un radar"),
+        ({"t_s": 0, "element": "radar:0", "portee": 1, "duree_s": None}, "reservee a un radar"),
+        ({"t_s": 0, "element": "poste:0", "duree_s": None}, "element inconnu"),
+    ],
+)
+def test_incident_invalide_refuse_comme_cote_javascript(panne, message):
+    brut = json.loads(json.dumps(BRUT))
+    brut["bleu"]["reseau"]["pannes"] = [panne]
+    with pytest.raises(ScenarioInvalideError, match=message):
+        resoudre_scenario(brut, charger_unites(ids_unites(brut)))

@@ -399,3 +399,12 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .debrief-constats { margin: 0; padding-inline-start: 18px; font-size: 13px; display: grid; gap: 4px; }
 .debrief-chrono { display: flex; align-items: flex-end; gap: 2px; block-size: 70px; border-block-end: 1px solid var(--trait); }
 .debrief-chrono span { flex: 1; min-inline-size: 2px; background: var(--hostile); border-radius: 2px 2px 0 0; }
+
+/* Annonces d'incidents (MODELE § 29) */
+.annonces { position: absolute; inset-block-start: calc(var(--marge) * 2 + var(--haut-barre)); inset-inline: 0; margin-inline: auto; inline-size: min(560px, 70%);
+  list-style: none; padding: 0; display: grid; gap: 6px; z-index: 4; pointer-events: none; }
+.annonces li { background: var(--verre); border: 1px solid var(--trait); border-inline-start: 4px solid #e8b04a; border-radius: 8px; padding: 7px 12px;
+  font-size: 13px; box-shadow: var(--ombre); animation: annonce-entree 0.25s ease-out; }
+.annonces li.fin { border-inline-start-color: var(--ami); }
+@keyframes annonce-entree { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .annonces li { animation: none; } }

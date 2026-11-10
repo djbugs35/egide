@@ -60,7 +60,7 @@ export function creer_monde(scenario, {registre, journal = true}) {
   const rayonDetection = couverture.rayon_couverture;
   return {
     scenario, registre, hasard, t: 0, cibles, couverture, rayonDetection, reseau: preparer_reseau(scenario, new Set(), cibles.map((c) => c.geo)),
-    cible_conduite: cibleConduite, conduite_detruite: null, hs_cle: "",
+    cible_conduite: cibleConduite, conduite_detruite: null, hs_cle: "", hs: new Set(),
     drones: creer_drones(scenario, registre, cibles.map((cible) => cible.geo), hasard, rayonDetection + MARGE_APPARITION),
     avions: creer_avions(scenario, hasard),
     postes: creer_postes(scenario, cibles),
@@ -103,11 +103,33 @@ function appliquer_ordres(monde) {
   }
 }
 
-/** Rendre les éléments en panne à l'instant du monde : pannes datées du scénario, centre de conduite détruit. */
-function elements_hs(monde) {
-  const hs = new Set(monde.scenario.reseau.pannes.filter((p) => p.t <= monde.t && (p.fin === null || monde.t < p.fin)).map((p) => p.element));
+const est_en_cours = (panne, t) => panne.t <= t && (panne.fin === null || t < panne.fin);
+
+/**
+ * Rendre {hs, degradations} à l'instant du monde : éléments hors service (pannes datées, centre de conduite détruit)
+ * et facteur de portée des radars sous un incident de portée réduite, le plus sévère s'il y en a plusieurs (MODELE § 29).
+ */
+function etat_pannes(monde) {
+  const hs = new Set();
+  const degradations = new Map();
+  for (const panne of monde.scenario.reseau.pannes) {
+    if (!est_en_cours(panne, monde.t)) continue;
+    if (panne.portee === null) hs.add(panne.element);
+    else degradations.set(panne.element, Math.min(degradations.get(panne.element) ?? 1, panne.portee));
+  }
   if (monde.conduite_detruite !== null) hs.add("conduite");
-  return hs;
+  return {hs, degradations};
+}
+
+/** Journaliser le début et la fin de chaque incident franchis pendant le dernier pas (MODELE § 29). */
+function raconter_incidents(monde) {
+  const avant = monde.t - monde.scenario.simulation.pas;
+  for (const panne of monde.scenario.reseau.pannes) {
+    const recit = {element: panne.element, cause: panne.cause, portee: panne.portee, fin: panne.fin};
+    // Au premier pas, un incident posé à l'instant 0 commence aussi.
+    if (panne.t <= monde.t && (panne.t > avant || avant <= 0)) journaliser(monde, {type: "incident", debut: true, ...recit});
+    if (panne.fin !== null && panne.fin > avant && panne.fin <= monde.t) journaliser(monde, {type: "incident", debut: false, ...recit});
+  }
 }
 
 /** Détruire le centre de conduite frappé, puis recalculer le réseau si l'ensemble des éléments en panne a changé. */
@@ -117,11 +139,13 @@ function appliquer_pannes(monde) {
     journaliser(monde, {type: "panne", element: "conduite", cause: "frappe"});
   }
   if (!monde.scenario.reseau.pannes.length && monde.conduite_detruite === null) return;
-  const hs = elements_hs(monde);
-  const cle = [...hs].sort().join(",");
+  raconter_incidents(monde);
+  const {hs, degradations} = etat_pannes(monde);
+  const cle = [...[...hs].sort(), ...[...degradations].sort().map(([e, f]) => `${e}@${f}`)].join(",");
   if (cle === monde.hs_cle) return;
   monde.hs_cle = cle;
-  monde.reseau = preparer_reseau(monde.scenario, hs, monde.cibles.map((c) => c.geo));
+  monde.hs = hs;
+  monde.reseau = preparer_reseau(monde.scenario, hs, monde.cibles.map((c) => c.geo), degradations);
   journaliser(monde, {type: "reseau", hs: [...hs]});
 }
 

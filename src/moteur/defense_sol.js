@@ -112,6 +112,11 @@ export function tirer_sol(monde) {
   };
   for (const poste of monde.postes) {
     if (poste.munitions === 0 || monde.t < poste.prochain_tir) continue;
+    // Batterie sous incident (MODELE § 29) : ni tir ni acquisition, elle reprendra à zéro.
+    if (poste.batterie !== undefined && monde.hs.has(`batterie:${poste.batterie}`)) {
+      poste.acquisition = null;
+      continue;
+    }
     const unite = poste.unite ?? sol;
     const choix = cible_du_poste(monde, poste, unite);
     if (!choix) continue;

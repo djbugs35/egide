@@ -105,17 +105,19 @@ function acces_groupes(scenario, lieux, hs, latencesCentres) {
  * Pour chaque centre : latence depuis chaque radar (Infinity sans chemin), vers chaque cible défendue, et accès de
  * chaque groupe d'avions. `simple` : réseau complet sans panne ni relief, le moteur prend le chemin d'avant le réseau.
  */
-export function preparer_reseau(scenario, hs = new Set(), cibles = []) {
+export function preparer_reseau(scenario, hs = new Set(), cibles = [], degradations = new Map()) {
   const {reseau} = scenario;
   const radars = positions_radars(scenario);
   const ecefRadars = radars.map((geo) => vers_ecef(geo));
   const centres = ids_centres(reseau).map((id, c) => ({id, geo: c === 0 ? reseau.centre : reseau.centres[c - 1].geo, nom: c === 0 ? "CDC" : reseau.centres[c - 1].nom, hs: hs.has(id)}));
   const grille = grille_scenario(scenario);
   const radars_hs = radars.map((_, i) => hs.has(`radar:${i}`));
+  // Facteur de portée de chaque radar (MODELE § 29) : 1 en service normal, moins sous un incident de portée réduite.
+  const facteurs_portee = radars.map((_, i) => degradations.get(`radar:${i}`) ?? 1);
   // Avec un terrain, chaque radar voit selon son masque : le moteur prend le chemin radar par radar.
   const commun = {centre: reseau.centre, centres, radars, ecefRadars, hs, conduite_hs: hs.has("conduite"), aucun_centre: centres.every((c) => c.hs),
     grille, masques: masques_radars(scenario), hauteur_drones: scenario.rouge.altitude, portees_radars: positions_radars(scenario).map((_, i) => portee_site(scenario, i)), radars_hs,
-    simple: reseau.mode === "complet" && hs.size === 0 && !grille};
+    facteurs_portee, simple: reseau.mode === "complet" && hs.size === 0 && degradations.size === 0 && !grille};
   const resumer = (latencesRadars, latencesSol) => ({
     latences_centres: latencesRadars, latences_sol: latencesSol,
     latences_radars: radars.map((_, i) => Math.min(...latencesRadars.map((l) => l[i]))),
@@ -177,11 +179,17 @@ export function radar_le_plus_proche(reseau, drone) {
  * radars en état s'il est vu (couverture frontière : la frontière est jalonnée par les radars, MODELE § 15.1).
  */
 export function radars_voyants(detection, couverture, reseau, drone, outils) {
-  if (reseau.grille) return radars_voyants_relief(detection, couverture, reseau, drone, outils);
-  if (detection.detecte_par) return detection.detecte_par(couverture, drone, outils).filter((i) => !reseau.radars_hs[i]);
+  if (reseau.grille) return radars_voyants_relief(detection, couverture, reseau, drone, outils).filter((i) => voit_a_portee_reduite(reseau, i, drone));
+  if (detection.detecte_par) return detection.detecte_par(couverture, drone, outils).filter((i) => !reseau.radars_hs[i] && voit_a_portee_reduite(reseau, i, drone));
   if (!detection.detecte(couverture, drone, outils)) return [];
   const indice = radar_le_plus_proche(reseau, drone);
-  return indice < 0 ? [] : [indice];
+  return indice < 0 || !voit_a_portee_reduite(reseau, indice, drone) ? [] : [indice];
+}
+
+/** Rendre vrai si le radar `i` voit encore `drone` à sa portée, réduite par un incident (MODELE § 29). */
+function voit_a_portee_reduite(reseau, i, drone) {
+  const facteur = reseau.facteurs_portee?.[i] ?? 1;
+  return facteur >= 1 || distance_oblique(reseau.ecefRadars[i], drone.ecef) <= facteur * reseau.portees_radars[i];
 }
 
 /**

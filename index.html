@@ -22,6 +22,7 @@
 </svg>
 
 <main class="vue" id="vue" aria-label="Situation aérienne">
+  <ol class="annonces" aria-live="polite" aria-label="Incidents en cours"></ol>
   <div id="carte" aria-label="Fond de carte"></div>
   <div id="globe" aria-label="Vue 3D du raid sur le globe"></div>
   <canvas id="scope" aria-label="Situation : zone défendue, radars, avions, drones, cibles"></canvas>
@@ -67,6 +68,10 @@
     <div id="reglages"></div>
     <label class="interrupteur" title="Relief du théâtre : il masque radars et liaisons radio (MODELE § 16). Fabriquer un terrain réel : node outils/terrain.js.">Terrain <select name="terrain"><option value="">Terre lisse</option></select></label>
     <label class="interrupteur" title="Le centre de conduite devient une cible de l'essaim ; à la première frappe, il est détruit (MODELE § 15.4)."><input type="checkbox" name="conduite_ciblee">Le CDC est une cible de l'essaim</label>
+    <div class="ligne" title="Incidents tirés à la graine du raid : radars gênés par la météo ou en maintenance, liaisons coupées, batteries indisponibles (MODELE § 29)">
+      <button data-action="incidents_hasard">Incidents au hasard</button>
+      <button data-action="incidents_retirer">Retirer les incidents</button>
+    </div>
     <div class="prereglages">
       <select name="bibliotheque" aria-label="Charger un scénario de la bibliothèque"></select>
       <select name="prereglage" aria-label="Charger un réglage enregistré"></select>

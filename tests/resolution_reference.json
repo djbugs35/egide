@@ -432,12 +432,15 @@
         {
           "t_s": 300,
           "element": "radar:2",
-          "duree_s": 120
+          "duree_s": 120,
+          "cause": "meteo",
+          "portee": 0.5
         },
         {
           "t_s": 200,
           "element": "conduite",
-          "duree_s": null
+          "duree_s": null,
+          "cause": "maintenance"
         }
       ],
       "bleu.reseau.conduite_ciblee": true,
@@ -931,12 +934,16 @@
           {
             "t": 200,
             "element": "conduite",
-            "fin": null
+            "fin": null,
+            "cause": "maintenance",
+            "portee": null
           },
           {
             "t": 300,
             "element": "radar:2",
-            "fin": 420
+            "fin": 420,
+            "cause": "meteo",
+            "portee": 0.5
           }
         ]
       },

@@ -28,12 +28,13 @@ function vecteurs_scene(monde, calques) {
 /** Rendre les unités au sol : radars sur leur mât, batteries, centres et cibles ; `alt` est la hauteur au-dessus du sol. */
 function fixes_scene(monde, calques) {
   const {scenario} = monde;
-  const radars = !calques.radars ? [] : positions_radars(scenario).map((geo, i) => ({id: `r${i}`, ...position(geo), icone: parametres_radar(scenario, i).icone ?? "radar_pylone", camp: "ami"}));
+  // Un élément hors service (panne, incident : MODELE § 29) s'estompe comme une unité à court de munitions.
+  const radars = !calques.radars ? [] : positions_radars(scenario).map((geo, i) => ({id: `r${i}`, ...position(geo), icone: parametres_radar(scenario, i).icone ?? "radar_pylone", camp: "ami", vide: Boolean(monde.reseau.radars_hs?.[i])}));
   const batteries = !calques.postes ? [] : monde.postes.filter((p) => p.batterie !== undefined && p.munitions > 0)
-    .map((p) => ({id: `b${p.batterie}`, ...position(p.geo), alt: 0, icone: p.unite.icone ?? "batterie_moyenne", camp: "sol"}));
-  const centres = !calques.reseau ? [] : monde.reseau.centres.map((c, k) => ({id: `c${k}`, ...position(c.geo), alt: 0, icone: "c2", camp: "ami"}));
-  const cibles = !calques.cibles ? [] : monde.cibles.map((c, k) => ({id: `s${k}`, ...position(c.geo), alt: 0, icone: "site", camp: "sol"}));
-  return [...radars, ...batteries, ...centres, ...cibles].map((e) => ({...e, sol: true, vide: false}));
+    .map((p) => ({id: `b${p.batterie}`, ...position(p.geo), alt: 0, icone: p.unite.icone ?? "batterie_moyenne", camp: "sol", vide: Boolean(monde.hs?.has(`batterie:${p.batterie}`))}));
+  const centres = !calques.reseau ? [] : monde.reseau.centres.map((c, k) => ({id: `c${k}`, ...position(c.geo), alt: 0, icone: "c2", camp: "ami", vide: Boolean(c.hs)}));
+  const cibles = !calques.cibles ? [] : monde.cibles.map((c, k) => ({id: `s${k}`, ...position(c.geo), alt: 0, icone: "site", camp: "sol", vide: false}));
+  return [...radars, ...batteries, ...centres, ...cibles].map((e) => ({...e, sol: true}));
 }
 
 /** Rendre {drones, unites, icone_drone} à montrer à l'instant du monde, selon les mêmes calques que la 2D. */
