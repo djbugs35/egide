@@ -17,6 +17,8 @@
   <symbol id="i-profil" viewBox="0 0 24 24"><path d="M2 19l6-9 4 5 3-4 7 8H2zM2 7h20"/></symbol>
   <symbol id="i-journal" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></symbol>
   <symbol id="i-auto" viewBox="0 0 24 24"><path d="M12 2l2.2 4.6L19 7.3l-3.5 3.4.8 4.9L12 13.4l-4.3 2.2.8-4.9L5 7.3l4.8-.7z"/><path d="M5 20h14"/></symbol>
+  <symbol id="i-son" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
+  <symbol id="i-muet" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></symbol>
   <symbol id="i-debrief" viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6zM9 9h6M9 13h6M9 17h3"/><path d="M15 3v3h3"/></symbol>
   <symbol id="i-aide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17v.5"/></symbol>
 </svg>
@@ -186,7 +188,7 @@
       <dt>Espace</dt><dd>Lire ou suspendre</dd>
       <dt>← →</dt><dd>Reculer ou avancer de 30 s</dd>
       <dt>E</dt><dd>Éditer le scénario</dd>
-      <dt>M</dt><dd>Couper ou rétablir les sons</dd>
+      <dt>M</dt><dd>Activer ou couper les bruitages (coupés au départ)</dd>
       <dt>V</dt><dd>Vue du CDC : ce que sait la conduite</dd>
       <dt>L</dt><dd>Outil Liaison, dans l'éditeur</dd>
       <dt>1 à 8</dt><dd>Ouvrir un panneau (hors édition)</dd>
@@ -322,7 +324,7 @@
       <fieldset class="vitesses"><legend>Vitesse</legend><div data-zone="vitesses"></div></fieldset>
       <label class="graine" title="Graine du hasard : une même graine rejoue le même raid">Graine <input type="number" name="graine" min="0" step="1"></label>
       <button data-action="autre_graine" title="Tirer une autre graine">Autre raid</button>
-      <button data-action="son" aria-pressed="true" title="Sons du raid, synthétisés (M)">Son</button>
+      <button data-action="son" class="bouton-son" aria-pressed="false" title="Activer ou couper les bruitages du raid (M)"><svg aria-hidden="true"><use href="#i-muet"/></svg><span>Son coupé</span></button>
     </div>
   </div>
 

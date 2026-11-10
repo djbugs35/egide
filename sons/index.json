@@ -1,0 +1,27 @@
+{
+  "explosion": [
+    "explosion_1.wav",
+    "explosion_2.wav",
+    "explosion_3.wav"
+  ],
+  "interception": [
+    "interception_1.wav",
+    "interception_2.wav",
+    "interception_3.wav"
+  ],
+  "lancement": [
+    "lancement_1.wav",
+    "lancement_2.wav"
+  ],
+  "roquette": [
+    "roquette_1.wav",
+    "roquette_2.wav"
+  ],
+  "radio": [
+    "radio_1.wav",
+    "radio_2.wav"
+  ],
+  "alerte": [
+    "alerte_1.wav"
+  ]
+}

@@ -319,24 +319,19 @@ function annoncer_incidents(monde) {
   }
 }
 
-/** Rendre la préférence `cle` gardée dans le navigateur, ou `defaut` si elle est absente ou illisible. */
-function lire_preference(cle, defaut) {
-  try {
-    return localStorage.getItem(cle) ?? defaut;
-  } catch {
-    return defaut;
-  }
+/** Mettre le bouton Son à l'image de la console : icône, libellé, état pressé. */
+function afficher_bouton_son() {
+  const bouton = $("[data-action='son']");
+  const actif = etat.sons.actif();
+  bouton.setAttribute("aria-pressed", String(actif));
+  bouton.querySelector("use").setAttribute("href", actif ? "#i-son" : "#i-muet");
+  bouton.querySelector("span").textContent = actif ? "Son actif" : "Son coupé";
 }
 
-/** Couper ou rétablir les sons, et s'en souvenir dans ce navigateur. */
+/** Activer ou couper les bruitages ; le clic sert aussi de geste qui autorise le navigateur à jouer du son. */
 function basculer_son() {
-  const actif = etat.sons.basculer();
-  $("[data-action='son']").setAttribute("aria-pressed", String(actif));
-  try {
-    localStorage.setItem("egide.son", actif ? "1" : "0");
-  } catch {
-    // Stockage refusé (navigation privée) : le réglage vaut pour cette page seulement.
-  }
+  etat.sons.basculer();
+  afficher_bouton_son();
 }
 
 // Une ligne de radio reste 5 s ; deux à la fois au plus, en sous-titres.
@@ -423,8 +418,9 @@ function brancher_transport() {
   vitesses.innerHTML = MULTIPLICATEURS.map((m) => `<label><input type="radio" name="vitesse" value="${m}" ${m === 1 ? "checked" : ""}>×${String(m).replace(".", ",")}</label>`).join("");
   vitesses.addEventListener("change", (e) => (etat.lecteur.multiplicateur = Number(e.target.value)));
   $("[name='graine']").addEventListener("change", (e) => modifier({"simulation.graine": Number(e.target.value)}));
-  etat.sons = creer_sons(lire_preference("egide.son", "1") === "1");
-  $("[data-action='son']").setAttribute("aria-pressed", String(etat.sons.actif()));
+  // Bruitages coupés au départ : un son qui part sans prévenir surprend ; le joueur les active d'un clic (ou M).
+  etat.sons = creer_sons(false);
+  afficher_bouton_son();
   $("[data-action='son']").addEventListener("click", basculer_son);
   $("[data-action='autre_graine']").addEventListener("click", () => modifier({"simulation.graine": Math.floor(Math.random() * 1e6)}));
   document.querySelectorAll("[name='tactique']").forEach((bouton) => bouton.addEventListener("change", () => modifier({"rouge.tactique": bouton.value})));

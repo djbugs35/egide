@@ -5,6 +5,7 @@ import {simuler} from "../src/moteur/monde.js";
 import {niveau_degats, panache} from "../src/vue/ambiance.js";
 import {indicatif, message_du_lot} from "../src/vue/radio.js";
 import {sons_du_lot} from "../src/vue/sons.js";
+import {calculer_banque, encoder_wav, FREQUENCE} from "../outils/sons/generer.js";
 import {REGISTRE, scenario} from "./aide_scenario.js";
 
 test("le niveau de dégâts suit les frappes rapportées à la concentration maximale, seuils compris", () => {
@@ -31,8 +32,22 @@ test("la radio dit le plus important du lot, et nomme chaque avion par son group
   assert.equal(message_du_lot(monde, [{type: "reseau", hs: []}]), null);
 });
 
-test("les sons d'un lot comptent impacts, tirs et destructions, et la radio seulement si elle parle", () => {
-  const lot = [{type: "tir", detruit: true}, {type: "tir", detruit: false}, {type: "impact"}, {type: "detection"}];
-  assert.deepEqual(sons_du_lot(lot), {impact: 1, eclat: 1, tir: 2, radio: 0});
+test("les bruitages d'un lot distinguent impacts, départs sol et air, interceptions, alertes ; la radio seulement si elle parle", () => {
+  const lot = [{type: "tir", couche: "sol", detruit: true}, {type: "tir", couche: "air", detruit: false}, {type: "impact"}, {type: "detection"},
+    {type: "incident", debut: true}, {type: "incident", debut: false}];
+  assert.deepEqual(sons_du_lot(lot), {explosion: 1, interception: 1, lancement: 1, roquette: 1, radio: 0, alerte: 1});
   assert.equal(sons_du_lot([], true).radio, 1);
+});
+
+test("la banque de bruitages se recalcule à l'identique, sans valeur hors de [-1, 1], en WAV valide", () => {
+  const [a, b] = [calculer_banque(), calculer_banque()];
+  assert.deepEqual(Object.keys(a), ["explosion", "interception", "lancement", "roquette", "radio", "alerte"]);
+  for (const sorte of Object.keys(a)) {
+    assert.deepEqual(a[sorte][0].slice(0, 2000), b[sorte][0].slice(0, 2000));
+    assert.ok(a[sorte].every((s) => s.every((v) => Number.isFinite(v) && Math.abs(v) <= 1)), sorte);
+  }
+  const wav = encoder_wav(a.radio[0]);
+  assert.equal(new TextDecoder().decode(wav.subarray(0, 4)), "RIFF");
+  assert.equal(new DataView(wav.buffer).getUint32(24, true), FREQUENCE);
+  assert.equal(wav.length, 44 + a.radio[0].length * 2);
 });

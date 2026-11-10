@@ -873,8 +873,12 @@ Effets d'écran tirés de l'état du monde et de son journal, sans aucun effet s
   radars « Vigie n », les avions par l'indicatif de leur groupe (oiseaux de proie, inventés) et leur rang. Au plus un
   message toutes les 1,5 s de temps réel, le plus important d'abord : impact, puis mission et contact, puis tir et
   détection.
-- **Sons** : synthétisés dans le navigateur (aucun fichier), coupés par la touche M. Au plus un son de chaque sorte
-  toutes les 120 ms, pour qu'un essaim reste audible sans saturer.
+- **Bruitages** : banque de sons calculée hors ligne par `outils/sons/generer.js` (synthèse à graine : explosions en
+  couches avec réverbération, départs de missiles et de roquettes, interceptions, radio, alerte), écrite en WAV dans
+  `sons/`, sans aucun enregistrement emprunté. Une explosion répond à une frappe, un départ de missile à un tir sol, une
+  roquette à un tir air, une interception à un tir au but, une alerte au début d'un incident (§ 29). Chaque son est joué
+  dans une variante tirée au hasard, à ±10 % de hauteur, derrière un compresseur ; au plus dix à la fois, avec un écart
+  minimal par sorte. Coupés au départ : bouton Son ou touche M.
 
 ## 31 · Brouillard de guerre (vue du CDC)
 Affichage seulement : la simulation garde ses positions vraies (`src/vue/brouillard.js`). Dans la vue du CDC (touche V),

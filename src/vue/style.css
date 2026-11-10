@@ -414,4 +414,7 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
   display: grid; gap: 4px; z-index: 4; pointer-events: none; text-align: center; }
 .radio li { justify-self: center; background: rgba(8, 12, 18, 0.72); color: #e9f0d8; font: 600 13px ui-monospace, "SF Mono", Menlo, monospace;
   padding: 4px 10px; border-radius: 6px; letter-spacing: 0.01em; }
-[data-action="son"][aria-pressed="false"] { opacity: 0.55; text-decoration: line-through; }
+.bouton-son { display: inline-flex; align-items: center; gap: 6px; }
+.bouton-son svg { inline-size: 18px; block-size: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bouton-son[aria-pressed="true"] { border-color: var(--ami); color: var(--ami); }
+.bouton-son[aria-pressed="false"] { color: var(--texte-secondaire); }
