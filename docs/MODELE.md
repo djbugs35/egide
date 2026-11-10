@@ -683,7 +683,7 @@ calcul, selon les mêmes calques que la 2D. Hypothèses d'affichage :
   nord-ouest à 45° d'élévation ; `pente = Δh / (2 m) × max(1, (m / 30) ^ 0,25)`, `m` la taille du pixel en mètres, ce
   renfort compensant le lissage des tuiles lointaines ; opacité `min(0,6 ; 2 |e − e_plat|)`, noire à l'ombre, blanche
   au soleil, nulle sur le plat. Ces pentes renforcées sont un choix d'image, sans valeur de mesure.
-- **Exagération** : le facteur choisi étire le relief comme les hauteurs de vol ; à 1, tout est à l'échelle. Les symboles restent visibles à travers le terrain, pour ne pas perdre une unité derrière une crête. Le relief du moteur (§ 16) reste celui du scénario ; celui de cette vue ne sert qu'à l'image.
+- **Exagération** : le facteur choisi étire le relief comme les hauteurs de vol, jamais la forme des modèles 3D ; à 1, tout est à l'échelle. Les symboles restent visibles à travers le terrain, pour ne pas perdre une unité derrière une crête. Le relief du moteur (§ 16) reste celui du scénario ; celui de cette vue ne sert qu'à l'image.
 - **Couvertures** : un contour à la hauteur de l'essaim, puis à 1 500 et 5 000 m au-dessus du sol pour ceux qui sont
   plus hauts que lui. Sur relief, chaque contour vient de `couverture_reelle` (§ 16.2) ; sans relief, de la portée du
   moteur (§ 2), `min(horizon(h, z), portée instrumentée)`. Hypothèse d'image : un contour est tracé à niveau, au sol du

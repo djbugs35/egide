@@ -59,7 +59,9 @@ export function creer_modeles3d(Cesium, viewer, disponibles) {
 
   function charger(id, icone, taille_ecran = TAILLE_ECRAN_MIN, cliquable = true) {
     pool.set(id, null);
-    Cesium.Model.fromGltfAsync({url: new URL(`../../${chemin_modele(icone)}`, import.meta.url).href, id, minimumPixelSize: taille_ecran, allowPicking: cliquable, maximumScale: ECHELLE_MAX, show: false, imageBasedLighting: ambiance_neutre()})
+    Cesium.Model.fromGltfAsync({url: new URL(`../../${chemin_modele(icone)}`, import.meta.url).href, id, minimumPixelSize: taille_ecran, allowPicking: cliquable, maximumScale: ECHELLE_MAX,
+      // L'exagération étire le relief, pas les objets : sans cela, Cesium étire aussi le modèle et le soulève (MODELE § 23).
+      enableVerticalExaggeration: false, show: false, imageBasedLighting: ambiance_neutre()})
       .then((modele) => {
         pool.set(id, primitives.add(modele));
         viewer.scene.requestRender();
