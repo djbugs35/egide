@@ -36,6 +36,9 @@ import {brancher_panneaux} from "./panneaux.js";
 import {construire_reglages} from "./reglages.js";
 import {dessiner_scope, trouver_sous_curseur} from "./scope.js";
 import {mettre_a_jour_tableau} from "./tableau.js";
+import {debriefer} from "./debriefing.js";
+import {est_termine} from "../moteur/monde.js";
+import {afficher_debriefing} from "./debriefing_vue.js";
 import {creer_traces, echantillonner} from "./traces.js";
 
 const $ = (selecteur) => document.querySelector(selecteur);
@@ -181,6 +184,7 @@ function image(maintenant, precedent) {
       dessiner_inspection(ctx, etat.camera, etat.inspection, lecteur.monde);
     }
     if (fini || maintenant - etat.dernierTableau > 100) rafraichir_commandes(maintenant);
+    if (fini) presenter_debriefing(true);
   }
 }
 
@@ -287,6 +291,14 @@ function brancher_journal() {
   });
 }
 
+/** Remplir le tiroir de débriefing, et l'ouvrir si `ouvrir` : rien à lire tant que le raid n'est pas fini (MODELE § 28). */
+function presenter_debriefing(ouvrir = false) {
+  const monde = etat.lecteur?.monde;
+  const fini = Boolean(monde?.evenements) && est_termine(monde);
+  afficher_debriefing($("[data-zone='debriefing']"), fini ? debriefer(monde) : null);
+  if (ouvrir && fini) etat.panneaux.ouvrir("debriefing");
+}
+
 function rafraichir_commandes(maintenant) {
   const {lecteur} = etat;
   etat.dernierTableau = maintenant;
@@ -343,7 +355,7 @@ function brancher_transport() {
     const edition = etat.editeur?.est_actif();
     // En préparation, Espace et les flèches servent à la carte ; en cours de raid (ordres), ils restent à la lecture.
     const preparation = edition && etat.editeur.mode() === "edition";
-    const panneau = /^Digit([1-7])$/.exec(e.code)?.[1];
+    const panneau = /^Digit([1-8])$/.exec(e.code)?.[1];
     if (panneau && !edition) etat.panneaux.basculer(etat.panneaux.ids()[Number(panneau) - 1]);
     if (e.key.toLowerCase() === "e" && !edition) etat.editeur.activer(true);
     if (e.key.toLowerCase() === "v" && !edition) basculer_vue_pc();
@@ -767,6 +779,7 @@ async function demarrer() {
     if (id === "profil") rafraichir_profil();
     if (id === "journal" && etat.lecteur) rafraichir_journal(performance.now(), true);
     if (id === "autoconfig") autoconfig.remplir();
+    if (id === "debriefing") presenter_debriefing();
   });
   brancher_prereglages();
   brancher_bibliotheque();

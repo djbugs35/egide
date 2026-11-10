@@ -816,3 +816,31 @@ Un avion n'engage pas une trajectoire balistique. Seul un poste déclaré `anti_
 la bulle reste calculée à l'altitude de l'essaim (§ 25.2), ce qui est prudent contre un objet plus haut ; la cadence (§ 5) et le Pk ne
 dépendent pas de la vitesse de la cible.
 
+
+## 28 · Débriefing de fin de raid
+Le débriefing se calcule après le raid, à partir de l'état final du monde et de son journal (`src/vue/debriefing.js`). Il
+ne change rien à la simulation : c'est une lecture, valable en vue 2D comme en 3D.
+
+### 28.1 Note de la défense
+Les menaces comptent l'essaim et les groupes (§ 27). Une menace est interceptée si elle est détruite (air, sol ou
+brouillage), et frappe si elle arrive. Taux d'interception τ = interceptées / menaces. Note : A si τ ≥ 95 %, B si
+τ ≥ 85 %, C si τ ≥ 70 %, D si τ ≥ 50 %, E sinon. Ces seuils sont un barème de jeu, sans autre fondement.
+
+### 28.2 Cause de chaque frappe
+Une frappe reçoit la première cause qui s'applique : **non détectée** (aucun radar ne l'a vue), **détectée, inconnue de
+la conduite** (vue, mais l'information n'a atteint aucun centre), **connue, jamais engagée** (aucun tir ne l'a visée),
+**engagée, manquée** (au moins un tir, aucun n'a porté). La cause dominante d'une cible est la plus fréquente parmi ses
+frappes.
+
+### 28.3 Tireurs, capteurs, chronologie
+- **Tireurs** : par unité (postes sol regroupés par unité, avions par groupe), tirs, coups au but et réussite
+  (coups / tirs). Un poste est **épuisé** s'il n'a plus de munitions ; son instant d'épuisement est celui de son dernier
+  tir. Les tirs sont ceux du journal : un tir dont la cible est tombée entre-temps n'y figure pas.
+- **Capteurs** : premières détections par radar, d'après le journal (§ 17). En réseau complet, la première détection
+  est attribuée au radar le plus proche du drone : un radar « sans détection » a pu voir des drones déjà connus.
+- **Chronologie** : frappes par tranche de 5 min.
+
+### 28.4 Points faibles
+Au plus cinq constats, chacun chiffré, dans cet ordre : cause dominante de toutes les frappes ; cible la plus frappée et
+sa cause dominante ; postes épuisés avant la fin du raid, avec le premier instant d'épuisement ; radars sans aucune
+détection ; plus de la moitié des munitions air restantes alors que des menaces ont frappé (aviation sous-employée).

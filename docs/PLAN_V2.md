@@ -165,6 +165,10 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Jeu | **Modèles 3D privés étendus à tout le catalogue**, après validation du pilote à cinq unités, dans le navigateur comme dans Godot | 17 | fait |
 | Jeu | **Import de modèles 3D tiers** (licence compatible, sous `prive/`), à côté des modèles générés par code, pour un rendu photoréaliste | 17 | à faire |
 | Jeu | **Suivre une unité au sol** (radar, batterie) avec la caméra de suivi, comme les avions | 17 | à faire |
+| Jeu | **Débriefing de fin de raid** : note, causes des frappes, tireurs, capteurs, chronologie et points faibles, en 2D comme en 3D (MODELE § 28) | 18 | fait |
+| Jeu | **Incidents de scénario** : pannes, maintenance, météo qui dégrade un capteur, liaison coupée, posés par le concepteur et racontés à l'écran | 18 | à faire |
+| Jeu | **Crédibilité à l'écran** : impacts et dégâts sur les cibles, sons, messages radio de la conduite, brouillard de guerre (pistes incertaines, retard des pistes) | 18 | à faire |
+| Jeu | **Défense à piloter** : le joueur fixe les priorités de tir, déplace des batteries, gère munitions et orbites | 19 | à faire |
 | Jeu | **Camp rouge jouable**, dans un mode séparé qui ne fausse pas les analyses | 17 | à faire |
 | Jeu | **Confirmation avant d'abandonner un relief** non enregistré | 17 | à faire |
 | Jeu | **Brouillard masqué par le relief**, comme le calcule déjà le moteur | 17 | à faire |

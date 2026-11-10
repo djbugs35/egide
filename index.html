@@ -17,6 +17,7 @@
   <symbol id="i-profil" viewBox="0 0 24 24"><path d="M2 19l6-9 4 5 3-4 7 8H2zM2 7h20"/></symbol>
   <symbol id="i-journal" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></symbol>
   <symbol id="i-auto" viewBox="0 0 24 24"><path d="M12 2l2.2 4.6L19 7.3l-3.5 3.4.8 4.9L12 13.4l-4.3 2.2.8-4.9L5 7.3l4.8-.7z"/><path d="M5 20h14"/></symbol>
+  <symbol id="i-debrief" viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6zM9 9h6M9 13h6M9 17h3"/><path d="M15 3v3h3"/></symbol>
   <symbol id="i-aide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17v.5"/></symbol>
 </svg>
 
@@ -58,6 +59,7 @@
     <button data-panneau="journal" aria-expanded="false" title="Qui a vu quoi, qui a informé qui, quand (5)"><svg><use href="#i-journal"/></svg><span>Journal</span></button>
     <button data-panneau="autoconfig" aria-expanded="false" title="Auto-configuration : menaces, moyens, zone, répartition optimisée (6)"><svg><use href="#i-auto"/></svg><span>Auto</span></button>
     <button data-panneau="aide" aria-expanded="false" title="Commandes et symboles (7)"><svg><use href="#i-aide"/></svg><span>Aide</span></button>
+    <button data-panneau="debriefing" aria-expanded="false" title="Débriefing du raid : note, causes des frappes, points faibles (8)"><svg><use href="#i-debrief"/></svg><span>Débrief</span></button>
   </nav>
 
   <section class="tiroir" data-tiroir="scenario" aria-label="Réglages du scénario" hidden>
@@ -180,13 +182,19 @@
       <dt>E</dt><dd>Éditer le scénario</dd>
       <dt>V</dt><dd>Vue du CDC : ce que sait la conduite</dd>
       <dt>L</dt><dd>Outil Liaison, dans l'éditeur</dd>
-      <dt>1 à 7</dt><dd>Ouvrir un panneau (hors édition)</dd>
+      <dt>1 à 8</dt><dd>Ouvrir un panneau (hors édition)</dd>
       <dt>Molette</dt><dd>Zoom</dd>
       <dt>Clic droit glissé</dt><dd>Incliner et tourner la carte</dd>
       <dt>Double-clic</dt><dd>Recadrer</dd>
       <dt>Clic</dt><dd>Inspecter une entité</dd>
       <dt>Échap</dt><dd>Fermer le panneau ou l'inspecteur</dd>
     </dl>
+  </section>
+
+  <section class="tiroir large" data-tiroir="debriefing" aria-label="Débriefing du raid" hidden>
+    <header><h2>Débriefing</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
+    <p class="note">Lu dans le journal du raid terminé : ce qui a passé, pourquoi, et où la défense a faibli (MODELE § 28).</p>
+    <div data-zone="debriefing"></div>
   </section>
 
   <div class="colonne-droite">

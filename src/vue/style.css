@@ -378,3 +378,24 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
   border: 1px solid var(--trait); border-radius: 8px; box-shadow: var(--ombre); }
 .choix-superposes button { padding: 5px 10px; text-align: start; font-size: 13px; background: transparent; border: 0; border-radius: 5px; color: inherit; cursor: pointer; }
 .choix-superposes button:hover, .choix-superposes button:focus-visible { background: rgba(255, 255, 255, 0.14); outline: none; }
+
+/* Débriefing (MODELE § 28) */
+.debrief-note { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 16px; padding: 10px 12px; border: 1px solid var(--trait); border-radius: 8px; }
+.debrief-note strong { font-size: 56px; line-height: 1; inline-size: 1.2em; text-align: center; }
+.debrief-note dl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 14px; margin: 0; font-size: 13px; }
+.debrief-note dt { color: var(--texte-secondaire); }
+.debrief-note dd { margin: 0; font-weight: 600; }
+.note-A strong, .note-B strong { color: var(--ami); }
+.note-C strong { color: #e8d36a; }
+.note-D strong, .note-E strong { color: var(--hostile); }
+.debrief-barres { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 12.5px; }
+.debrief-barres li { display: grid; grid-template-columns: minmax(8em, 15em) 1fr 3em; gap: 8px; align-items: center; }
+.debrief-barres .barre { block-size: 8px; background: var(--trait); border-radius: 4px; overflow: hidden; }
+.debrief-barres .barre i { display: block; block-size: 100%; background: var(--hostile); }
+.debrief-barres b { text-align: end; }
+.debrief-table { inline-size: 100%; border-collapse: collapse; font-size: 12.5px; }
+.debrief-table th, .debrief-table td { padding: 3px 6px; text-align: end; border-block-end: 1px solid var(--trait); }
+.debrief-table th:first-child, .debrief-table td:first-child { text-align: start; }
+.debrief-constats { margin: 0; padding-inline-start: 18px; font-size: 13px; display: grid; gap: 4px; }
+.debrief-chrono { display: flex; align-items: flex-end; gap: 2px; block-size: 70px; border-block-end: 1px solid var(--trait); }
+.debrief-chrono span { flex: 1; min-inline-size: 2px; background: var(--hostile); border-radius: 2px 2px 0 0; }
