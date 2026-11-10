@@ -39,6 +39,9 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
   résultante des C2, conduite de tir comme contrainte du moteur ; objets orientés ; installation automatique ; icônes privées.
 - **v0.12.0** : refonte de l'édition du théâtre (palette à onglets, consigne, gestes unifiés), liaisons au moyen choisi avec
   refus motivé, connexions par famille de moyen dans la fiche ; menaces multiples, SER et trajectoire balistique.
+- **v0.13.0** : vue 3D reprise (relief ombré et sans pics, bulles au sol, exagération sans déformer les modèles), modèles
+  3D texturés pour tout le catalogue et l'essaim ; débriefing de fin de raid, incidents de scénario, fumées, radio et
+  bruitages, brouillard de guerre dans la vue du CDC ; choix entre unités superposées, symboles réduits au dézoom.
 
 ## Arborescence cible
 ```

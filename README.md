@@ -114,10 +114,10 @@ ni ne s'édite.
 | Touche | Action | Touche | Action |
 |---|---|---|---|
 | Espace | Lire / pause | ← → | Reculer / avancer de 30 s |
-| 1 à 7 | Ouvrir un panneau | Échap | Fermer le panneau ou l'inspecteur |
+| 1 à 8 | Ouvrir un panneau | Échap | Fermer le panneau ou l'inspecteur |
 | E | Éditer | V | Vue du CDC |
 | R | Essaim réactif ou non (hors édition) | O | Vue 3D |
-| M | Règle (en édition) | | |
+| M | Bruitages (hors édition), règle (en édition) | | |
 | S, C, R, K, L, P, Z | Outils Sélection, Cible, Radar, CDC, Liaison, Plan de vol, Zone (en édition) | Suppr | Effacer la sélection (en édition) ou la mettre hors service (en plein raid) |
 | X | Gomme : effacer l'unité cliquée | Maj+clic | Pendant un dépôt : effacer l'unité visée (curseur rouge) |
 | Ctrl+1 à 9 | Mémoriser la sélection comme groupe | 1 à 9 | Rappeler le groupe (en édition) |
@@ -220,6 +220,15 @@ bulles sol-air, les liaisons et les tirs sont en volume. Les altitudes (100 m su
 
 ![Le raid en 3D : vue commandant avec altitudes × 10, puis depuis un radar, puis au plus près de l'essaim](docs/images/vue3d.gif)
 
+Près de la caméra, une unité qui a un **modèle 3D** le prend à la place de son pictogramme : à sa taille réelle, peint
+(camouflage, panneaux, marquages), jamais sous 80 pixels. Les 40 drones les plus proches de l'essaim sont aussi
+dessinés en modèle, et « Suivre la sélection » se place à 70 m d'une unité qui en a un. Le dépôt construit un modèle
+notionnel par icône de classe (`node outils/modeles3d/classes.js`, fichiers non versionnés dans `modeles/`) ; un
+catalogue privé range les siens dans `prive/modeles/`. Les altitudes étirées allongent le relief et les hauteurs de vol,
+jamais la forme des modèles.
+
+![Depuis le site attaqué à 12:09 : avions d'appui en modèles 3D au-dessus des bulles sol-air, l'essaim en rouge sur l'horizon](docs/images/modeles3d.png)
+
 Six caméras au choix : libre, suivi de la sélection, depuis un radar, depuis le site attaqué, vue commandant, vue de
 dessus. Un clic sur une unité ouvre le même inspecteur qu'en 2D. Pour une vue 3D sans réseau, préparez le théâtre :
 
@@ -229,6 +238,38 @@ node outils/hors_ligne.js --lat 47 --lon 2.5 --rayon-km 300 --zoom-max 10   # da
 
 Tant que ce dossier existe, la vue 3D lit ses tuiles plutôt que le fond choisi. Respectez les conditions de chaque
 source : ces tuiles ne se redistribuent pas forcément.
+
+### Incidents de scénario
+
+Un radar gêné par la météo, en maintenance ou en panne, une liaison coupée, une batterie indisponible : une panne datée
+porte maintenant une **cause**, et un radar peut garder une **portée réduite** au lieu de s'arrêter. Le bouton
+« Incidents au hasard » du panneau Scénario en tire quelques-uns à la graine du raid (même graine, mêmes incidents) ;
+« Retirer les incidents » les enlève. Chaque début et chaque fin s'annonce à l'écran et s'inscrit au journal. En 2D,
+un radar gêné porte un anneau orange et son pourcentage, une batterie indisponible une croix ; en 3D, l'élément hors
+service s'estompe. Règles : [docs/MODELE.md § 29](docs/MODELE.md).
+
+![Incidents tirés au hasard : R2 et R8 gênés par la météo, portée réduite à 51 et 69 % ; la radio de la conduite envoie les premières missions](docs/images/incidents.png)
+
+### Fumées, radio et bruitages
+
+Une cible frappée **fume**, d'autant plus que les frappes s'accumulent ; en flammes, sa base brûle. Le journal se lit
+aussi en **messages radio** sous-titrés : « Égide à Faucon 1 : rejoignez la zone », « Busard 24 : au but »,
+« Égide, à tous : impact sur C5 » (indicatifs inventés, le plus important d'abord). Le bouton **Son** de la barre de
+lecture (touche M) active les **bruitages**, coupés au départ : explosions, départs de missiles et de roquettes,
+interceptions, radio, alerte d'incident. Ils sont calculés par `node outils/sons/generer.js`, sans aucun son emprunté.
+Rien de cela ne touche à la simulation ([docs/MODELE.md § 30](docs/MODELE.md)).
+
+![Au plus près de C9 et C10, de 16:12 à 18:38 : les panaches montent des cibles frappées pendant que la radio annonce contacts et tirs au but](docs/images/ambiance.gif)
+
+### Le débriefing
+
+À la fin du raid, le panneau **Débrief** (touche 8) s'ouvre de lui-même, en 2D comme en 3D : une **note** de A à E
+d'après le taux d'interception, la **cause** de chaque frappe (non détectée, inconnue de la conduite, jamais engagée,
+engagée mais manquée), les frappes par cible, le bilan de chaque tireur avec ses postes à sec, la chronologie par
+tranche de 5 min et au plus cinq **points faibles** chiffrés. Tout est lu dans le journal du raid
+([docs/MODELE.md § 28](docs/MODELE.md)).
+
+![Débriefing du raid de référence : note D, 53 % interceptés ; 98 % des frappes viennent de drones connus mais jamais engagés, 60 postes à sec dès 9 min](docs/images/debriefing.png)
 
 ## 5 · Jouer dans Godot
 
@@ -415,6 +456,13 @@ notionnel).
 par son algorithme de pistage. La vérité terrain revient au même bouton.
 
 ![Vue du CDC : les pistes de la conduite, avec leur effectif](docs/images/vue_pc.png)
+
+Le **brouillard de guerre** y est rendu : chaque drone apparaît en piste, au dernier plot reçu, mis à jour toutes les
+10 s et écarté d'une erreur d'au plus 300 m, dans un cercle d'incertitude qui grossit avec l'âge du plot. La traînée
+ne garde que les plots déjà reçus. Seul l'affichage change : la simulation garde les positions vraies
+([docs/MODELE.md § 31](docs/MODELE.md)).
+
+![Vue du CDC à 7:17 : l'essaim qui entre près de R1 n'est plus qu'un faisceau de pistes, chacune dans son cercle d'incertitude](docs/images/brouillard.png)
 
 ### Couvertures : détecter, conduire le tir, intercepter
 
