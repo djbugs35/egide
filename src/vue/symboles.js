@@ -7,6 +7,7 @@ import {a_l_echelle, chemin_cercle, echelle_symboles, ecran as projeter_ecran, n
 import {COULEURS} from "./couleurs.js";
 import {avancement} from "./effets.js";
 import {niveau_degats, panache} from "./ambiance.js";
+import {piste} from "./brouillard.js";
 import {dessiner_icone, dessiner_silhouette} from "./icones.js";
 
 const TAILLE = 6;
@@ -131,11 +132,17 @@ function dessiner_impacts(ctx, camera, monde, effets, maintenant) {
  * Tracer les drones en vol : plots d'historique estompés, puis le symbole hostile (gris tant que non détecté).
  * `montre(drone)` : filtre facultatif (vue du CDC : seulement les drones que la conduite connaît).
  */
-export function dessiner_drones(ctx, camera, monde, traces, calques, montre = () => true) {
+export function dessiner_drones(ctx, camera, monde, traces, calques, montre = () => true, brouillard = false) {
   const k = echelle_symboles(camera);
+  const pistes = new Map();
+  if (brouillard) {
+    for (const drone of monde.drones) if (traces.plots.has(drone.id)) pistes.set(drone.id, piste(drone, traces.plots.get(drone.id), monde.t, monde.scenario.rouge.vitesse));
+  }
   for (const [id, plots] of calques.plots ? traces.plots : []) {
     if (!montre(monde.drones[id])) continue;
-    plots.forEach((plot, rang) => {
+    // Brouillard : la conduite ne connaît que les plots déjà reçus.
+    const limite = pistes.get(id)?.t_plot ?? Infinity;
+    plots.filter((plot) => plot.t === undefined || plot.t <= limite).forEach((plot, rang) => {
       const ecran = projeter_ecran(camera, plot);
       ctx.fillStyle = `rgba(229, 87, 75, ${0.12 + (0.4 * rang) / plots.length})`;
       ctx.fillRect(ecran.x - 1, ecran.y - 1, 2, 2);
@@ -144,7 +151,9 @@ export function dessiner_drones(ctx, camera, monde, traces, calques, montre = ()
   for (const drone of monde.drones) {
     if (!drone.vivant || drone.arrive || monde.t < drone.depart) continue;
     if (!calques[drone.detection === null ? "drones_inconnus" : "drones_detectes"] || !montre(drone)) continue;
-    const ecran = projeter_ecran(camera, drone.geo);
+    const suivie = pistes.get(drone.id);
+    if (suivie) dessiner_incertitude(ctx, camera, suivie);
+    const ecran = projeter_ecran(camera, suivie?.geo ?? drone.geo);
     const couleur = drone.detection === null ? COULEURS.inconnu : COULEURS.hostile;
     const rotation = rotation_ecran(camera, drone.geo, cap_drone(drone));
     if (calques.icones && monde.scenario.rouge.icone && dessiner_silhouette(ctx, ecran.x, ecran.y, monde.scenario.rouge.icone, couleur, 12 * k, rotation)) continue;
@@ -161,6 +170,16 @@ export function dessiner_drones(ctx, camera, monde, traces, calques, montre = ()
     ctx.fill();
     ctx.restore();
   }
+}
+
+/** Tracer le cercle d'incertitude d'une piste (MODELE § 31), en pointillés : le drone vrai est dedans. */
+function dessiner_incertitude(ctx, camera, suivie) {
+  ctx.strokeStyle = "rgba(229, 87, 75, 0.55)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  chemin_cercle(ctx, camera, suivie.geo, suivie.rayon, 24);
+  ctx.stroke();
+  ctx.setLineDash([]);
 }
 
 /** Calque d'un vecteur défensif : avions par guidage, drones défensifs ensemble. */

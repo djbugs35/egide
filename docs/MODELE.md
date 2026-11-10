@@ -875,3 +875,14 @@ Effets d'écran tirés de l'état du monde et de son journal, sans aucun effet s
   détection.
 - **Sons** : synthétisés dans le navigateur (aucun fichier), coupés par la touche M. Au plus un son de chaque sorte
   toutes les 120 ms, pour qu'un essaim reste audible sans saturer.
+
+## 31 · Brouillard de guerre (vue du CDC)
+Affichage seulement : la simulation garde ses positions vraies (`src/vue/brouillard.js`). Dans la vue du CDC (touche V),
+un drone connu de la conduite s'affiche en piste, et non à sa position vraie.
+
+- **Renouvellement** : la piste est mise à jour toutes les 10 s, comptées depuis l'instant où la conduite a connu le drone.
+  Entre deux mises à jour, elle reste au dernier plot relevé à cet instant ou avant (plots toutes les 4 s, § 23).
+- **Erreur de position** : à chaque mise à jour, la piste s'écarte du plot d'au plus 300 m, dans une direction et d'une
+  longueur fixées par le drone et le rang de la mise à jour (pas de tirage : la même lecture redonne la même image).
+- **Incertitude** : un cercle de rayon 300 m + v × âge, v la vitesse de l'essaim et âge le temps depuis le plot,
+  entoure la piste : un drone de l'essaim y est toujours (un objet de groupe, plus rapide, peut en sortir).

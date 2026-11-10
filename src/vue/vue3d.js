@@ -1,5 +1,6 @@
 // Vue Observer en 3D (jalon 14, MODELE § 23) : le raid sur le globe CesiumJS, à chaque unité sa vraie altitude.
 // Cette vue n'affiche que ce que rend scene3d.js. CesiumJS (12 Mo) n'est chargé qu'à la première ouverture.
+import {piste} from "./brouillard.js";
 import {inverse, vers_degres} from "../moteur/geodesie.js";
 import {consigne_camera} from "./cameras3d.js";
 import {chemin_icone} from "../moteur/catalogue.js";
@@ -267,7 +268,9 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
       if (change || continu || fumee || effets.liste.length > 0 || images % PERIODE_SCENE_AU_REPOS === 0) {
         vu = {monde, t: monde.t, calques, percue, selection, exageration};
         tiges_posees = 0;
-        const {drones, unites, icone_drone: icone} = entites_scene(monde, calques, montre);
+        // Vue du CDC : chaque drone à sa piste, en retard et entachée d'erreur (MODELE § 31).
+        const situer = percue ? (d) => piste(d, traces.plots.get(d.id), monde.t, monde.scenario.rouge.vitesse)?.geo : null;
+        const {drones, unites, icone_drone: icone} = entites_scene(monde, calques, montre, situer);
         modeles.debut();
         placer_drones(drones, icone, selection, exageration);
         placer_unites(unites, selection, exageration);

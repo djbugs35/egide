@@ -18,7 +18,8 @@ export function echantillonner(traces, monde) {
       continue;
     }
     const plots = traces.plots.get(drone.id) ?? [];
-    plots.push({lat: drone.geo.lat, lon: drone.geo.lon});
+    // L'instant du plot sert au brouillard de guerre (MODELE § 31) : une piste reprend le dernier plot connu.
+    plots.push({lat: drone.geo.lat, lon: drone.geo.lon, t: monde.t});
     if (plots.length > HISTORIQUE) plots.shift();
     traces.plots.set(drone.id, plots);
   }

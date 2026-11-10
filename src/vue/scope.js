@@ -33,7 +33,7 @@ export function dessiner_scope(ctx, camera, etat) {
   if (calques.radars) dessiner_radars(ctx, camera, positions_radars(monde.scenario), (i) => icone_radar(monde.scenario, i, calques));
   if (calques.radars || calques.reseau) dessiner_pannes(ctx, camera, monde);
   if (etat.percue) {
-    dessiner_drones(ctx, camera, monde, traces, calques, (drone) => connu_du_pc(monde, drone));
+    dessiner_drones(ctx, camera, monde, traces, calques, (drone) => connu_du_pc(monde, drone), true);
     dessiner_pistes(ctx, camera, pistes_connues(monde));
   } else {
     dessiner_drones(ctx, camera, monde, traces, calques);

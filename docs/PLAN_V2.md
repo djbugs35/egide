@@ -168,7 +168,7 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Jeu | **Débriefing de fin de raid** : note, causes des frappes, tireurs, capteurs, chronologie et points faibles, en 2D comme en 3D (MODELE § 28) | 18 | fait |
 | Jeu | **Incidents de scénario** : pannes, maintenance, météo qui dégrade un capteur, liaison coupée, posés par le concepteur et racontés à l'écran | 18 | fait |
 | Jeu | **Crédibilité à l'écran** : dégâts et fumées sur les cibles, sons synthétisés, messages radio de la conduite (MODELE § 30) | 18 | fait |
-| Jeu | **Brouillard de guerre** : dans la vue du CDC, pistes incertaines et en retard sur la position vraie | 18 | à faire |
+| Jeu | **Brouillard de guerre** : dans la vue du CDC, pistes incertaines et en retard sur la position vraie (MODELE § 31) | 18 | fait |
 | Jeu | **Défense à piloter** : le joueur fixe les priorités de tir, déplace des batteries, gère munitions et orbites | 19 | à faire |
 | Jeu | **Camp rouge jouable**, dans un mode séparé qui ne fausse pas les analyses | 17 | à faire |
 | Jeu | **Confirmation avant d'abandonner un relief** non enregistré | 17 | à faire |

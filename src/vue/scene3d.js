@@ -12,10 +12,10 @@ import {calque_vecteur} from "./symboles.js";
 const position = ({lat, lon, alt}) => ({lat_deg: vers_degres(lat), lon_deg: vers_degres(lon), alt: alt ?? 0});
 
 /** Rendre les drones en vol à montrer : {id, lat_deg, lon_deg, alt (m), detecte, cap (rad)} ; `montre` restreint (vue du CDC). */
-function drones_scene(monde, calques, montre) {
+function drones_scene(monde, calques, montre, situer) {
   return monde.drones
     .filter((d) => d.vivant && !d.arrive && monde.t >= d.depart && calques[d.detection === null ? "drones_inconnus" : "drones_detectes"] && montre(d))
-    .map((d) => ({id: `d${d.id}`, ...position(d.geo), detecte: d.detection !== null, cap: cap_drone(d)}));
+    .map((d) => ({id: `d${d.id}`, ...position(situer?.(d) ?? d.geo), detecte: d.detection !== null, cap: cap_drone(d)}));
 }
 
 /** Rendre les avions et drones défensifs à montrer, à leur altitude ; `vide` : plus de munitions ; `cap` (rad) : leur dernier déplacement. */
@@ -38,8 +38,12 @@ function fixes_scene(monde, calques) {
 }
 
 /** Rendre {drones, unites, icone_drone} à montrer à l'instant du monde, selon les mêmes calques que la 2D. */
-export function entites_scene(monde, calques, montre = () => true) {
-  return {drones: drones_scene(monde, calques, montre), unites: [...vecteurs_scene(monde, calques), ...fixes_scene(monde, calques)], icone_drone: monde.scenario.rouge.icone ?? "drone_delta"};
+/**
+ * Rendre {drones, unites, icone_drone} à montrer. `situer(drone)` rend la position affichée d'un drone (piste du
+ * brouillard de guerre, MODELE § 31) ; absent ou null : sa position vraie.
+ */
+export function entites_scene(monde, calques, montre = () => true, situer = null) {
+  return {drones: drones_scene(monde, calques, montre, situer), unites: [...vecteurs_scene(monde, calques), ...fixes_scene(monde, calques)], icone_drone: monde.scenario.rouge.icone ?? "drone_delta"};
 }
 
 /** Rendre l'entité d'un identifiant de la scène, au format de trouver_sous_curseur, ou null (batterie : pas d'inspecteur). */
