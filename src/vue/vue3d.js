@@ -262,7 +262,9 @@ export async function creer_vue3d(conteneur, sources, fond, local = null) {
       const continu = placer_camera(monde, camera, selection, exageration);
       // En pause, rien ne bouge : ni recalcul ni image, sauf pour suivre le relief qui se charge.
       const change = monde !== vu.monde || monde.t !== vu.t || calques !== vu.calques || percue !== vu.percue || selection !== vu.selection || exageration !== vu.exageration;
-      if (change || continu || effets.liste.length > 0 || images % PERIODE_SCENE_AU_REPOS === 0) {
+      // Une cible frappée fume : la scène s'anime alors même en pause (MODELE § 30).
+      const fumee = calques.cibles && monde.fuites.some((n) => n > 0);
+      if (change || continu || fumee || effets.liste.length > 0 || images % PERIODE_SCENE_AU_REPOS === 0) {
         vu = {monde, t: monde.t, calques, percue, selection, exageration};
         tiges_posees = 0;
         const {drones, unites, icone_drone: icone} = entites_scene(monde, calques, montre);

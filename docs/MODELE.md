@@ -861,3 +861,17 @@ adversaire ne le provoque : il raconte ce qui arrive à un dispositif réel (usu
   fin) et s'annonce à l'écran, en 2D comme en 3D.
 - **Tirage au hasard** : l'éditeur peut poser des incidents tirés à graine (`src/vue/incidents.js`) ; le tirage ne
   touche pas au générateur du raid, il écrit des pannes dans le scénario comme un geste de l'éditeur.
+
+## 30 · Mise en scène
+Effets d'écran tirés de l'état du monde et de son journal, sans aucun effet sur la simulation (`src/vue/ambiance.js`,
+`src/vue/radio.js`, `src/vue/sons.js`).
+
+- **Dégâts d'une cible** : niveau 0 intacte, 1 touchée (au moins une frappe), 2 endommagée (au moins 20 % de
+  `rouge.concentration_max`), 3 en flammes (au moins 60 %). Un panache de fumée monte de la cible, d'autant plus haut et
+  dense que le niveau est grand ; au niveau 3, sa base brûle. Le nombre exact de frappes reste écrit près de la cible.
+- **Radio de la conduite** : le journal se lit aussi en messages radio sous-titrés. La conduite s'appelle « Égide », les
+  radars « Vigie n », les avions par l'indicatif de leur groupe (oiseaux de proie, inventés) et leur rang. Au plus un
+  message toutes les 1,5 s de temps réel, le plus important d'abord : impact, puis mission et contact, puis tir et
+  détection.
+- **Sons** : synthétisés dans le navigateur (aucun fichier), coupés par la touche M. Au plus un son de chaque sorte
+  toutes les 120 ms, pour qu'un essaim reste audible sans saturer.

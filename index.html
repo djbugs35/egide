@@ -23,6 +23,7 @@
 
 <main class="vue" id="vue" aria-label="Situation aérienne">
   <ol class="annonces" aria-live="polite" aria-label="Incidents en cours"></ol>
+  <ol class="radio" aria-live="off" aria-label="Radio de la conduite"></ol>
   <div id="carte" aria-label="Fond de carte"></div>
   <div id="globe" aria-label="Vue 3D du raid sur le globe"></div>
   <canvas id="scope" aria-label="Situation : zone défendue, radars, avions, drones, cibles"></canvas>
@@ -185,6 +186,7 @@
       <dt>Espace</dt><dd>Lire ou suspendre</dd>
       <dt>← →</dt><dd>Reculer ou avancer de 30 s</dd>
       <dt>E</dt><dd>Éditer le scénario</dd>
+      <dt>M</dt><dd>Couper ou rétablir les sons</dd>
       <dt>V</dt><dd>Vue du CDC : ce que sait la conduite</dd>
       <dt>L</dt><dd>Outil Liaison, dans l'éditeur</dd>
       <dt>1 à 8</dt><dd>Ouvrir un panneau (hors édition)</dd>
@@ -320,6 +322,7 @@
       <fieldset class="vitesses"><legend>Vitesse</legend><div data-zone="vitesses"></div></fieldset>
       <label class="graine" title="Graine du hasard : une même graine rejoue le même raid">Graine <input type="number" name="graine" min="0" step="1"></label>
       <button data-action="autre_graine" title="Tirer une autre graine">Autre raid</button>
+      <button data-action="son" aria-pressed="true" title="Sons du raid, synthétisés (M)">Son</button>
     </div>
   </div>
 

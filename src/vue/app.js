@@ -40,6 +40,8 @@ import {debriefer} from "./debriefing.js";
 import {est_termine} from "../moteur/monde.js";
 import {afficher_debriefing} from "./debriefing_vue.js";
 import {generer_incidents, recit_incident} from "./incidents.js";
+import {INTERVALLE_RADIO_MS, message_du_lot} from "./radio.js";
+import {creer_sons, sons_du_lot} from "./sons.js";
 import {creer_traces, echantillonner} from "./traces.js";
 
 const $ = (selecteur) => document.querySelector(selecteur);
@@ -172,6 +174,7 @@ function image(maintenant, precedent) {
     if (lecteur.enLecture) etat.angle = (lecteur.monde.t * VITESSE_BALAYAGE) % (2 * Math.PI);
     absorber(etat.effets, lecteur.monde, maintenant);
     annoncer_incidents(lecteur.monde);
+    animer_ambiance(lecteur.monde, maintenant);
     if (etat.en_3d) {
       const {monde} = lecteur;
       etat.vue3d.rendre({monde, calques: etat.calques, montre: etat.vue_pc ? (drone) => connu_du_pc(monde, drone) : () => true, percue: etat.vue_pc, camera: $("[name='camera_3d']").value,
@@ -316,6 +319,54 @@ function annoncer_incidents(monde) {
   }
 }
 
+/** Rendre la préférence `cle` gardée dans le navigateur, ou `defaut` si elle est absente ou illisible. */
+function lire_preference(cle, defaut) {
+  try {
+    return localStorage.getItem(cle) ?? defaut;
+  } catch {
+    return defaut;
+  }
+}
+
+/** Couper ou rétablir les sons, et s'en souvenir dans ce navigateur. */
+function basculer_son() {
+  const actif = etat.sons.basculer();
+  $("[data-action='son']").setAttribute("aria-pressed", String(actif));
+  try {
+    localStorage.setItem("egide.son", actif ? "1" : "0");
+  } catch {
+    // Stockage refusé (navigation privée) : le réglage vaut pour cette page seulement.
+  }
+}
+
+// Une ligne de radio reste 5 s ; deux à la fois au plus, en sous-titres.
+const DUREE_RADIO_MS = 5000;
+const LIGNES_RADIO_MAX = 2;
+// Après un saut dans le temps, ni radio ni son pour ce qui est déjà passé : seulement les 5 dernières secondes simulées.
+const FENETRE_AMBIANCE_S = 5;
+
+/** Faire parler la radio et jouer les sons des évènements nouveaux du journal (MODELE § 30). */
+function animer_ambiance(monde, maintenant) {
+  const evenements = monde.evenements ?? [];
+  if (etat.ambiance_monde !== monde || etat.ambiance_lues > evenements.length) [etat.ambiance_monde, etat.ambiance_lues] = [monde, evenements.length];
+  const lot = evenements.slice(etat.ambiance_lues).filter((e) => e.t >= monde.t - FENETRE_AMBIANCE_S);
+  etat.ambiance_lues = evenements.length;
+  if (!lot.length) return;
+  let parle = false;
+  const texte = maintenant - (etat.radio_derniere ?? -Infinity) >= INTERVALLE_RADIO_MS ? message_du_lot(monde, lot) : null;
+  if (texte) {
+    etat.radio_derniere = maintenant;
+    parle = true;
+    const ligne = document.createElement("li");
+    ligne.textContent = texte;
+    const zone = $(".radio");
+    zone.append(ligne);
+    while (zone.children.length > LIGNES_RADIO_MAX) zone.firstElementChild.remove();
+    setTimeout(() => ligne.remove(), DUREE_RADIO_MS);
+  }
+  if (etat.lecteur.enLecture) etat.sons.jouer(sons_du_lot(lot, parle));
+}
+
 /** Remplir le tiroir de débriefing, et l'ouvrir si `ouvrir` : rien à lire tant que le raid n'est pas fini (MODELE § 28). */
 function presenter_debriefing(ouvrir = false) {
   const monde = etat.lecteur?.monde;
@@ -372,6 +423,9 @@ function brancher_transport() {
   vitesses.innerHTML = MULTIPLICATEURS.map((m) => `<label><input type="radio" name="vitesse" value="${m}" ${m === 1 ? "checked" : ""}>×${String(m).replace(".", ",")}</label>`).join("");
   vitesses.addEventListener("change", (e) => (etat.lecteur.multiplicateur = Number(e.target.value)));
   $("[name='graine']").addEventListener("change", (e) => modifier({"simulation.graine": Number(e.target.value)}));
+  etat.sons = creer_sons(lire_preference("egide.son", "1") === "1");
+  $("[data-action='son']").setAttribute("aria-pressed", String(etat.sons.actif()));
+  $("[data-action='son']").addEventListener("click", basculer_son);
   $("[data-action='autre_graine']").addEventListener("click", () => modifier({"simulation.graine": Math.floor(Math.random() * 1e6)}));
   document.querySelectorAll("[name='tactique']").forEach((bouton) => bouton.addEventListener("change", () => modifier({"rouge.tactique": bouton.value})));
   $("[name='essaim_reactif']").addEventListener("change", (e) => modifier({"rouge.reaction": e.target.checked ? "adaptatif" : null}));
@@ -383,6 +437,7 @@ function brancher_transport() {
     const panneau = /^Digit([1-8])$/.exec(e.code)?.[1];
     if (panneau && !edition) etat.panneaux.basculer(etat.panneaux.ids()[Number(panneau) - 1]);
     if (e.key.toLowerCase() === "e" && !edition) etat.editeur.activer(true);
+    if (e.key.toLowerCase() === "m" && !edition) basculer_son();
     if (e.key.toLowerCase() === "v" && !edition) basculer_vue_pc();
     if (e.key.toLowerCase() === "o" && !edition) basculer_3d();
     if (e.key.toLowerCase() === "r" && !edition) $("[name='essaim_reactif']").click();

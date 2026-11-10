@@ -4,6 +4,7 @@ import {vers_degres} from "../moteur/geodesie.js";
 import {COULEURS} from "./couleurs.js";
 import {contour_objet, enveloppes_a_montrer} from "./couvertures_vue.js";
 import {avancement} from "./effets.js";
+import {niveau_degats, panache} from "./ambiance.js";
 import {bulles_scene, couvertures_scene, liaisons_scene} from "./scene3d.js";
 import {calque_vecteur} from "./symboles.js";
 
@@ -70,6 +71,7 @@ export function creer_couches3d(Cesium, viewer, hauteur_sol) {
   const traits = creer_traits(Cesium, primitives.add(new Cesium.PolylineCollection()));
   const eclats = creer_points(Cesium, primitives.add(new Cesium.PointPrimitiveCollection()));
   const plots = creer_points(Cesium, primitives.add(new Cesium.PointPrimitiveCollection()));
+  const fumees = creer_points(Cesium, primitives.add(new Cesium.PointPrimitiveCollection()));
   const anneau = (alpha) => Cesium.Material.fromType("Color", {color: Cesium.Color.fromCssColorString(COULEURS.ami).withAlpha(alpha)});
   // Contour de l'essaim bien visible ; ceux du dessus, discrets : à 11 radars, ils encombreraient vite la vue.
   const [matiere_essaim, matiere_haut] = [anneau(0.7), anneau(0.14)];
@@ -176,6 +178,21 @@ export function creer_couches3d(Cesium, viewer, hauteur_sol) {
     }
   }
 
+  /** Poser le panache de chaque cible frappée (MODELE § 30) : bouffées qui montent et dérivent vers l'est. */
+  function maj_fumees(monde, calques, maintenant) {
+    fumees.debut();
+    if (calques.cibles) {
+      monde.cibles.forEach((cible, k) => {
+        const [lat, lon] = [vers_degres(cible.geo.lat), vers_degres(cible.geo.lon)];
+        const metre_en_degre = 180 / (Math.PI * RAYON_TERRE * Math.cos(cible.geo.lat));
+        for (const b of panache(niveau_degats(monde.fuites[k], monde.scenario.rouge.concentration_max), k, maintenant)) {
+          fumees.poser(position(lat, lon + b.est * metre_en_degre, 20 + b.haut), b.couleur, b.opacite, Math.max(3, b.rayon / 18));
+        }
+      });
+    }
+    fumees.fin();
+  }
+
   /** Reposer les plots radar à chaque nouveau tour d'antenne seulement : entre deux, ils ne bougent pas. */
   function maj_plots(monde, traces, calques, montre, exageration) {
     const cle = calques.plots ? `${traces.prochain}|${exageration}` : "aucun";
@@ -203,6 +220,7 @@ export function creer_couches3d(Cesium, viewer, hauteur_sol) {
       traits.fin();
       eclats.fin();
       maj_plots(monde, traces, calques, montre, exageration);
+      maj_fumees(monde, calques, maintenant);
     },
   };
 }

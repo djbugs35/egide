@@ -6,6 +6,7 @@ import {cap_drone} from "../moteur/menace.js";
 import {a_l_echelle, chemin_cercle, echelle_symboles, ecran as projeter_ecran, noms_lisibles, rotation_ecran} from "./ecran.js";
 import {COULEURS} from "./couleurs.js";
 import {avancement} from "./effets.js";
+import {niveau_degats, panache} from "./ambiance.js";
 import {dessiner_icone, dessiner_silhouette} from "./icones.js";
 
 const TAILLE = 6;
@@ -39,6 +40,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
       }
       return;
     }
+    dessiner_panache(ctx, ecran, niveau_degats(monde.fuites[indice], monde.scenario.rouge.concentration_max), indice, maintenant, k);
     const frappe = effets.liste.some((effet) => effet.type === "impact" && effet.cible === indice);
     ctx.fillStyle = frappe ? COULEURS.hostile : COULEURS.fond;
     ctx.strokeStyle = COULEURS.texte;
@@ -93,6 +95,23 @@ function dessiner_batteries(ctx, camera, monde, calques) {
     ctx.fillStyle = COULEURS.sol;
     if (noms_lisibles(k)) ecrire_nom(ctx, `B${poste.batterie + 1}`, p.x + 9, p.y + 4);
   }
+}
+
+// Vu de dessus, une colonne de fumée se lit à sa dérive et à son étalement : 1 m du panache vaut 0,07 px à pleine échelle,
+// et une bouffée garde au moins 4 px, sans quoi elle disparaît sous les symboles au dézoom.
+const PIXELS_PAR_METRE_PANACHE = 0.07;
+const RAYON_BOUFFEE_MIN_PX = 4;
+
+/** Tracer le panache d'une cible selon son niveau de dégâts (MODELE § 30). */
+function dessiner_panache(ctx, ecran, niveau, graine, maintenant, k) {
+  for (const bouffee of panache(niveau, graine, maintenant)) {
+    ctx.globalAlpha = bouffee.opacite;
+    ctx.fillStyle = bouffee.couleur;
+    ctx.beginPath();
+    ctx.arc(ecran.x + bouffee.est * PIXELS_PAR_METRE_PANACHE * k, ecran.y - bouffee.haut * 0.01 * k, Math.max(RAYON_BOUFFEE_MIN_PX, bouffee.rayon * PIXELS_PAR_METRE_PANACHE * k), 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
 
 function dessiner_impacts(ctx, camera, monde, effets, maintenant) {

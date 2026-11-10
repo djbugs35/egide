@@ -408,3 +408,10 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .annonces li.fin { border-inline-start-color: var(--ami); }
 @keyframes annonce-entree { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .annonces li { animation: none; } }
+
+/* Radio de la conduite (MODELE § 30) */
+.radio { position: absolute; inset-block-end: 92px; inset-inline: 0; margin-inline: auto; inline-size: min(620px, 70%); list-style: none; padding: 0;
+  display: grid; gap: 4px; z-index: 4; pointer-events: none; text-align: center; }
+.radio li { justify-self: center; background: rgba(8, 12, 18, 0.72); color: #e9f0d8; font: 600 13px ui-monospace, "SF Mono", Menlo, monospace;
+  padding: 4px 10px; border-radius: 6px; letter-spacing: 0.01em; }
+[data-action="son"][aria-pressed="false"] { opacity: 0.55; text-decoration: line-through; }
