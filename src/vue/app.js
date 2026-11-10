@@ -325,7 +325,7 @@ function afficher_bouton_son() {
   const actif = etat.sons.actif();
   bouton.setAttribute("aria-pressed", String(actif));
   bouton.querySelector("use").setAttribute("href", actif ? "#i-son" : "#i-muet");
-  bouton.querySelector("span").textContent = actif ? "Son actif" : "Son coupé";
+  bouton.title = actif ? "Bruitages actifs : cliquer pour les couper (M)" : "Bruitages coupés : cliquer pour les activer (M)";
 }
 
 /** Activer ou couper les bruitages ; le clic sert aussi de geste qui autorise le navigateur à jouer du son. */
