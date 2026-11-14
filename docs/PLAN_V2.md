@@ -43,6 +43,8 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
   3D texturés pour tout le catalogue et l'essaim ; débriefing de fin de raid, incidents de scénario, fumées, radio et
   bruitages, brouillard de guerre dans la vue du CDC ; choix entre unités superposées, symboles réduits au dézoom.
 
+La suite, centrée sur l'atelier de scénario et l'exécution rapide, est dans [PLAN_V3.md](PLAN_V3.md).
+
 ## Arborescence cible
 ```
 unites/<famille>/<classe>/<unite>.json      catalogue public (notionnel), héritage par herite_de
