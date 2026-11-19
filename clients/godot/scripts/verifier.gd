@@ -5,6 +5,7 @@ extends SceneTree
 ##   godot --headless --path clients/godot --script res://scripts/verifier.gd -- --rejeu <fichier> --sortie <dump.json>
 
 const Rejeu := preload("res://scripts/rejeu.gd")
+const Langue := preload("res://scripts/langue.gd")
 
 const CLES_BILAN := ["fuites", "fuites_max_cible", "detruits_air", "detruits_sol", "munitions_air_restantes", "munitions_sol_restantes", "duree"]
 
@@ -25,9 +26,9 @@ func _initialize() -> void:
 	for cle: String in CLES_BILAN:
 		if absf(float(recalcule[cle]) - float(rejeu.bilan[cle])) > 1e-3:
 			accord = false
-			printerr("bilan différent sur %s : %s contre %s" % [cle, recalcule[cle], rejeu.bilan[cle]])
+			printerr(Langue.t("godot.verif.bilan_different", {"cle": cle, "client": recalcule[cle], "fichier": rejeu.bilan[cle]}))
 	var sortie := FileAccess.open(options["sortie"], FileAccess.WRITE)
 	sortie.store_string(JSON.stringify({"empreinte": rejeu.entete["empreinte"], "bilan_recalcule": recalcule, "bilan_fichier": rejeu.bilan, "images": rejeu.images_de_controle()}))
 	sortie.close()
-	print("Bilan recalculé %s ; %s écrit." % ["identique" if accord else "DIFFÉRENT", options["sortie"]])
+	print(Langue.t("godot.verif.bilan_identique" if accord else "godot.verif.bilan_different_court", {"sortie": options["sortie"]}))
 	quit(0 if accord else 1)

@@ -55,7 +55,7 @@ function ecrire_json(chemin, contenu) {
 function creer_bibliotheque() {
   const dossier_joueur = join(RACINE, "prive", "scenarios");
   const sous = (dossier, prefixe) => (existsSync(join(RACINE, dossier)) ? readdirSync(join(RACINE, dossier)).filter((f) => f.endsWith(".json") && f !== "index.json").map((f) => ({id: `${dossier}/${f}`, nom: `${prefixe}${f.replace(/\.json$/, "")}`})) : []);
-  const lister = () => [...sous("scenarios", ""), ...sous("prive/scenarios", "moi : ")];
+  const lister = () => [...sous("scenarios", ""), ...sous("prive/scenarios", t("cli.serveur.moi"))];
   return {
     lister,
     lire(id) {

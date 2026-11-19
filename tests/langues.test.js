@@ -32,12 +32,14 @@ function cles_page(source) {
   return [...directes, ...attributs];
 }
 
-/** Rendre les clés citées par le code : t("…") dans src/. */
+/** Rendre les clés citées par le code : src/, outils/ et les scripts du client Godot. */
 function cles_code() {
   const fichiers = (dossier) => readdirSync(join(RACINE, dossier), {withFileTypes: true}).flatMap((e) => (e.isDirectory() ? fichiers(join(dossier, e.name)) : e.name.endsWith(".js") ? [join(dossier, e.name)] : []));
   // Toute chaîne littérale qui commence par un espace de noms de clé (vue., page., commun., cli.) est une clé :
   // passée à t() directement, ou rangée dans une table puis traduite à l'affichage.
-  return [...fichiers("src"), ...fichiers("outils")].flatMap((f) => [...lire(f).matchAll(/["'`]((?:vue|page|commun|cli)\.[a-z0-9_.]+)["'`]/g)].map((m) => m[1]));
+  const godot = (dossier) => readdirSync(join(RACINE, dossier), {withFileTypes: true}).flatMap((e) => (e.isDirectory() ? godot(join(dossier, e.name)) : e.name.endsWith(".gd") ? [join(dossier, e.name)] : []));
+  const cites = (liste, motif) => liste.flatMap((f) => [...lire(f).matchAll(motif)].map((m) => m[1]));
+  return [...cites([...fichiers("src"), ...fichiers("outils")], /["'`]((?:vue|page|commun|cli)\.[a-z0-9_.]+)["'`]/g), ...cites(godot("clients/godot/scripts"), /"(godot\.[a-z0-9_.]+)"/g)];
 }
 
 test("langues : toute clé citée par les pages et par le code existe ; aucune clé du dictionnaire n'est orpheline", () => {
@@ -117,4 +119,11 @@ test("catalogue : noms, aides et fiches traduits sans toucher aux originaux ; re
   assert.equal(nom_unite("capteurs/radars/fra_ajonc_300", "Ajonc 300 (FRA, notionnel)"), "Ajonc 300 (FRA, notionnel)", "en français, le fichier");
   assert.equal(sans_mention("Gorse 300 (FRA, notional)"), "Gorse 300");
   assert.equal(sans_mention("Liaison filaire (notionnelle)"), "Liaison filaire");
+});
+
+// Client Godot (lot 27.6) : ses dictionnaires sont les clés godot.* de langues/, recopiées par outils/langues.js.
+import {texte_godot} from "../outils/langues.js";
+
+test("langues : les dictionnaires du client Godot sont à jour (node outils/langues.js --godot)", () => {
+  for (const code of Object.keys(LANGUES)) assert.equal(lire(`clients/godot/langues/${code}.json`), texte_godot(code), `clients/godot/langues/${code}.json périmé`);
 });

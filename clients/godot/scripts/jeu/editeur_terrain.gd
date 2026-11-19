@@ -2,8 +2,9 @@ extends Control
 ## Éditeur de relief : un pinceau retouche la grille d'altitudes, tenue et calculée par le serveur (docs/FORMATS.md § 10.5).
 
 const Ihm := preload("res://scripts/jeu/ihm.gd")
+const Langue := preload("res://scripts/langue.gd")
 
-const OUTILS := [["elever", "1 Élever"], ["abaisser", "2 Abaisser"], ["aplanir", "3 Aplanir"], ["lisser", "4 Lisser"]]
+const OUTILS := [["elever", "godot.outil.elever"], ["abaisser", "godot.outil.abaisser"], ["aplanir", "godot.outil.aplanir"], ["lisser", "godot.outil.lisser"]]
 const PERIODE_PINCEAU_S := 0.05
 const RAYON_DEFAUT_M := 8_000.0
 const RAYON_MIN_M := 500.0
@@ -49,7 +50,7 @@ func brancher(partie: Node) -> void:
 	rangee.add_child(_curseur_rayon)
 	rangee.add_child(_curseur_force)
 	rangee.add_child(_texte_reglages)
-	rangee.add_child(_bouton("Annuler", func() -> void: _partie.envoyer({"type": "terrain_annuler"})))
+	rangee.add_child(_bouton(Langue.t("godot.annuler"), func() -> void: _partie.envoyer({"type": "terrain_annuler"})))
 	_choix.focus_mode = Control.FOCUS_NONE
 	# Le nom complet d'un terrain tiendrait la moitié de la barre.
 	_choix.fit_to_longest_item = false
@@ -57,11 +58,11 @@ func brancher(partie: Node) -> void:
 	_choix.custom_minimum_size = Vector2(180.0, 0.0)
 	_choix.item_selected.connect(_ouvrir_choix)
 	rangee.add_child(_choix)
-	_nom.placeholder_text = "nom du relief"
+	_nom.placeholder_text = Langue.t("godot.nom_relief")
 	_nom.custom_minimum_size = Vector2(130.0, 0.0)
 	_nom.text_submitted.connect(func(_texte: String) -> void: _enregistrer())
 	rangee.add_child(_nom)
-	rangee.add_child(_bouton("Enregistrer", _enregistrer))
+	rangee.add_child(_bouton(Langue.t("godot.enregistrer"), _enregistrer))
 	_barre.add_child(rangee)
 	add_child(_barre)
 	_choisir_outil("elever")
@@ -88,8 +89,8 @@ static func _preparer_curseur(curseur: HSlider, mini_v: float, maxi_v: float, va
 
 func poser_palette(familles: Array) -> void:
 	_choix.clear()
-	_choix.add_item("Ouvrir un relief…")
-	_choix.add_item("Nouveau relief plat")
+	_choix.add_item(Langue.t("godot.ouvrir_relief"))
+	_choix.add_item(Langue.t("godot.relief_plat"))
 	for famille: Dictionary in familles:
 		if famille["id"] == "terrains":
 			_terrains = famille["elements"]
@@ -172,7 +173,7 @@ func _commencer_trait(ecran: Vector2) -> void:
 
 ## Avancer d'une image : suivre la souris, et peindre tant que le bouton est tenu.
 func avancer(delta: float) -> void:
-	_texte_reglages.text = "rayon %.1f km · force %.0f m" % [_rayon / 1000.0, _force]
+	_texte_reglages.text = Langue.t("godot.pinceau", {"rayon": "%.1f" % (_rayon / 1000.0), "force": "%.0f" % _force})
 	var sol: Variant = _partie.vise(get_viewport().get_mouse_position())
 	if sol == null:
 		_partie.sol().poser_pinceau(0.0, 0.0, -1.0)

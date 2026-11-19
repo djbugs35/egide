@@ -3,6 +3,7 @@ extends Node
 ## et tient l'interface. Égide reste l'autorité : ce nœud n'avance ni ne décide rien de la simulation.
 
 const Liaison := preload("res://scripts/liaison.gd")
+const Langue := preload("res://scripts/langue.gd")
 const Selection := preload("res://scripts/jeu/selection.gd")
 const Brouillard := preload("res://scripts/jeu/brouillard.gd")
 const Sons := preload("res://scripts/jeu/sons.gd")
@@ -13,6 +14,9 @@ const PiloteCamera := preload("res://scripts/pilote_camera.gd")
 const SolGrille := preload("res://scripts/jeu/sol_grille.gd")
 const EditeurScenario := preload("res://scripts/jeu/editeur_scenario.gd")
 const EditeurTerrain := preload("res://scripts/jeu/editeur_terrain.gd")
+
+## Clés de traduction des états des vecteurs, tels que l'en-tête du rejeu les nomme.
+const ETATS_VECTEUR := {"orbite": "godot.etat.orbite", "ralliement": "godot.etat.ralliement", "poste": "godot.etat.poste", "retour": "godot.etat.retour", "engagement": "godot.etat.engagement", "perdu": "godot.etat.perdu"}
 
 enum Mode { JEU, SCENARIO, TERRAIN }
 
@@ -84,7 +88,7 @@ func brancher(h: Node3D, options: Dictionary) -> void:
 	# Le fond clair du rejeu trancherait avec le brouillard au bord du terrain.
 	hote.environnement.background_color = COULEUR_HORS_THEATRE
 	_liaison.ouvrir("ws://127.0.0.1:%s" % options["direct"])
-	hote.texte.text = "Connexion au serveur de partie (node src/direct.js)…"
+	hote.texte.text = Langue.t("godot.connexion")
 
 
 func recevoir(delta: float) -> void:
@@ -92,16 +96,18 @@ func recevoir(delta: float) -> void:
 		match message["genre"]:
 			"entete":
 				_ouvrir_partie(message)
+				# Le serveur parle la langue du joueur : palette, listes et refus lui reviennent traduits (sans effet si déjà la sienne).
+				_liaison.envoyer({"type": "langue", "code": Langue.code()})
 			"etat":
 				_etat = message
 				hote.rang_vitesse = maxi(hote.VITESSES.find(float(message["vitesse"])), 0)
 			"erreur":
-				_ihm.annoncer("Refusé : %s" % message["message"])
+				_ihm.annoncer(Langue.t("godot.refuse", {"message": message["message"]}))
 				push_warning(message["message"])
 			"archive":
-				_ihm.annoncer("Partie enregistrée : %s" % str(message["chemin"]).get_file())
+				_ihm.annoncer(Langue.t("godot.partie_enregistree", {"fichier": str(message["chemin"]).get_file()}))
 			"enregistre":
-				_ihm.annoncer("Enregistré : %s" % str(message["chemin"]))
+				_ihm.annoncer(Langue.t("godot.enregistre", {"chemin": str(message["chemin"])}))
 			"elements":
 				_editeur.poser_elements(message)
 			"palette":
@@ -299,17 +305,17 @@ func _jouer(evenement: Dictionary) -> void:
 			_sons.jouer("impact")
 			_sons.jouer("alerte")
 			_ihm.mini_carte.alerter(site["e"], site["n"])
-			_ihm.annoncer("Frappe sur le site %d" % int(evenement["cible"]))
+			_ihm.annoncer(Langue.t("godot.frappe", {"n": int(evenement["cible"])}))
 		"detection":
 			if _premiere_detection:
 				_premiere_detection = false
 				_sons.jouer("alerte")
-				_ihm.annoncer("Essaim détecté")
+				_ihm.annoncer(Langue.t("godot.essaim_detecte"))
 		"ordre":
-			_ihm.annoncer("%d vecteurs ont reçu l'ordre" % evenement["avions"].size())
+			_ihm.annoncer(Langue.t("godot.ordre_recu", {"n": evenement["avions"].size()}))
 		"panne":
 			_sons.jouer("alerte")
-			_ihm.annoncer("Panne : %s" % str(evenement["element"]))
+			_ihm.annoncer(Langue.t("godot.panne", {"element": str(evenement["element"])}))
 
 
 func _objets_selectionnes() -> Array:
@@ -384,11 +390,11 @@ func _texte_haut(drones: PackedFloat32Array) -> String:
 	while k < drones.size():
 		detectes += int(drones[k])
 		k += hote.rejeu.largeur_drones
-	var allure := "PAUSE (Espace)" if _etat.get("pause", true) else "×%d" % int(vitesse)
+	var allure := Langue.t("godot.pause") if _etat.get("pause", true) else "×%d" % int(vitesse)
 	if obtenue > 0.0 and obtenue < 0.9 * vitesse and not _etat.get("pause", true):
-		allure += " (obtenu ×%.1f)" % obtenue
-	var liaison := "" if _liaison.est_connectee() else "   LIAISON COUPÉE : relancer node src/direct.js"
-	return "T+%s   %s   Détectés : %d   Frappes : %d   Détruits : %d air, %d sol   Munitions : %d air, %d sol   H : aide%s" % [_duree(hote.instant), allure, detectes, int(b.get("fuites", 0)), int(b.get("detruits_air", 0)), int(b.get("detruits_sol", 0)), int(b.get("munitions_air_restantes", 0)), int(b.get("munitions_sol_restantes", 0)), liaison]
+		allure += " " + Langue.t("godot.obtenu", {"vitesse": "%.1f" % obtenue})
+	var liaison := "" if _liaison.est_connectee() else "   " + Langue.t("godot.liaison_coupee")
+	return Langue.t("godot.barre", {"t": _duree(hote.instant), "allure": allure, "detectes": detectes, "frappes": int(b.get("fuites", 0)), "air": int(b.get("detruits_air", 0)), "sol": int(b.get("detruits_sol", 0)), "munitions_air": int(b.get("munitions_air_restantes", 0)), "munitions_sol": int(b.get("munitions_sol_restantes", 0))}) + liaison
 
 
 static func _duree(secondes: float) -> String:
@@ -406,7 +412,7 @@ func _ecrire_selection() -> void:
 
 func _ecrire_fixe(objet: Dictionary) -> void:
 	var portees: Array[String] = []
-	for paire in [["détection", "detection"], ["conduite de tir", "conduite"], ["interception", "interception"]]:
+	for paire in [[Langue.t("godot.couverture.detection"), "detection"], [Langue.t("godot.couverture.conduite"), "conduite"], [Langue.t("godot.couverture.interception"), "interception"]]:
 		if float(objet[paire[1]]) > 0.0:
 			portees.append("%s %.0f km" % [paire[0], float(objet[paire[1]]) / 1000.0])
 	_ihm.montrer_selection(str(_noms.get(objet["unite"], objet["unite"])), "  ·  ".join(portees), _icones.get(objet["unite"]))
@@ -431,15 +437,15 @@ func _ecrire_vecteurs() -> void:
 	var nom := " ; ".join(types)
 	var repartition: Array[String] = []
 	for etat: String in etats:
-		repartition.append("%d %s" % [etats[etat], etat])
-	_ihm.montrer_selection(nom, "Munitions : %d\n%s" % [munitions, ", ".join(repartition)], _icones.get(premiere))
+		repartition.append("%d %s" % [etats[etat], Langue.t(ETATS_VECTEUR.get(etat, etat))])
+	_ihm.montrer_selection(nom, Langue.t("godot.munitions", {"n": munitions}) + "\n" + ", ".join(repartition), _icones.get(premiere))
 
 
 func _texte_fin() -> String:
 	var b := _bilan_fini
 	var total := int(hote.rejeu.statique["drones"]["nombre"])
 	var arretes := int(b["detruits_air"]) + int(b["detruits_sol"])
-	return "RAID TERMINÉ\n\nDrones arrêtés : %d sur %d (%.0f %%)\nFrappes sur les sites : %d\nDétruits : %d air, %d sol\nDurée : %s\n\nN : nouvelle partie" % [arretes, total, 100.0 * arretes / maxi(total, 1), int(b["fuites"]), int(b["detruits_air"]), int(b["detruits_sol"]), _duree(float(b["duree"]))]
+	return Langue.t("godot.fin", {"arretes": arretes, "total": total, "pourcent": "%.0f" % (100.0 * arretes / maxi(total, 1)), "frappes": int(b["fuites"]), "air": int(b["detruits_air"]), "sol": int(b["detruits_sol"]), "duree": _duree(float(b["duree"]))})
 
 
 func _unhandled_input(evenement: InputEvent) -> void:
@@ -586,7 +592,7 @@ func _envoyer_vitesse(sens: int) -> void:
 func _basculer_brouillard() -> void:
 	_brouillard.basculer()
 	hote.montrer_inconnus = not _brouillard.actif
-	_ihm.annoncer("Brouillard levé : tous les drones sont montrés" if hote.montrer_inconnus else "Brouillard rétabli")
+	_ihm.annoncer(Langue.t("godot.brouillard_leve" if hote.montrer_inconnus else "godot.brouillard_retabli"))
 
 
 func _selectionner_tous() -> void:
@@ -600,7 +606,7 @@ func _selectionner_tous() -> void:
 func _traiter_groupe(numero: int, memoriser: bool) -> void:
 	if memoriser:
 		_selection.memoriser(numero)
-		_ihm.annoncer("Groupe %d mémorisé" % numero)
+		_ihm.annoncer(Langue.t("godot.groupe_memorise", {"n": numero}))
 		return
 	if not _selection.rappeler(numero):
 		return
@@ -619,7 +625,7 @@ func _centrer_sur(e: float, n: float) -> void:
 func _ordonner_vers(ecran: Vector2) -> void:
 	var vise: Variant = _point_vise(ecran)
 	if vise == null:
-		_ihm.annoncer("Viser le sol pour donner un ordre")
+		_ihm.annoncer(Langue.t("godot.viser_sol"))
 		return
 	_ordonner_au_point(vise.x, -vise.z)
 
@@ -632,7 +638,7 @@ func _ordonner_au_point(e: float, n: float) -> void:
 		if not _est_perdu(id):
 			ids.append(id)
 	if ids.is_empty():
-		_ihm.annoncer("Aucun vecteur sélectionné")
+		_ihm.annoncer(Langue.t("godot.aucun_vecteur"))
 		return
 	if not _liaison.envoyer({"type": "ordre", "avions": ids, "e": e, "n": n}):
 		return
@@ -658,7 +664,7 @@ func _changer_mode(voulu: Mode) -> void:
 	if _mode != Mode.JEU and float(_etat.get("t", 0.0)) > 0.0 or quitte == Mode.TERRAIN:
 		# En quittant le relief, la nouvelle ouverture remet le sol du scénario.
 		_liaison.envoyer({"type": "recommencer"})
-	_ihm.annoncer({Mode.JEU: "Mode jeu", Mode.SCENARIO: "Édition du scénario", Mode.TERRAIN: "Édition du relief"}[_mode])
+	_ihm.annoncer(Langue.t({Mode.JEU: "godot.mode_jeu", Mode.SCENARIO: "godot.mode_scenario", Mode.TERRAIN: "godot.mode_relief"}[_mode]))
 
 
 ## Envoyer une commande au serveur ; rendre faux si la liaison est coupée.

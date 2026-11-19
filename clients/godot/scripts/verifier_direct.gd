@@ -6,6 +6,7 @@ extends SceneTree
 
 const Rejeu := preload("res://scripts/rejeu.gd")
 const Liaison := preload("res://scripts/liaison.gd")
+const Langue := preload("res://scripts/langue.gd")
 
 const VITESSE := 60.0
 const INSTANT_ORDRE_S := 30.0
@@ -32,7 +33,7 @@ func _initialize() -> void:
 func _process(delta: float) -> bool:
 	_ecoule += delta
 	if _ecoule > DUREE_MAX_S:
-		printerr("partie non terminée après %d s" % int(DUREE_MAX_S))
+		printerr(Langue.t("godot.verif.non_terminee", {"s": int(DUREE_MAX_S)}))
 		quit(1)
 		return true
 	var debut := Time.get_ticks_usec()
@@ -54,7 +55,7 @@ func _traiter(message: Dictionary) -> void:
 				_liaison.envoyer({"type": "vitesse", "valeur": VITESSE})
 				_liaison.envoyer({"type": "reprendre"})
 		"erreur":
-			printerr("refus du serveur : %s" % message["message"])
+			printerr(Langue.t("godot.verif.refus", {"message": message["message"]}))
 			quit(1)
 		"archive":
 			_conclure(message)
@@ -67,5 +68,5 @@ func _conclure(archive: Dictionary) -> void:
 	var sortie := FileAccess.open(_sortie, FileAccess.WRITE)
 	sortie.store_string(JSON.stringify({"empreinte": archive["empreinte"], "bilan_recalcule": recalcule, "bilan_fichier": _rejeu.bilan, "images": _rejeu.images_de_controle()}))
 	sortie.close()
-	print("%d images reçues, lecture maximale %.1f ms par image de jeu ; scénario joué : %s" % [_rejeu.instants.size(), _max_lecture_ms, archive["chemin"]])
+	print(Langue.t("godot.verif.direct", {"n": _rejeu.instants.size(), "ms": "%.1f" % _max_lecture_ms, "chemin": archive["chemin"]}))
 	quit(0)

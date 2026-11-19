@@ -4,6 +4,7 @@ extends Control
 
 const Selection := preload("res://scripts/jeu/selection.gd")
 const Ihm := preload("res://scripts/jeu/ihm.gd")
+const Langue := preload("res://scripts/langue.gd")
 
 const RAYON_CLIC_PX := 16.0
 const GLISSEMENT_MAX_PX := 6.0
@@ -18,7 +19,7 @@ const COULEUR_CHOIX := Color(0.4, 1.0, 0.6)
 const COULEUR_LIAISON := Color(0.75, 0.75, 0.8, 0.55)
 const COULEUR_ZONE := Color(1.0, 0.85, 0.3, 0.8)
 const COULEUR_APERCU := Color(1.0, 0.9, 0.4)
-const OUTILS := [["selection", "1 Sélection"], ["liaison", "2 Liaison"], ["plan", "3 Plan de vol"], ["zone", "4 Zone"], ["gomme", "5 Gomme"]]
+const OUTILS := [["selection", "godot.outil.selection"], ["liaison", "godot.outil.liaison"], ["plan", "godot.outil.plan"], ["zone", "godot.outil.zone"], ["gomme", "godot.outil.gomme"]]
 
 var _partie: Node = null
 var _actif := false
@@ -72,19 +73,19 @@ func _construire_barre() -> void:
 	_barre.position = Vector2(10.0, 50.0)
 	var rangee := HBoxContainer.new()
 	for outil: Array in OUTILS:
-		_boutons[outil[0]] = _bouton(outil[1], _choisir_outil.bind(outil[0]))
+		_boutons[outil[0]] = _bouton(Langue.t(outil[1]), _choisir_outil.bind(outil[0]))
 		_boutons[outil[0]].toggle_mode = true
 		rangee.add_child(_boutons[outil[0]])
-	rangee.add_child(_bouton("Annuler", func() -> void: _partie.envoyer({"type": "annuler"})))
-	rangee.add_child(_bouton("Rétablir", func() -> void: _partie.envoyer({"type": "retablir"})))
+	rangee.add_child(_bouton(Langue.t("godot.annuler"), func() -> void: _partie.envoyer({"type": "annuler"})))
+	rangee.add_child(_bouton(Langue.t("godot.retablir"), func() -> void: _partie.envoyer({"type": "retablir"})))
 	_choix_scenario.focus_mode = Control.FOCUS_NONE
 	_choix_scenario.item_selected.connect(_charger_scenario)
 	rangee.add_child(_choix_scenario)
-	_nom.placeholder_text = "nom"
+	_nom.placeholder_text = Langue.t("godot.nom")
 	_nom.custom_minimum_size = Vector2(120.0, 0.0)
 	_nom.text_submitted.connect(func(_texte: String) -> void: _enregistrer())
 	rangee.add_child(_nom)
-	rangee.add_child(_bouton("Enregistrer", _enregistrer))
+	rangee.add_child(_bouton(Langue.t("godot.enregistrer"), _enregistrer))
 	_barre.add_child(rangee)
 	add_child(_barre)
 	_choisir_outil("selection")
@@ -133,7 +134,7 @@ func poser_palette(familles: Array) -> void:
 func poser_scenarios(liste: Array) -> void:
 	_scenarios = liste
 	_choix_scenario.clear()
-	_choix_scenario.add_item("Charger un scénario…")
+	_choix_scenario.add_item(Langue.t("godot.charger_scenario"))
 	for scenario: Dictionary in liste:
 		_choix_scenario.add_item(scenario["nom"])
 
@@ -357,7 +358,7 @@ func _deposer(fin: Vector2, sol: Vector2) -> void:
 	if _famille_depot["cible"] == "unite":
 		var element: Variant = _sous(fin, true)
 		if element == null:
-			_partie.ihm().annoncer("À déposer sur une unité")
+			_partie.ihm().annoncer(Langue.t("godot.deposer_sur_unite"))
 			return
 		geste["sous"] = element["cle"]
 	_editer(geste)

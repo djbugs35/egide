@@ -6,6 +6,7 @@ extends Node3D
 # Par preload et non class_name : les noms globaux n'existent qu'après un passage dans l'éditeur, et le client doit
 # se lancer depuis un dossier fraîchement cloné.
 const Rejeu := preload("res://scripts/rejeu.gd")
+const Langue := preload("res://scripts/langue.gd")
 const TerrainExporte := preload("res://scripts/terrain.gd")
 const BibliothequeModeles := preload("res://scripts/modeles.gd")
 const PiloteCamera := preload("res://scripts/pilote_camera.gd")
@@ -17,7 +18,7 @@ const SAUT_S := 10.0
 const TAILLE_RELATIVE := 0.012
 const TAILLE_MINIMALE := 15.0
 const DUREE_TRACE_TIR := 0.5
-const COUVERTURES := ["aucune", "détection", "conduite de tir", "interception", "résultante du C2"]
+const COUVERTURES := ["godot.couverture.aucune", "godot.couverture.detection", "godot.couverture.conduite", "godot.couverture.interception", "godot.couverture.resultante"]
 const CLES_COUVERTURE := ["", "detection", "conduite", "interception"]
 const COULEURS_COUVERTURE := [Color.WHITE, Color(0.29, 0.6, 0.91), Color(0.91, 0.77, 0.28), Color(0.34, 0.78, 0.52)]
 const COULEUR_RESULTANTE := Color(0.71, 0.56, 0.91)
@@ -72,7 +73,7 @@ var _imagerie_attribution := ""
 
 func _ready() -> void:
 	_preparer_scene()
-	texte.text = "Chargement du rejeu…"
+	texte.text = Langue.t("godot.chargement")
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var options := _options()
@@ -152,7 +153,7 @@ static func _terrain_recent(dossier: String) -> String:
 
 func _charger(options: Dictionary) -> String:
 	if options["rejeu"] == "":
-		return "Aucun rejeu trouvé : lancer node src/rejeu.js, ou passer -- --rejeu <fichier>."
+		return Langue.t("godot.aucun_rejeu")
 	var erreur := rejeu.charger(options["rejeu"])
 	if erreur != "":
 		return erreur
@@ -168,11 +169,11 @@ func charger_terrain(dossier: String) -> String:
 	if erreur != "":
 		return erreur
 	if not _meme_origine(charge.description["origine"], rejeu.entete["origine"]):
-		push_warning("Terrain ignoré : %s n'a pas l'origine du scénario." % dossier)
+		push_warning(Langue.t("godot.terrain_ignore", {"dossier": dossier}))
 		return ""
 	var scene := charge.creer_scene(dossier)
 	if scene == null:
-		return "maillage illisible : %s" % dossier
+		return Langue.t("godot.maillage_illisible", {"dossier": dossier})
 	add_child(scene)
 	terrain = charge
 	scene_terrain = scene
@@ -332,6 +333,14 @@ func touche_commune(touche: int) -> void:
 			couverture = posmod(couverture + 1, COUVERTURES.size())
 		KEY_X:
 			_c2 += 1
+		KEY_L:
+			changer_langue()
+
+
+## Passer à la langue suivante (anglais, français), la retenir et recharger l'écran dans cette langue.
+func changer_langue() -> void:
+	Langue.choisir(Langue.suivante())
+	get_tree().reload_current_scene()
 
 
 func _process(delta: float) -> void:
@@ -533,10 +542,10 @@ func _afficher(en_vol: int) -> void:
 	var r := rejeu
 	var b := r.bilan
 	var lignes := [
-		"t = %.1f s / %.1f s   ×%d   %s   caméra %s" % [instant, r.instants[-1], int(VITESSES[rang_vitesse]), "lecture" if _en_lecture else "pause", PiloteCamera.NOMS[pilote.mode]],
-		"En vol : %d drones   Frappes : %d   Détruits air : %d   Détruits sol : %d" % [en_vol, Rejeu.compter_jusqua(r.instants_impacts, instant), Rejeu.compter_jusqua(r.instants_detruits_air, instant), Rejeu.compter_jusqua(r.instants_detruits_sol, instant)],
-		"Bilan de la simulation : %d frappes, %d détruits air, %d détruits sol, %d tirs air, %d tirs sol" % [int(b["fuites"]), int(b["detruits_air"]), int(b["detruits_sol"]), int(b["tirs_air"]), int(b["tirs_sol"])],
-		"Graine %d   empreinte %s   couverture : %s" % [int(r.entete["graine"]), str(r.entete["empreinte"]).left(12), COUVERTURES[couverture]],
+		Langue.t("godot.rejeu.ligne_temps", {"t": "%.1f" % instant, "fin": "%.1f" % r.instants[-1], "vitesse": int(VITESSES[rang_vitesse]), "etat": Langue.t("godot.rejeu.lecture" if _en_lecture else "godot.rejeu.pause"), "camera": Langue.t(PiloteCamera.NOMS[pilote.mode])}),
+		Langue.t("godot.rejeu.ligne_vol", {"n": en_vol, "frappes": Rejeu.compter_jusqua(r.instants_impacts, instant), "air": Rejeu.compter_jusqua(r.instants_detruits_air, instant), "sol": Rejeu.compter_jusqua(r.instants_detruits_sol, instant)}),
+		Langue.t("godot.rejeu.ligne_bilan", {"frappes": int(b["fuites"]), "air": int(b["detruits_air"]), "sol": int(b["detruits_sol"]), "tirs_air": int(b["tirs_air"]), "tirs_sol": int(b["tirs_sol"])}),
+		Langue.t("godot.rejeu.ligne_graine", {"graine": int(r.entete["graine"]), "empreinte": str(r.entete["empreinte"]).left(12), "couverture": Langue.t(COUVERTURES[couverture])}),
 	]
 	if _imagerie_attribution != "":
 		lignes.append(_imagerie_attribution)

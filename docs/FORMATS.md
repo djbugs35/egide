@@ -410,6 +410,7 @@ Chaque message porte son `type` :
 | `ordre` | `avions` (rangs de `statique.vecteurs`), `e`, `n` (m, repère du § 6.3) | les vecteurs rallient ce point, au pas suivant |
 | `recommencer` | | même scénario, à l'instant initial, en pause |
 | `modifier` | `modifications` : `{chemin: valeur}` | scénario modifié par chemin (§ 5), relancé à l'instant initial, en pause |
+| `langue` | `code` : `en` ou `fr` | langue des textes que le serveur envoie ensuite (palette, listes, refus) ; palette et listes sont rediffusées si elle change |
 
 ### 10.3 Partie enregistrée
 

@@ -3,6 +3,7 @@ extends RefCounted
 ## le code : aucun modèle d'un système réel.
 
 # [longueur, envergure], rapportées à une unité : la forme suggère la classe, l'échelle est celle de l'affichage.
+const Langue := preload("res://scripts/langue.gd")
 const VOLANTS := {
 	"avion_helice": [1.0, 1.5], "avion_reaction": [1.3, 0.8], "drone_aile_delta": [0.8, 1.1], "drone_helices": [0.6, 0.6],
 	"drone_reaction": [1.2, 0.5], "helicoptere": [1.1, 0.5], "missile": [1.5, 0.25],
@@ -35,7 +36,7 @@ static func est_detaille(nom: String) -> bool:
 func charger(chemin: String, catalogue: Array) -> String:
 	var lu: Variant = JSON.parse_string(FileAccess.get_file_as_string(chemin))
 	if not lu is Dictionary:
-		return "table de modèles illisible : %s" % chemin
+		return Langue.t("godot.modeles_illisibles", {"chemin": chemin})
 	_table = lu
 	for fiche: Dictionary in catalogue:
 		_catalogue[fiche["id"]] = fiche

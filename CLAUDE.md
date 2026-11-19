@@ -96,6 +96,8 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
   toucher aux fichiers ; toute unité ou tout algorithme ajouté y reçoit son entrée (`node outils/valider.js --langues`).
   Un outil en ligne de commande commence par `preparer_langue(process.argv.slice(2))` (`src/langue_node.js`) :
   `--langue fr` ou `EGIDE_LANGUE`, anglais par défaut ; ses messages sont des clés `cli.*`.
+  Le client Godot lit `Langue.t("godot.…")` (`scripts/langue.gd`) ; après toute clé `godot.*` modifiée :
+  `node outils/langues.js --godot`.
 - Ne jamais tuer un processus qu'on n'a pas lancé soi-même.
 
 ## Vérifications avant commit

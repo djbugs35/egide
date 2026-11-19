@@ -4,7 +4,8 @@ extends RefCounted
 
 enum Mode { LIBRE, SUIVI, RADAR, STRATEGIE }
 
-const NOMS := ["libre", "suivi", "radar", "stratégie"]
+## Clés de traduction des noms des caméras, dans l'ordre de Mode.
+const NOMS := ["godot.camera.libre", "godot.camera.suivi", "godot.camera.radar", "godot.camera.strategie"]
 const VITESSE_RELATIVE := 0.8
 const VITESSE_MINIMALE := 500.0
 const SENSIBILITE := 0.004

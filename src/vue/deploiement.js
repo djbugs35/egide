@@ -42,11 +42,12 @@ const SPECIAUX = [{id: "special/cible", nom: "vue.palette.site_sensible", icone:
 export function palette(index, pays = "") {
   const garde = (u) => !pays || !u.pays || u.pays === pays;
   const ordre = (a, b) => (a.pays ?? "").localeCompare(b.pays ?? "") || a.nom.localeCompare(b.nom);
-  // Libellés, aides et noms des infrastructures sont des clés : traduits ici, dans la langue installée.
+  // Libellés, aides et noms des infrastructures sont des clés, les unités ont leur traduction de catalogue : tout est
+  // rendu ici dans la langue installée (le serveur du jeu n'a pas d'index traduit à la lecture, contrairement au navigateur).
   return FAMILLES_PALETTE.map((famille) => ({
     ...famille, libelle: t(famille.libelle), aide: t(famille.aide),
     elements: famille.id === "infrastructures" ? SPECIAUX.map((e) => ({...e, nom: t(e.nom)}))
-      : index.filter((u) => !u.base && sans_prive(u.id).startsWith(famille.prefixe) && garde(u)).sort(ordre).map(({id, nom, pays: p = null, icone = null}) => ({id, nom, pays: p, icone})),
+      : index.filter((u) => !u.base && sans_prive(u.id).startsWith(famille.prefixe) && garde(u)).map((u) => ({...u, nom: nom_unite(u.id, u.nom)})).sort(ordre).map(({id, nom, pays: p = null, icone = null}) => ({id, nom, pays: p, icone})),
   })).filter((famille) => famille.elements.length);
 }
 

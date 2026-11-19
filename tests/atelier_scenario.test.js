@@ -6,6 +6,7 @@ import {en_v2, modifier_scenario} from "../src/moteur/scenario.js";
 import {creer_atelier_scenario, description_edition, message_palette} from "../src/serveur/atelier_scenario.js";
 import {creer_salle} from "../src/serveur/salle.js";
 import {FICHIERS, REFERENCE, REGISTRE} from "./aide_scenario.js";
+import {installer_langue_node} from "../src/langue_node.js";
 
 const INDEX = Object.keys(FICHIERS).filter((id) => !id.startsWith("prive/")).map((id) => ({id, nom: FICHIERS[id].nom ?? id, base: id.split("/").at(-1).startsWith("_"), pays: null, icone: null}));
 const RADAR = "capteurs/radars/radar_longue_portee_notionnel";
@@ -108,4 +109,17 @@ test("description : les éléments sont en mètres dans le repère du rejeu", as
   const site = p.ouverture()[1].sites[0];
   const cible = description.liste.find((e) => e.cle === "cible:0");
   assert.ok(Math.hypot(cible.e - site.e, cible.n - site.n) < 1);
+});
+
+test("langue : le client la choisit ; palette et refus reviennent dans cette langue, une langue inconnue est refusée", async () => {
+  const {salle, dernier} = await salle_edition();
+  try {
+    await salle.commander({type: "langue", code: "en"});
+    const radars = dernier("palette").familles.find((f) => f.id === "capteurs");
+    assert.ok(radars.elements.some((e) => e.nom === "Long-range early-warning radar (notional)"), "noms d'unités traduits");
+    await salle.commander({type: "langue", code: "xx"});
+    assert.match(dernier("erreur").message, /unknown language: xx/);
+  } finally {
+    installer_langue_node("fr");
+  }
 });

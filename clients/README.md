@@ -60,8 +60,13 @@ Le moteur tourne dans le serveur, Godot affiche et commande (docs/FORMATS.md § 
 | B | lever ou rétablir le brouillard |
 | M, H | couper le son, afficher l'aide |
 | N | nouvelle partie |
+| L | changer de langue (anglais, français) : retenue pour les lancements suivants |
 | F5 | éditer le scénario (la partie revient à l'instant initial) |
 | F6 | éditer le relief |
+
+Langue : anglais par défaut ; `-- --langue fr` sur la ligne de Godot (ou `./jouer.command --langue fr`, qui la passe au
+serveur et au client), sinon la variable `EGIDE_LANGUE`, sinon le choix retenu par la touche L. Les textes du client sont
+les clés `godot.*` de `langues/<code>.json`, recopiées dans `clients/godot/langues/` par `node outils/langues.js --godot`.
 
 Sélectionner un objet trace ses enveloppes de détection, de conduite de tir et d'interception, jusqu'à huit vecteurs à la fois.
 Le brouillard masque les drones qu'aucun radar n'a encore vus et assombrit le sol hors de la portée de détection, tracée en

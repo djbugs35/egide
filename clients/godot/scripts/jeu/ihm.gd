@@ -2,13 +2,13 @@ extends CanvasLayer
 ## Interface à l'écran de la partie en direct : barre d'état, mini-carte, panneau de sélection, cadre de sélection, fin de raid.
 
 const MiniCarte := preload("res://scripts/jeu/mini_carte.gd")
+const Langue := preload("res://scripts/langue.gd")
 
 const COULEUR_PANNEAU := Color(0.05, 0.09, 0.12, 0.88)
 const COULEUR_BORD := Color(0.3, 0.55, 0.65)
 const COULEUR_CADRE := Color(0.4, 1.0, 0.6)
 const COTE_ICONE := 96
 const ECHELLE_PANNEAU := 4.0
-const AIDE := "Clic gauche ou cadre : sélectionner   Maj : ajouter\nDouble-clic : tout le type à l'écran   Échap : désélectionner   Ctrl+A : tous\nClic droit : ordre   Ctrl+1 à 9 : mémoriser   1 à 9 : rappeler (deux fois : centrer)\nWASD, flèches, bord d'écran : défiler   molette : zoom   bouton du milieu : pivoter\nF1 à F4 : caméras   F5 : éditer le scénario   F6 : éditer le relief\nEspace : lancer, pause   + et - : vitesse   N : nouvelle partie\nC : couvertures   B : brouillard   M : son   H : cette aide"
 
 
 class Cadre extends Control:
@@ -121,7 +121,7 @@ func _panneau_selection() -> Control:
 
 
 func _bloc_aide() -> Control:
-	_aide.text = AIDE
+	_aide.text = Langue.t("godot.aide")
 	_aide.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_aide.position = Vector2(-640.0, 52.0)
 	_aide.add_theme_color_override("font_outline_color", Color.BLACK)

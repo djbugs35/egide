@@ -144,7 +144,8 @@ async function controler_client_godot(godot, {brut, fichiers, registre}) {
     const rejeu = join(dossier, "essai.egide-rejeu");
     writeFileSync(rejeu, gzipSync(texte_rejeu(await creer_rejeu(brut, fichiers, registre))));
     const lu = lancer(godot, ["--headless", "--path", join(RACINE, "clients", "godot"), "--script", "res://scripts/verifier.gd", "--", "--rejeu", rejeu, "--sortie", join(dossier, "dump.json")], DELAI_GODOT_MS);
-    const reussi = lu.reussi && lu.sortie.includes("identique");
+    // Le code de sortie dit l'accord des bilans, quelle que soit la langue du message.
+    const reussi = lu.reussi;
     return resultat(t("cli.verif.client_godot"), reussi ? "ok" : "echec", reussi ? t("cli.verif.client_godot_ok") : lu.sortie.trim().split("\n").slice(-3).join(" | "), t("cli.verif.client_godot_remede"));
   } finally {
     rmSync(dossier, {recursive: true, force: true});

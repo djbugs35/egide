@@ -11,4 +11,5 @@ fi
 node src/direct.js "$@" &
 SERVEUR=$!
 trap 'kill "$SERVEUR" 2>/dev/null' EXIT INT TERM
-"$GODOT" --path clients/godot -- --direct 8767
+# Les mêmes arguments vont au client : --langue fr y choisit aussi la langue de l'écran.
+"$GODOT" --path clients/godot -- --direct 8767 "$@"

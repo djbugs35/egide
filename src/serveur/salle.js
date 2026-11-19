@@ -1,7 +1,8 @@
 // La salle (docs/FORMATS.md § 10) : la partie en cours, son horloge et les commandes des clients. Ne connaît ni socket ni
 // temps réel : `tic` reçoit le temps écoulé et `maintenant` mesure le coût des pas, si bien que tout se teste sans réseau.
 import {modifier_scenario} from "../moteur/scenario.js";
-import {t} from "../i18n.js";
+import {langue, LANGUES, t} from "../i18n.js";
+import {installer_langue_node} from "../langue_node.js";
 
 export const VITESSE_MAX = 60;
 // Temps de calcul accordé à chaque tic de la période nominale : le reste sert à envoyer et à répondre aux commandes.
@@ -69,6 +70,13 @@ export function creer_salle({brut, preparer, diffuser, archiver, maintenant, ext
       if (!(valeur > 0 && valeur <= VITESSE_MAX)) throw new CommandeInvalide(t("cli.serveur.vitesse", {max: VITESSE_MAX, valeur}));
       vitesse = valeur;
       diffuser(etat());
+    },
+    // Langue du joueur (jalon 27) : le serveur la prend, et renvoie dans cette langue ce que le client affiche.
+    langue: ({code}) => {
+      if (!Object.hasOwn(LANGUES, code)) throw new CommandeInvalide(t("cli.serveur.langue_inconnue", {code}));
+      if (code === langue()) return;
+      installer_langue_node(code);
+      (ajouts.arrivee?.() ?? []).forEach(diffuser);
     },
     ordre: (message) => partie.ordonner(message),
     recommencer: () => relancer(partie.brut),

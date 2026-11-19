@@ -4,6 +4,7 @@ extends SceneTree
 ##   godot --headless --path clients/godot --script res://scripts/jeu/verifier_jeu.gd
 
 const Selection := preload("res://scripts/jeu/selection.gd")
+const Langue := preload("res://scripts/langue.gd")
 const MiniCarte := preload("res://scripts/jeu/mini_carte.gd")
 const Brouillard := preload("res://scripts/jeu/brouillard.gd")
 const EditeurScenario := preload("res://scripts/jeu/editeur_scenario.gd")
@@ -14,7 +15,7 @@ var _echecs := 0
 func _verifier(condition: bool, nom: String) -> void:
 	if not condition:
 		_echecs += 1
-		printerr("ÉCHEC : %s" % nom)
+		printerr(Langue.t("godot.verif.echec", {"nom": nom}))
 
 
 func _initialize() -> void:
@@ -23,7 +24,7 @@ func _initialize() -> void:
 	_carte()
 	_zones()
 	await _palette_visible()
-	print("Règles du jeu : %s" % ("toutes vérifiées" if _echecs == 0 else "%d échecs" % _echecs))
+	print(Langue.t("godot.verif.regles_ok") if _echecs == 0 else Langue.t("godot.verif.regles_echecs", {"n": _echecs}))
 	quit(0 if _echecs == 0 else 1)
 
 

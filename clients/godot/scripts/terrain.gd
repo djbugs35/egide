@@ -1,6 +1,7 @@
 extends RefCounted
 ## Charge un export de outils/export_terrain.js (docs/FORMATS.md § 7) : maillage, imagerie et altitude du sol.
 
+const Langue := preload("res://scripts/langue.gd")
 const RAYON_TERRE := 6_371_000.0
 
 var description: Dictionary = {}
@@ -27,14 +28,14 @@ func est_plat() -> bool:
 func charger(dossier: String) -> String:
 	var lu: Variant = JSON.parse_string(FileAccess.get_file_as_string(dossier.path_join("terrain.json")))
 	if not lu is Dictionary or lu.get("format") != "egide-terrain":
-		return "pas un export de terrain : %s" % dossier
+		return Langue.t("godot.terrain.pas_export", {"dossier": dossier})
 	description = lu
 	_brut = FileAccess.get_file_as_bytes(dossier.path_join("hauteurs.raw"))
 	var grille: Dictionary = description["grille"]
 	_lignes = int(grille["lignes"])
 	_colonnes = int(grille["colonnes"])
 	if _brut.size() != 2 * _lignes * _colonnes:
-		return "hauteurs.raw absent ou de mauvaise taille"
+		return Langue.t("godot.terrain.hauteurs")
 	_nord = grille["nord"]
 	_sud = grille["sud"]
 	_ouest = grille["ouest"]

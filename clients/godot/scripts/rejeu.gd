@@ -1,6 +1,7 @@
 extends RefCounted
 ## Lit un fichier .egide-rejeu (docs/FORMATS.md § 6). Égide reste l'autorité : le client relit, il ne simule rien.
 
+const Langue := preload("res://scripts/langue.gd")
 const FORMAT := "egide-rejeu"
 const VERSION := 1
 # Le rejeu de référence fait 86 Mo une fois décompressé : 1 Gio laisse de la marge sans accepter n'importe quoi.
@@ -37,35 +38,35 @@ var couvertures: Array[Dictionary] = []
 func charger(chemin: String) -> String:
 	var octets := FileAccess.get_file_as_bytes(chemin)
 	if octets.is_empty():
-		return "fichier illisible : %s" % chemin
+		return Langue.t("godot.rejeu.illisible", {"chemin": chemin})
 	var texte := octets.decompress_dynamic(TAILLE_MAX_DECOMPRESSEE, FileAccess.COMPRESSION_GZIP).get_string_from_utf8()
 	var lignes := texte.split("\n", false)
 	if lignes.is_empty():
-		return "fichier vide : %s" % chemin
+		return Langue.t("godot.rejeu.vide", {"chemin": chemin})
 	var erreur := _entete_de_ligne(lignes[0])
 	if erreur != "":
 		return erreur
 	for rang in range(1, lignes.size()):
 		var objet: Variant = JSON.parse_string(lignes[rang])
 		if not objet is Dictionary:
-			return "ligne %d illisible" % (rang + 1)
+			return Langue.t("godot.rejeu.ligne_illisible", {"n": rang + 1})
 		ajouter(objet)
-	return "" if not bilan.is_empty() else "fichier tronqué : pas de ligne de bilan"
+	return "" if not bilan.is_empty() else Langue.t("godot.rejeu.tronque")
 
 
 func _entete_de_ligne(ligne: String) -> String:
 	var objet: Variant = JSON.parse_string(ligne)
-	return lire_entete(objet) if objet is Dictionary else "pas un fichier de rejeu"
+	return lire_entete(objet) if objet is Dictionary else Langue.t("godot.rejeu.pas_rejeu")
 
 
 ## Retenir l'en-tête `objet` ; rendre "" ou le message d'erreur.
 func lire_entete(objet: Dictionary) -> String:
 	if objet.get("format") != FORMAT:
-		return "pas un fichier de rejeu"
+		return Langue.t("godot.rejeu.pas_rejeu")
 	if int(objet["version"]) != VERSION:
-		return "version de rejeu %d non prise en charge" % int(objet["version"])
+		return Langue.t("godot.rejeu.version", {"version": int(objet["version"])})
 	if objet["colonnes"]["drones"] != COLONNES_POSITION:
-		return "colonnes inattendues : %s" % str(objet["colonnes"]["drones"])
+		return Langue.t("godot.rejeu.colonnes", {"colonnes": str(objet["colonnes"]["drones"])})
 	entete = objet
 	largeur_drones = entete["colonnes"]["drones"].size()
 	largeur_vecteurs = entete["colonnes"]["vecteurs"].size()
