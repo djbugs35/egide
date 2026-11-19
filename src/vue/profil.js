@@ -2,6 +2,7 @@
 import {COULEURS} from "./couleurs.js";
 import {format_decimal, format_entier} from "./format.js";
 import {pas_rond} from "./graphique.js";
+import {t} from "../i18n.js";
 
 const MARGES = {haut: 18, droite: 20, bas: 34, gauche: 56};
 const HAUTEUR = 220;
@@ -31,8 +32,8 @@ export function dessiner_profil(conteneur, echantillons, relief, altitudeVol) {
     ? `<path d="M${x(0)},${y(0)} ${echantillons.map((e, i) => `L${x(e.distance)},${y(relief[i])}`).join(" ")} L${x(longueur)},${y(0)} Z" fill="#4a5a6c" stroke="#8b9bab" stroke-width="1"/>`
     : "";
   const vol = `<line x1="${x(0)}" x2="${x(longueur)}" y1="${y(altitudeVol)}" y2="${y(altitudeVol)}" stroke="${COULEURS.hostile}" stroke-width="2"/>
-    <text x="${x(longueur) - 4}" y="${y(altitudeVol) - 6}" text-anchor="end" fill="${COULEURS.texte}">essaim à ${format_entier(altitudeVol)} m</text>`;
-  const note = relief ? "" : `<p class="note-profil">Relief indisponible (hors ligne ou source absente) : seule l'altitude de vol est tracée.</p>`;
-  conteneur.innerHTML = `<svg viewBox="0 0 ${largeur} ${HAUTEUR}" width="100%" role="img" aria-label="Profil du plan de vol">
+    <text x="${x(longueur) - 4}" y="${y(altitudeVol) - 6}" text-anchor="end" fill="${COULEURS.texte}">${t("vue.profil.essaim_a", {m: format_entier(altitudeVol)})}</text>`;
+  const note = relief ? "" : `<p class="note-profil">${t("vue.profil.sans_relief")}</p>`;
+  conteneur.innerHTML = `<svg viewBox="0 0 ${largeur} ${HAUTEUR}" width="100%" role="img" aria-label="${t("vue.profil.titre")}">
     ${lignesY.join("")}${graduationsX.join("")}${sol}${passages.join("")}${vol}</svg>${note}`;
 }

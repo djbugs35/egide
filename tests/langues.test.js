@@ -35,7 +35,9 @@ function cles_page(source) {
 /** Rendre les clés citées par le code : t("…") dans src/. */
 function cles_code() {
   const fichiers = (dossier) => readdirSync(join(RACINE, dossier), {withFileTypes: true}).flatMap((e) => (e.isDirectory() ? fichiers(join(dossier, e.name)) : e.name.endsWith(".js") ? [join(dossier, e.name)] : []));
-  return fichiers("src").flatMap((f) => [...lire(f).matchAll(/\bt\("([a-z0-9_.]+)"/g)].map((m) => m[1]));
+  // Toute chaîne littérale qui commence par un espace de noms de clé (vue., page., commun., cli.) est une clé :
+  // passée à t() directement, ou rangée dans une table puis traduite à l'affichage.
+  return fichiers("src").flatMap((f) => [...lire(f).matchAll(/["'`]((?:vue|page|commun|cli)\.[a-z0-9_.]+)["'`]/g)].map((m) => m[1]));
 }
 
 test("langues : toute clé citée par les pages et par le code existe ; aucune clé du dictionnaire n'est orpheline", () => {

@@ -1,8 +1,9 @@
 // Bilan vivant du raid : grands nombres, munitions, état de la flotte, frappes par cible.
 import {format_entier} from "./format.js";
 import {munitions_sol_initiales} from "../moteur/defense_sol.js";
+import {t} from "../i18n.js";
 
-const ETATS = [["orbite", "En orbite"], ["ralliement", "En route"], ["engagement", "Au contact"], ["poste", "À poste"]];
+const ETATS = [["orbite", "vue.tableau.orbite"], ["ralliement", "vue.tableau.ralliement"], ["engagement", "vue.tableau.engagement"], ["poste", "vue.tableau.poste"]];
 
 const somme = (elements, champ) => elements.reduce((total, element) => total + element[champ], 0);
 
@@ -20,7 +21,7 @@ function jauge(racine, champ, restant, total) {
 function frappes_par_cible(racine, monde) {
   const liste = racine.querySelector("[data-liste='cibles']");
   if (liste.children.length !== monde.cibles.length) {
-    liste.innerHTML = monde.cibles.map((c, i) => `<li><span>${c.conduite ? "CDC" : `C${i + 1}`}</span><span class="barre"><i></i></span><b>0</b></li>`).join("");
+    liste.innerHTML = monde.cibles.map((c, i) => `<li><span>${c.conduite ? t("vue.commun.cdc") : `C${i + 1}`}</span><span class="barre"><i></i></span><b>0</b></li>`).join("");
   }
   const maximum = Math.max(1, monde.scenario.rouge.concentration_max);
   [...liste.children].forEach((ligne, i) => {
@@ -46,13 +47,13 @@ export function mettre_a_jour_tableau(racine, monde) {
   // Drones défensifs : leurs compteurs n'existent que s'il y en a (MODELE § 19).
   const {neutralises_brouillage: brouilles, intercepteurs_perdus: perdus} = monde.compteurs;
   const zone = racine.querySelector("[data-zone='defensifs']");
-  const texte = [brouilles !== undefined ? `${format_entier(brouilles)} neutralisés par brouillage` : null,
-    perdus !== undefined ? `${format_entier(perdus)} intercepteurs perdus` : null].filter(Boolean).join(" · ");
+  const texte = [brouilles !== undefined ? t("vue.tableau.brouilles", {n: brouilles, nombre: format_entier(brouilles)}) : null,
+    perdus !== undefined ? t("vue.tableau.perdus", {n: perdus, nombre: format_entier(perdus)}) : null].filter(Boolean).join(" · ");
   if (zone && zone.textContent !== texte) [zone.textContent, zone.hidden] = [texte, !texte];
   // Essaim réactif : ses compteurs n'existent que s'il réagit (MODELE § 22.5).
   const {reaffectations, detours, esquives} = monde.compteurs;
   const zoneEssaim = racine.querySelector("[data-zone='essaim']");
   const texteEssaim = reaffectations === undefined ? ""
-    : `Essaim réactif : ${format_entier(reaffectations)} réaffectations · ${format_entier(detours)} détours · ${format_entier(esquives)} tirs esquivés`;
+    : t("vue.tableau.essaim_reactif", {reaffectations: format_entier(reaffectations), detours: format_entier(detours), esquives: format_entier(esquives)});
   if (zoneEssaim && zoneEssaim.textContent !== texteEssaim) [zoneEssaim.textContent, zoneEssaim.hidden] = [texteEssaim, !texteEssaim];
 }

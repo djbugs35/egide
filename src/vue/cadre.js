@@ -6,6 +6,7 @@ import {COULEURS} from "./couleurs.js";
 import {chemin_cercle, ecran, metres_par_pixel} from "./ecran.js";
 import {format_distance} from "./format.js";
 import {couverture_reelle} from "../moteur/terrain.js";
+import {t} from "../i18n.js";
 
 const couvertures = new WeakMap();
 
@@ -62,7 +63,7 @@ function dessiner_couverture(ctx, camera, monde) {
   const nord = ecran(camera, direct(origine, 0, monde.rayonDetection));
   ctx.fillStyle = COULEURS.ami;
   ctx.textAlign = "center";
-  ctx.fillText("couverture radar", nord.x, nord.y - 8);
+  ctx.fillText(t("vue.cadre.couverture"), nord.x, nord.y - 8);
   ctx.textAlign = "start";
 }
 

@@ -1,11 +1,12 @@
 // Courbes du balayage : moyenne de chaque grandeur et son intervalle de confiance à 95 %, survol par valeur.
 import {COULEURS} from "./couleurs.js";
 import {format_decimal, format_intervalle} from "./format.js";
+import {t} from "../i18n.js";
 
 export const SERIES = [
-  {cle: "fuites", libelle: "Frappes sur les cibles", couleur: COULEURS.hostile},
-  {cle: "detruits_air", libelle: "Détruits par les avions", couleur: COULEURS.ami},
-  {cle: "detruits_sol", libelle: "Détruits au sol", couleur: COULEURS.sol},
+  {cle: "fuites", libelle: "vue.graphique.fuites", couleur: COULEURS.hostile},
+  {cle: "detruits_air", libelle: "vue.graphique.detruits_air", couleur: COULEURS.ami},
+  {cle: "detruits_sol", libelle: "vue.graphique.detruits_sol", couleur: COULEURS.sol},
 ];
 
 const MARGES = {haut: 16, droite: 150, bas: 40, gauche: 52};
@@ -60,8 +61,8 @@ function serie(echelle, points, {cle, couleur, libelle}) {
 
 /** Rendre le texte de l'infobulle d'une valeur balayée : chaque grandeur avec son IC. */
 export function texte_infobulle(point, libelleAbscisse) {
-  const lignes = SERIES.map((s) => `${s.libelle} : ${format_intervalle(point.resume[s.cle])}`);
-  return [`${libelleAbscisse} = ${format_decimal(point.valeur)}`, ...lignes, `${point.resume.fuites.effectif} raids simulés`].join("\n");
+  const lignes = SERIES.map((s) => t("vue.graphique.ligne", {serie: t(s.libelle), valeur: format_intervalle(point.resume[s.cle])}));
+  return [`${libelleAbscisse} = ${format_decimal(point.valeur)}`, ...lignes, t("vue.graphique.raids", {n: point.resume.fuites.effectif})].join("\n");
 }
 
 /** Dessiner dans `conteneur` les courbes des `points` reçus ({valeur, resume}) ; `surSurvol(point|null, x, y)`. */
@@ -77,7 +78,7 @@ export function dessiner_courbes(conteneur, points, libelleAbscisse, surSurvol) 
     const droite = i < points.length - 1 ? (echelle.x(p.valeur) + echelle.x(points[i + 1].valeur)) / 2 : largeur - MARGES.droite;
     return `<rect data-indice="${i}" x="${gauche}" y="0" width="${Math.max(1, droite - gauche)}" height="${HAUTEUR}" fill="transparent"/>`;
   });
-  conteneur.innerHTML = `<svg viewBox="0 0 ${largeur} ${HAUTEUR}" width="100%" role="img" aria-label="Résultats du balayage">
+  conteneur.innerHTML = `<svg viewBox="0 0 ${largeur} ${HAUTEUR}" width="100%" role="img" aria-label="${t("vue.graphique.titre")}">
     <g class="axes">${axes(echelle, largeur, points, libelleAbscisse)}</g>${SERIES.map((s) => serie(echelle, points, s)).join("")}${zones.join("")}</svg>`;
   conteneur.querySelectorAll("rect[data-indice]").forEach((zone) => {
     zone.addEventListener("pointermove", (e) => surSurvol(points[Number(zone.dataset.indice)], e.clientX, e.clientY));

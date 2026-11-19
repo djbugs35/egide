@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test --test-skip-pattern=\"équivalence v0.1\" \"tests/*.test.js\"",
-    "test:complet": "node --test \"tests/*.test.js\""
+    "test": "node --import ./tests/langue_tests.js --test --test-skip-pattern=\"équivalence v0.1\" \"tests/*.test.js\"",
+    "test:complet": "node --import ./tests/langue_tests.js --test \"tests/*.test.js\""
   }
 }

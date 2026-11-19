@@ -44,6 +44,7 @@ import {generer_incidents, recit_incident} from "./incidents.js";
 import {INTERVALLE_RADIO_MS, message_du_lot} from "./radio.js";
 import {creer_sons, sons_du_lot} from "./sons.js";
 import {creer_traces, echantillonner} from "./traces.js";
+import {t} from "../i18n.js";
 
 const $ = (selecteur) => document.querySelector(selecteur);
 const mouvementReduit = matchMedia("(prefers-reduced-motion: reduce)");
@@ -73,17 +74,17 @@ async function completer_catalogue(brut) {
 /** Simuler le raid courant et télécharger son rejeu ; seules ses unités entrent dans l'empreinte, comme sous Node. */
 async function telecharger_rejeu() {
   const message = $("[data-champ='message']");
-  message.textContent = "Simulation du raid pour le rejeu…";
+  message.textContent = t("vue.app.rejeu_calcul");
   // Le raid occupe le fil principal plusieurs secondes : le message doit s'afficher avant.
   await new Promise((suite) => setTimeout(suite));
   try {
     const brut = brut_courant();
     const enregistrements = await creer_rejeu(brut, await charger_unites(ids_unites(brut), lire_json), etat.registre);
     await exporter_rejeu(texte_rejeu(enregistrements), `egide-g${enregistrements[0].graine}.egide-rejeu`);
-    message.textContent = `Rejeu exporté : ${enregistrements[0].images} images, ${enregistrements[0].duree_s} s de raid.`;
+    message.textContent = t("vue.app.rejeu_exporte", {images: enregistrements[0].images, duree: enregistrements[0].duree_s});
   } catch (erreur) {
     console.error(erreur);
-    message.textContent = `Rejeu impossible : ${erreur.message}`;
+    message.textContent = t("vue.app.rejeu_impossible", {erreur: erreur.message});
   }
 }
 
@@ -110,7 +111,7 @@ async function charger() {
     etat.lecteur = creer_lecteur(scenario, etat.registre, {differe: Boolean(etat.editeur?.est_actif()) && etat.editeur.mode() === "edition"});
   } catch (erreur) {
     if (!(erreur instanceof ScenarioInvalide || erreur instanceof CatalogueInvalide || erreur instanceof AlgoInvalide)) throw erreur;
-    $("[data-champ='message']").textContent = `Scénario refusé : ${erreur.message}`;
+    $("[data-champ='message']").textContent = t("vue.app.scenario_refuse", {erreur: erreur.message});
     return;
   }
   $("[data-champ='message']").textContent = "";
@@ -224,7 +225,7 @@ function controle_html(c, i, j) {
   if (c.type === "choix") return `<label>${c.libelle}<select ${repere}>${c.options.map(option).join("")}</select></label>`;
   if (c.type === "nombre") return `<label>${c.libelle}<input type="number" ${repere} value="${c.valeur}" min="${c.min}" step="${c.pas}"></label>`;
   if (c.type === "texte") return `<label>${c.libelle}<input ${repere} value="${echapper_html(c.valeur)}"></label>`;
-  return `<fieldset ${repere}><legend>${c.libelle} (lus par « Relier automatiquement »)</legend>${c.options.map((o) =>
+  return `<fieldset ${repere}><legend>${t("vue.fiche.moyens_legende", {libelle: c.libelle})}</legend>${c.options.map((o) =>
     `<label><input type="checkbox" value="${echapper_html(o.valeur)}" ${c.valeur.includes(o.valeur) ? "checked" : ""}>${echapper_html(o.libelle.replace(/ \(notionnel(le)?\)$/, ""))}</label>`).join("")}</fieldset>`;
 }
 
@@ -245,7 +246,7 @@ function brancher_sauvegarde() {
   $("[data-action='ranger_deploiement']").addEventListener("click", () => {
     const nom = $("[name='nom_deploiement']").value.trim() || brut_courant().nom;
     const brut = {...brut_courant(), nom};
-    $("[data-champ='message']").textContent = enregistrer_dans_bibliotheque(nom, brut) ? `« ${nom} » rangé dans la bibliothèque : panneau Scénario pour le recharger.` : "Ce navigateur refuse d'enregistrer : exportez le scénario.";
+    $("[data-champ='message']").textContent = enregistrer_dans_bibliotheque(nom, brut) ? t("vue.app.range_bibliotheque", {nom}) : t("vue.app.refus_stockage");
     remplir_bibliotheque();
   });
   $("[data-action='exporter_deploiement']").addEventListener("click", () => {
@@ -260,7 +261,7 @@ function brancher_sauvegarde() {
       try {
         await remplacer_base(JSON.parse(await fichier.text()));
       } catch (erreur) {
-        $("[data-champ='message']").textContent = `Fichier illisible : ${erreur.message}`;
+        $("[data-champ='message']").textContent = t("vue.app.fichier_illisible", {erreur: erreur.message});
       }
     });
   }
@@ -280,7 +281,7 @@ function rafraichir_journal(maintenant, forcer = false) {
   etat.journal = lignes;
   $("[data-zone='journal']").innerHTML = lignes.length
     ? lignes.map((l, i) => `<li class="${l.famille}" data-ligne="${i}"><time>${format_duree(l.t)}</time><span>${l.texte}</span></li>`).join("")
-    : `<li class="vide"><time></time><span>Rien encore : lancez la lecture.</span></li>`;
+    : `<li class="vide"><time></time><span>${t("vue.app.journal_vide")}</span></li>`;
 }
 
 function brancher_journal() {
@@ -326,7 +327,7 @@ function afficher_bouton_son() {
   const actif = etat.sons.actif();
   bouton.setAttribute("aria-pressed", String(actif));
   bouton.querySelector("use").setAttribute("href", actif ? "#i-son" : "#i-muet");
-  bouton.title = actif ? "Bruitages actifs : cliquer pour les couper (M)" : "Bruitages coupés : cliquer pour les activer (M)";
+  bouton.title = actif ? t("vue.app.son_actif") : t("vue.app.son_coupe");
 }
 
 /** Activer ou couper les bruitages ; le clic sert aussi de geste qui autorise le navigateur à jouer du son. */
@@ -378,12 +379,12 @@ function rafraichir_commandes(maintenant) {
   rafraichir_inspection(maintenant);
   mettre_a_jour_tableau($("#tableau"), lecteur.monde);
   $("[name='temps']").value = lecteur.monde.t;
-  $("[data-champ='horloge']").textContent = `${format_duree(lecteur.monde.t)} sur ${format_duree(lecteur.duree)}`;
+  $("[data-champ='horloge']").textContent = t("vue.app.horloge", {t: format_duree(lecteur.monde.t), duree: format_duree(lecteur.duree)});
   if (etat.vue_pc) {
     const s = resume_situation(lecteur.monde);
-    $("[data-champ='bandeau_pc']").textContent = `Vue du CDC : ${s.connus} drone${s.connus > 1 ? "s" : ""} connu${s.connus > 1 ? "s" : ""} sur ${s.en_vol} en vol, ${s.pistes} piste${s.pistes > 1 ? "s" : ""}`;
+    $("[data-champ='bandeau_pc']").textContent = `${t("vue.app.bandeau_pc", {n: s.connus, en_vol: s.en_vol})}, ${t("vue.app.pistes", {n: s.pistes})}`;
   }
-  $("[data-action='lire']").textContent = lecteur.enLecture ? "Pause" : lecteur.monde.t >= lecteur.duree ? "Rejouer" : "Lire";
+  $("[data-action='lire']").textContent = lecteur.enLecture ? t("vue.app.pause") : lecteur.monde.t >= lecteur.duree ? t("vue.app.rejouer") : t("vue.app.lire");
 }
 
 function sauter_a(t) {
@@ -528,10 +529,10 @@ async function remplir_bibliotheque() {
   bibliotheque.prive = lire_mode() === "public" ? [] : await lire_json("prive/scenarios/index.json").catch(() => []);
   bibliotheque.locale = lire_bibliotheque_locale();
   const liste = $("[name='bibliotheque']");
-  liste.innerHTML = `<option value="">Bibliothèque de scénarios…</option>`
+  liste.innerHTML = `<option value="">${t("vue.app.bibliotheque")}</option>`
     + bibliotheque.depot.map((s) => `<option value="depot:${s.id}">${s.nom}</option>`).join("")
     + bibliotheque.prive.map((s) => `<option value="prive:${s.id}">${s.nom}</option>`).join("")
-    + Object.keys(bibliotheque.locale).map((nom) => `<option value="locale:${nom}">${nom} (ce navigateur)</option>`).join("");
+    + Object.keys(bibliotheque.locale).map((nom) => `<option value="locale:${nom}">${t("vue.app.ce_navigateur", {nom})}</option>`).join("");
 }
 
 function brancher_bibliotheque() {
@@ -548,7 +549,7 @@ function brancher_bibliotheque() {
 
 function brancher_prereglages() {
   const liste = $("[name='prereglage']");
-  const remplir = () => (liste.innerHTML = `<option value="">Réglages enregistrés…</option>${Object.keys(lire_prereglages()).map((nom) => `<option>${nom}</option>`).join("")}`);
+  const remplir = () => (liste.innerHTML = `<option value="">${t("vue.app.reglages_enregistres")}</option>${Object.keys(lire_prereglages()).map((nom) => `<option>${nom}</option>`).join("")}`);
   remplir();
   liste.addEventListener("change", () => {
     const choisi = lire_prereglages()[liste.value];
@@ -559,7 +560,7 @@ function brancher_prereglages() {
   $("[data-action='enregistrer']").addEventListener("click", () => {
     const nom = $("[name='nom_prereglage']").value.trim();
     if (!nom) return;
-    $("[data-champ='message']").textContent = enregistrer_prereglage(nom, etat.modifications) ? `Réglage « ${nom} » enregistré.` : "Ce navigateur refuse d'enregistrer : exportez le scénario.";
+    $("[data-champ='message']").textContent = enregistrer_prereglage(nom, etat.modifications) ? t("vue.app.reglage_enregistre", {nom}) : t("vue.app.refus_stockage");
     remplir();
   });
   $("[data-action='exporter']").addEventListener("click", () => exporter_scenario(brut_courant(), "egide-scenario.json"));
@@ -633,8 +634,8 @@ async function basculer_3d(voulu = !etat.en_3d) {
       const local = await lire_json("hors_ligne/index.json").catch(() => null);
       etat.vue3d = await creer_vue3d($("#globe"), etat.sources_carte, source_fond(), local);
     } catch (erreur) {
-      console.warn(`Vue 3D indisponible : ${erreur.message}`);
-      $("[data-champ='message']").textContent = "Vue 3D indisponible sur ce navigateur (WebGL).";
+      console.warn(t("vue.app.vue3d_indisponible", {erreur: erreur.message}));
+      $("[data-champ='message']").textContent = t("vue.app.vue3d_webgl");
       return;
     } finally {
       bouton.disabled = false;
@@ -658,7 +659,7 @@ function survoler_3d(e, infobulle) {
   const cadre = $("#vue").getBoundingClientRect();
   const {monde} = etat.lecteur;
   const entite = entite_depuis_id(monde, etat.vue3d.sous_curseur(e.clientX - cadre.left, e.clientY - cadre.top));
-  const altitude = entite && ["drone", "avion"].includes(entite.type) ? `\naltitude : ${Math.round(entite.objet.geo.alt)} m` : "";
+  const altitude = entite && ["drone", "avion"].includes(entite.type) ? `\n${t("vue.app.altitude", {m: Math.round(entite.objet.geo.alt)})}` : "";
   montrer(infobulle, entite && `${decrire(entite, monde)}${altitude}`, e.clientX, e.clientY);
 }
 
@@ -679,7 +680,7 @@ function preparer_carte() {
   etat.carte_indisponible = true;
   const panneau = $(".reglages-carte");
   panneau.querySelectorAll("select, input:not([name='scope_seul'])").forEach((champ) => (champ.disabled = true));
-  panneau.title = "Carte indisponible dans ce navigateur (WebGL) : vue scope seule.";
+  panneau.title = t("vue.app.carte_webgl");
 }
 
 /** Appliquer un geste d'édition : il s'empile pour l'annulation, puis le raid est recalculé à t = 0. */
@@ -719,7 +720,7 @@ async function rafraichir_profil() {
   const {rouge} = etat.lecteur?.scenario ?? {};
   if (panneau.hidden || !rouge) return;
   if (rouge.plan_de_vol.length < 2) {
-    zone.innerHTML = `<p class="note-profil">Dessinez un plan de vol d'au moins deux points dans l'éditeur pour voir son profil.</p>`;
+    zone.innerHTML = `<p class="note-profil">${t("vue.app.profil_vide")}</p>`;
     return;
   }
   const brut = echantillonner_chemin(rouge.plan_de_vol, PAS_PROFIL);
@@ -758,9 +759,9 @@ function brancher_editeur() {
     },
     reseau_auto: async () => {
       const {modifications, liaisons, isoles} = modifications_reseau_auto(etat.lecteur.monde, brut_courant(), etat.fichiers);
-      if (!liaisons) return void ($("[data-champ='message']").textContent = "Aucune liaison possible : équipez les unités et au moins un centre C2 d'un même moyen (onglet Réseau de la palette).");
+      if (!liaisons) return void ($("[data-champ='message']").textContent = t("vue.app.aucune_liaison"));
       await appliquer_edition(modifications);
-      $("[data-champ='message']").textContent = `${liaisons} liaison${liaisons > 1 ? "s" : ""} créée${liaisons > 1 ? "s" : ""}${isoles.length ? ` ; hors réseau : ${isoles.map((n) => libelle_noeud(etat.lecteur.monde, n)).join(", ")}` : ""}.`;
+      $("[data-champ='message']").textContent = t(isoles.length ? "vue.app.liaisons_isoles" : "vue.app.liaisons_creees", {n: liaisons, isoles: isoles.map((n) => libelle_noeud(etat.lecteur.monde, n)).join(", ")});
     },
     sur_depot: (id) => {
       preparer_unite(id);
@@ -803,8 +804,8 @@ const PASTILLES = {avions_ir: "ami-plein", avions_laser: "ami-creux", missions: 
 function brancher_calques() {
   const zone = $("[data-zone='calques']");
   const groupes = [...new Set(CALQUES.map((c) => c.groupe))];
-  zone.innerHTML = groupes.map((groupe) => `<h3>${groupe}</h3>${CALQUES.filter((c) => c.groupe === groupe).map((c) =>
-    `<label class="calque"><input type="checkbox" name="calque" value="${c.id}"><i class="${PASTILLES[c.id] ?? ""}"></i>${c.libelle}</label>`).join("")}`).join("");
+  zone.innerHTML = groupes.map((groupe) => `<h3>${t(groupe)}</h3>${CALQUES.filter((c) => c.groupe === groupe).map((c) =>
+    `<label class="calque"><input type="checkbox" name="calque" value="${c.id}"><i class="${PASTILLES[c.id] ?? ""}"></i>${t(c.libelle)}</label>`).join("")}`).join("");
   const afficher = () => zone.querySelectorAll("[name='calque']").forEach((c) => (c.checked = etat.calques[c.value]));
   const changer = (calques) => {
     etat.calques = calques;
@@ -821,7 +822,7 @@ function brancher_calques() {
 async function remplir_moyens() {
   // Catalogue privé importé depuis la page Catalogue : fusionné au public ou à sa place, selon le mode retenu.
   const {index, erreur} = await charger_index(lire_json);
-  if (erreur) console.warn(`Catalogue privé : ${erreur}`);
+  if (erreur) console.warn(t("vue.app.catalogue_prive", {erreur}));
   etat.index_unites = index;
   etat.index_algos = await lire_json("algos/index.json");
   etat.panneau_deploiement = brancher_panneau_deploiement({racine: $(".palette"), index, armer: (id) => etat.editeur.armer_depot(id), brut: brut_courant, appliquer: appliquer_edition, placer_theatre: () => etat.editeur.choisir_outil("theatre")});
@@ -859,7 +860,7 @@ async function demarrer() {
     brut: brut_courant, fichiers: () => etat.fichiers, lire_json,
     appliquer: (brut) => remplacer_base(brut),
     enregistrer: (nom, brut) => {
-      $("[data-champ='message']").textContent = enregistrer_dans_bibliotheque(nom, brut) ? `« ${nom} » rangé dans la bibliothèque de ce navigateur.` : "Ce navigateur refuse d'enregistrer : exportez le scénario.";
+      $("[data-champ='message']").textContent = enregistrer_dans_bibliotheque(nom, brut) ? t("vue.app.range_navigateur", {nom}) : t("vue.app.refus_stockage");
       remplir_bibliotheque();
     },
     exporter: (brut) => exporter_scenario(brut, "egide-autoconfiguration.json"),

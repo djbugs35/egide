@@ -2,6 +2,7 @@
 import {format_decimal, format_intervalle} from "./format.js";
 import {SERIES, dessiner_courbes, texte_infobulle} from "./graphique.js";
 import {REGLAGES, unite_reglage} from "./reglages.js";
+import {t} from "../i18n.js";
 
 // Réglages proposés au balayage, avec des valeurs de départ qui couvrent leur plage utile.
 const PROPOSITIONS = {
@@ -19,11 +20,11 @@ const reglage_de = (id) => REGLAGES.find((r) => r.id === id);
 
 function libelle_reglage(id) {
   const reglage = reglage_de(id);
-  return `${reglage.libelle}${unite_reglage(reglage) ? ` (${unite_reglage(reglage)})` : ""}`;
+  return `${t(reglage.libelle)}${unite_reglage(reglage) ? ` (${unite_reglage(reglage)})` : ""}`;
 }
 
 function tableau_resultats(points, id) {
-  const entete = `<tr><th>${libelle_reglage(id)}</th>${SERIES.map((s) => `<th>${s.libelle}</th>`).join("")}</tr>`;
+  const entete = `<tr><th>${libelle_reglage(id)}</th>${SERIES.map((s) => `<th>${t(s.libelle)}</th>`).join("")}</tr>`;
   const lignes = points.map((p) => `<tr><td>${format_decimal(p.valeur)}</td>${SERIES.map((s) => `<td>${format_intervalle(p.resume[s.cle])}</td>`).join("")}</tr>`);
   return `<table>${entete}${lignes.join("")}</table>`;
 }
@@ -52,16 +53,16 @@ export function brancher_balayage(racine, courant, infobulle) {
     travailleur = new Worker(new URL("./balayage_travailleur.js", import.meta.url), {type: "module"});
     travailleur.addEventListener("message", ({data}) => {
       if (data.type === "fin") {
-        etat.textContent = `Terminé : ${liste.length} valeurs, ${tirages.value} raids chacune.`;
+        etat.textContent = t("vue.balayage.termine", {n: liste.length, tirages: tirages.value});
         return;
       }
       points.push(data);
       points.sort((a, b) => a.valeur - b.valeur);
-      etat.textContent = `${points.length} valeurs sur ${liste.length} simulées…`;
+      etat.textContent = t("vue.balayage.avancement", {n: points.length, total: liste.length});
       dessiner_courbes(courbes, points, libelle_reglage(id), survol);
       table.innerHTML = tableau_resultats(points, id);
     });
-    etat.textContent = `0 valeur sur ${liste.length} simulée…`;
+    etat.textContent = t("vue.balayage.avancement", {n: 0, total: liste.length});
     const {brut, fichiers} = courant();
     travailleur.postMessage({brut, fichiers, chemins: reglage_de(id).chemins, valeurs: liste, tirages: Number(tirages.value)});
   });
