@@ -1,6 +1,7 @@
 // Incidents de scénario (MODELE § 29) : leur récit à l'écran et leur tirage au hasard, à graine. Pur, testé sous Node.
 import {creer_hasard} from "../moteur/hasard.js";
 import {t} from "../i18n.js";
+import {nom_unite} from "../catalogue_langue.js";
 
 export const LIBELLES_CAUSES = {panne: "vue.incident.panne", maintenance: "vue.incident.maintenance", meteo: "vue.incident.meteo", coupure: "vue.incident.coupure"};
 // Décalage de graine : le tirage des incidents ne doit pas rejouer celui du raid, qui part de la même graine.
@@ -17,7 +18,7 @@ export function nom_element(monde, element) {
   if (genre === "radar") return `R${k + 1}`;
   if (genre === "liaison") return t("vue.incident.liaison", {n: k + 1});
   if (genre === "centre") return monde.scenario.reseau.centres[k]?.nom ?? t("vue.incident.centre", {n: k + 1});
-  if (genre === "batterie") return monde.scenario.sol.batteries?.[k]?.unite?.nom ? t("vue.incident.batterie_nom", {n: k + 1, nom: monde.scenario.sol.batteries[k].unite.nom}) : t("vue.incident.batterie", {n: k + 1});
+  if (genre === "batterie") return monde.scenario.sol.batteries?.[k]?.unite?.nom ? t("vue.incident.batterie_nom", {n: k + 1, nom: nom_unite(monde.scenario.sol.batteries[k].unite.id, monde.scenario.sol.batteries[k].unite.nom)}) : t("vue.incident.batterie", {n: k + 1});
   return element;
 }
 

@@ -2,6 +2,7 @@
 // traduction de la page (attributs data-i18n, data-i18n-html, data-i18n-attr) et sélecteur. Changer de langue
 // recharge la page : chaque module écrit ensuite ses textes dans la nouvelle langue, sans état à défaire.
 import {choisir_langue, installer_langue, langue, LANGUE_PAR_DEFAUT, LANGUES, t} from "../i18n.js";
+import {chemin_catalogue, installer_catalogue} from "../catalogue_langue.js";
 
 const CLE = "egide.langue";
 
@@ -28,6 +29,9 @@ export async function charger_langue(lire_json) {
   const code = choisir_langue({adresse: location.search, memorisee: memorisee()});
   const secours = await lire_json(`langues/${LANGUE_PAR_DEFAUT}.json`);
   installer_langue(code, code === LANGUE_PAR_DEFAUT ? secours : await lire_json(`langues/${code}.json`), secours);
+  // Catalogue : sans dictionnaire (langue source, ou fichier absent), on montre les textes des fichiers.
+  const catalogue = chemin_catalogue(code);
+  installer_catalogue(catalogue ? await lire_json(catalogue).catch(() => null) : null);
   return code;
 }
 

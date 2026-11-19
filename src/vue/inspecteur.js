@@ -1,9 +1,10 @@
 // Inspecteur « pourquoi » (jalon 4) : au clic sur une entité, son état en direct et l'explication de ce qu'elle fait —
 // pourquoi un avion va là, ce qu'un drone a subi, comment une cible est défendue. Rendu par des fonctions pures, testées.
+import {nom_unite} from "../catalogue_langue.js";
 import {inverse, vers_degres} from "../moteur/geodesie.js";
 import {COULEURS} from "./couleurs.js";
 import {ecran} from "./ecran.js";
-import {echapper, LIBELLES_FIDELITE} from "./fiches.js";
+import {echapper, libelle_fidelite} from "./fiches.js";
 import {format_decimal, format_duree, format_entier} from "./format.js";
 import {ms_vers_kmh} from "../moteur/unites.js";
 import {positions_radars} from "../moteur/radars.js";
@@ -16,8 +17,9 @@ import {t} from "../i18n.js";
 const ETATS = {orbite: "vue.insp.orbite", ralliement: "vue.insp.ralliement", engagement: "vue.insp.engagement",
   poste: "vue.infobulle.poste", retour: "vue.infobulle.retour"};
 
-const lien_fiche = (genre, id, texte) => `<a href="catalogue.html#${genre}/${encodeURIComponent(id)}" target="_blank" rel="noopener">${echapper(texte)}</a>`;
-const fidelite = (niveau) => `<span class="badge fidelite-${niveau}" title="${echapper(LIBELLES_FIDELITE[niveau] ?? "")}">${echapper(niveau)}</span>`;
+// Le nom affiché suit la langue (langues/catalogue.<code>.json) ; un algorithme se montre par son identifiant.
+const lien_fiche = (genre, id, texte) => `<a href="catalogue.html#${genre}/${encodeURIComponent(id)}" target="_blank" rel="noopener">${echapper(genre === "unite" ? nom_unite(id, texte) : texte)}</a>`;
+const fidelite = (niveau) => `<span class="badge fidelite-${niveau}" title="${echapper(libelle_fidelite(niveau))}">${echapper(niveau)}</span>`;
 const ligne = (cle, valeur) => `<tr><th scope="row">${t(cle)}</th><td>${valeur}</td></tr>`;
 const position = (geo) => t("vue.insp.position", {lat: vers_degres(geo.lat).toFixed(3).replace(".", format_decimal(0.5).charAt(1)), lon: vers_degres(geo.lon).toFixed(3).replace(".", format_decimal(0.5).charAt(1))});
 const pourcent = (p) => `${format_decimal(100 * p)} %`;
@@ -139,7 +141,7 @@ function acces_texte(monde, avion) {
   if (avion.acces === undefined) return t("vue.insp.acces_inconnu");
   if (!avion.acces) return t("vue.insp.acces_aucun");
   const centre = avion.acces.centre === 0 ? t("vue.commun.cdc") : echapper(monde.reseau.centres[avion.acces.centre].nom);
-  return t("vue.insp.acces", {centre, moyen: echapper(avion.acces.moyen.nom), depuis: libelle_noeud(monde, avion.acces.sol), s: format_decimal(avion.acces.latence)});
+  return t("vue.insp.acces", {centre, moyen: echapper(nom_unite(avion.acces.moyen.id, avion.acces.moyen.nom)), depuis: libelle_noeud(monde, avion.acces.sol), s: format_decimal(avion.acces.latence)});
 }
 
 /**

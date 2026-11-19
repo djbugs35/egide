@@ -1,6 +1,7 @@
 // Éditeur de déploiement (MODELE § 21) : palette du catalogue et dépôt d'une unité sur la carte, à la manière d'un jeu
 // de stratégie. Chaque dépôt devient des modifications par chemin du scénario : annulation, export et rejeu d'office.
 // Pur, sans DOM, testé.
+import {nom_unite} from "../catalogue_langue.js";
 import {t} from "../i18n.js";
 import {unite_si} from "../moteur/catalogue.js";
 import {direct, inverse} from "../moteur/geodesie.js";
@@ -142,7 +143,7 @@ function refus_portee(monde, de, vers, unite) {
   const distance = inverse(a, b).distance;
   const portee = portee_liaison(unite, unite.hauteur_antenne, unite.hauteur_antenne);
   if (distance <= portee) return null;
-  return t("vue.palette.hors_portee", {moyen: unite.nom, portee: Math.round(portee / 1000), de: libelle_noeud(monde, de), vers: libelle_noeud(monde, vers), distance: Math.round(distance / 1000)});
+  return t("vue.palette.hors_portee", {moyen: nom_unite(unite.id, unite.nom), portee: Math.round(portee / 1000), de: libelle_noeud(monde, de), vers: libelle_noeud(monde, vers), distance: Math.round(distance / 1000)});
 }
 
 /**
@@ -159,7 +160,7 @@ export function preparer_liaison(monde, brut, fichiers, de, vers, moyen) {
   const liens = `${libelle_noeud(monde, de)} ↔ ${libelle_noeud(monde, vers)}`;
   return {
     modifications: {...modifications_ajout_liaison(monde, brut, de, vers, moyen), ...modifications_equipement_liaison(brut, [de, vers], moyen)},
-    resume: unite ? `${liens} : ${unite.nom}` : liens,
+    resume: unite ? `${liens} : ${nom_unite(unite.id, unite.nom)}` : liens,
   };
 }
 

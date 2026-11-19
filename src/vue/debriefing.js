@@ -2,6 +2,7 @@
 // lus dans l'état final du monde et son journal. Pur : ni DOM ni horloge, testé sous Node.
 
 import {t} from "../i18n.js";
+import {nom_unite} from "../catalogue_langue.js";
 
 export const CAUSES = {
   non_detectee: "vue.debrief.non_detectee",
@@ -75,10 +76,10 @@ function analyser_tireurs(monde, parTireur) {
   for (const poste of monde.postes) {
     const fiche = parTireur.get(`sol:${poste.id}`);
     const unite = poste.unite ?? monde.scenario.sol;
-    ajouter(`sol:${unite.id}`, unite.nom, "sol", fiche, poste.munitions === 0 && (fiche?.tirs ?? 0) > 0);
+    ajouter(`sol:${unite.id}`, nom_unite(unite.id, unite.nom), "sol", fiche, poste.munitions === 0 && (fiche?.tirs ?? 0) > 0);
   }
   for (const avion of monde.avions) {
-    ajouter(`air:${avion.groupe.id}`, avion.groupe.nom, "air", parTireur.get(`air:${avion.id}`), false);
+    ajouter(`air:${avion.groupe.id}`, nom_unite(avion.groupe.id, avion.groupe.nom), "air", parTireur.get(`air:${avion.id}`), false);
   }
   return [...unites.values()].filter((u) => u.tirs > 0).map((u) => ({...u, reussite: u.coups / u.tirs})).sort((a, b) => b.tirs - a.tirs);
 }

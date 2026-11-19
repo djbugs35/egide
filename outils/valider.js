@@ -3,6 +3,7 @@
 //
 //   node outils/valider.js unites/capteurs/radars/mon_radar.json prive/algos/allocation/mon_algo.js scenarios/x.json
 //   node outils/valider.js --json prive/unites/…        # rapport JSON sur la sortie standard, pour un outil
+//   node outils/valider.js --langues                     # couverture des traductions du catalogue (langues/catalogue.<code>.json)
 //
 // Code de sortie 0 si tout est valide, 1 sinon. Les fichiers doivent être rangés à leur place dans le dépôt :
 // leur chemin donne leur identifiant (unites/<id>.json, prive/unites/<id>.json, algos/<id>.js, prive/algos/<id>.js).
@@ -14,6 +15,8 @@ import {charger_unites, chemin_icone, unite_brute, unite_si} from "../src/moteur
 import {importer_module, lire_fichier, RACINE} from "../src/moteur/catalogue_node.js";
 import {ids_unites, resoudre_scenario} from "../src/moteur/scenario.js";
 import {PAYS} from "../src/vue/pays.js";
+import {LANGUES} from "../src/i18n.js";
+import {chemin_catalogue, couverture_catalogue} from "../src/catalogue_langue.js";
 
 const TYPES_LIAISON = ["filaire", "radio", "satellite", "optique"];
 
@@ -99,11 +102,65 @@ export async function valider_fichier(chemin) {
   return {fichier, genre, id: id ?? null, valide: defauts.length === 0, defauts};
 }
 
+const lire_racine = (chemin) => JSON.parse(readFileSync(resolve(RACINE, chemin), "utf-8"));
+const longueur = (x) => (Array.isArray(x) ? x.length : null);
+
+/**
+ * Rendre, pour chaque langue qui a un dictionnaire de catalogue, {langue, fichier, manquants, defauts} : entrées
+ * absentes (le texte français s'affiche alors) et entrées fautives (identifiant inconnu, clés d'aide, nombre de sources,
+ * d'équations, d'hypothèses ou de références, paramètres différents de ceux du fichier traduit).
+ */
+export async function couverture_langues() {
+  const unites = Object.fromEntries(lire_racine("unites/index.json").map((u) => [u.id, lire_racine(`unites/${u.id}.json`)]));
+  const indexAlgos = lire_racine("algos/index.json");
+  const metas = Object.fromEntries(await Promise.all(indexAlgos.map(async (a) => [a.id, (await importer_module(chemin_algo(a.id))).meta])));
+  const attendus = {
+    unites: Object.keys(unites).filter((id) => "nom" in unites[id] || "sources" in unites[id] || "_aide" in unites[id]),
+    algos: Object.keys(metas),
+    scenarios: lire_racine("scenarios/index.json").map((s) => s.id),
+    cartes: lire_racine("cartes/index.json").map((c) => c.id),
+  };
+  const rapports = [];
+  for (const code of Object.keys(LANGUES)) {
+    const fichier = chemin_catalogue(code);
+    if (!fichier) continue;
+    const contenu = lire_racine(fichier);
+    const couverture = couverture_catalogue(contenu, attendus);
+    const defauts = Object.entries(couverture).flatMap(([genre, c]) => c.inconnus.map((id) => `${genre} : « ${id} » n'existe pas`));
+    for (const [id, x] of Object.entries(contenu.unites ?? {})) {
+      const brut = unites[id];
+      if (!brut) continue;
+      if ("nom" in x !== "nom" in brut) defauts.push(`unites ${id} : nom traduit sans nom d'origine, ou l'inverse`);
+      if (longueur(x.sources) !== longueur(brut.sources)) defauts.push(`unites ${id} : ${longueur(x.sources)} sources pour ${longueur(brut.sources)}`);
+      const cles = (o) => Object.keys(o ?? {}).sort().join(", ");
+      if (cles(x.aide) !== cles(brut._aide)) defauts.push(`unites ${id} : aides [${cles(x.aide)}] pour [${cles(brut._aide)}]`);
+    }
+    for (const [id, x] of Object.entries(contenu.algos ?? {})) {
+      const meta = metas[id];
+      if (!meta) continue;
+      for (const champ of ["equations", "hypotheses", "references"]) {
+        if (champ in x && longueur(x[champ]) !== longueur(meta[champ])) defauts.push(`algos ${id} : ${longueur(x[champ])} ${champ} pour ${longueur(meta[champ])}`);
+      }
+      const inconnus = Object.keys(x.parametres ?? {}).filter((cle) => !(cle in meta.parametres));
+      if (inconnus.length) defauts.push(`algos ${id} : paramètres inconnus ${inconnus.join(", ")}`);
+    }
+    const manquants = Object.entries(couverture).flatMap(([genre, c]) => c.manquants.map((id) => `${genre} ${id}`));
+    rapports.push({langue: code, fichier, manquants, defauts});
+  }
+  return rapports;
+}
+
 async function principal(args) {
   const json = args.includes("--json");
+  if (args.includes("--langues")) {
+    const rapports = await couverture_langues();
+    if (json) console.log(JSON.stringify(rapports, null, 2));
+    else for (const r of rapports) console.log(`${r.defauts.length ? "REFUSÉ " : "OK     "} ${r.fichier} : ${r.manquants.length} entrée(s) manquante(s), ${r.defauts.length} défaut(s)${[...r.manquants.map((m) => `\n        manque ${m}`), ...r.defauts.map((d) => `\n        - ${d}`)].join("")}`);
+    return rapports.every((r) => !r.defauts.length) ? 0 : 1;
+  }
   const chemins = args.filter((a) => a !== "--json");
   if (!chemins.length) {
-    console.error("usage : node outils/valider.js [--json] fichier…  (voir docs/FORMATS.md)");
+    console.error("usage : node outils/valider.js [--json] fichier…  |  --langues  (voir docs/FORMATS.md)");
     return 2;
   }
   const rapports = [];

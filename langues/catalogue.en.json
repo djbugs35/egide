@@ -1,0 +1,801 @@
+{
+ "_aide": "Translations of the public catalogue (unites/, algos/, scenarios/, cartes/) into English. French is the source, in the files themselves; a missing entry shows the French text. Checked by node outils/valider.js --langues and tests/langues.test.js.",
+ "unites": {
+  "_unite": {
+   "nom": "Unit",
+   "sources": [
+    "Notional order of magnitude"
+   ],
+   "aide": {
+    "_": "Base of every catalogue unit. A unit inherits its parent's keys (herite_de) and may replace their values; each key carries its sentence here or in a parent.",
+    "nom": "Displayed name of the unit.",
+    "fidelite": "Model fidelity level: notionnel (orders of magnitude), cinematique, point_masse (3 degrees of freedom) or 6ddl.",
+    "sources": "Origin of the values: public documents, books, or 'notional order of magnitude'. At least one entry.",
+    "herite_de": "Identifier of the parent unit, whose keys are taken before applying these.",
+    "algos": "Algorithms of the unit, by role: identifier in algos/ (or prive/algos/). A child unit only replaces the roles it names.",
+    "pays": "Country of inspiration (three-letter ISO 3166 code): sorting and badge colour only; name and values stay notional. null: generic unit.",
+    "icone": "Game icon of the unit (icones/<name>.svg), drawn on the map and in the palette; null: APP-6 symbology only."
+   }
+  },
+  "capteurs/radars/chn_charme_300": {
+   "nom": "Hornbeam 300 (CHN, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "capteurs/radars/deu_aulne_250": {
+   "nom": "Alder 250 (DEU, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "capteurs/radars/fra_ajonc_300": {
+   "nom": "Gorse 300 (FRA, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "capteurs/radars/isr_bruyere_120": {
+   "nom": "Heather 120 (ISR, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "capteurs/radars/radar_basse_altitude_notionnel": {
+   "nom": "Low-altitude surveillance radar (notional)",
+   "sources": [
+    "Notional order of magnitude: ground surveillance radar, mast-mounted antenna"
+   ],
+   "aide": {
+    "hauteur_antenne_m": "Height of the antenna above the ground; with the target's altitude, sets the radar horizon (MODELE § 2).",
+    "portee_max_km": "Maximum instrumented range, before the horizon limit.",
+    "ser_reference_m2": "RCS for which the instrumented range holds; null: the range does not depend on RCS (MODELE § 27.1)."
+   }
+  },
+  "capteurs/radars/radar_longue_portee_notionnel": {
+   "nom": "Long-range early-warning radar (notional)",
+   "sources": [
+    "Notional order of magnitude: tower-mounted early-warning radar, high antenna, instrumented range of several hundred km"
+   ]
+  },
+  "capteurs/radars/rus_bouleau_450": {
+   "nom": "Birch 450 (RUS, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "capteurs/radars/swe_cormier_180": {
+   "nom": "Service Tree 180 (SWE, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "capteurs/radars/usa_arnica_400": {
+   "nom": "Arnica 400 (USA, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "effecteurs/brouillage/brouillage_notionnel": {
+   "nom": "Jamming (notional)",
+   "sources": [
+    "Notional order of magnitude: area effect, no signal parameter"
+   ],
+   "aide": {
+    "_": "Jamming effect represented without a signal model: each enemy drone within the radius is neutralised at a constant rate (MODELE § 19.3).",
+    "type": "'brouillage': no shot; area effect around the carrier.",
+    "portee_km": "Radius of the effect around the carrier; also sets the distance it tries to close to.",
+    "constante_temps_s": "Mean time to neutralise an enemy drone kept within the radius: p = 1 - exp(-dt / tau) at each step."
+   }
+  },
+  "effecteurs/drones/_charge_drone": {
+   "aide": {
+    "_": "Base of the payloads carried by defensive drones; same keys as guided rockets, drone values."
+   }
+  },
+  "effecteurs/drones/charge_impact_notionnelle": {
+   "nom": "Impact interception (notional)",
+   "sources": [
+    "Notional order of magnitude: the interceptor drone rams its target"
+   ]
+  },
+  "effecteurs/drones/munition_drone_notionnelle": {
+   "nom": "Drone munition (notional)",
+   "sources": [
+    "Notional order of magnitude: small munition fired at short range by a drone"
+   ]
+  },
+  "effecteurs/roquettes/_roquette_guidee": {
+   "aide": {
+    "_": "Base of the guided rockets fired from aircraft (MODELE § 4 and § 8.5).",
+    "guidage": "'laser': the aircraft designates until impact and does not fire meanwhile; 'ir': fire and forget.",
+    "portee_km": "Effective range, measured as slant distance from shooter to drone.",
+    "pk": "Kill probability per shot.",
+    "duree_designation_s": "Laser guidance: designation time, equal to the flight time to impact.",
+    "cadence_s": "IR guidance: minimum interval between two shots from the same aircraft.",
+    "vitesse_ms": "IR guidance: mean rocket speed, which sets its flight time."
+   }
+  },
+  "effecteurs/roquettes/roquette_guidee_ir_notionnelle": {
+   "nom": "Infrared-guided rocket (notional)",
+   "sources": [
+    "Notional order of magnitude: class of infrared-seeker rockets, fire and forget"
+   ]
+  },
+  "effecteurs/roquettes/roquette_guidee_laser_notionnelle": {
+   "nom": "70 mm laser-guided rocket (notional)",
+   "sources": [
+    "Notional order of magnitude: class of 70 mm semi-active laser-guided rockets, 5 to 10 km"
+   ]
+  },
+  "liaisons/_liaison": {
+   "nom": "Link",
+   "aide": {
+    "_": "Base of the means of communication between units: end-to-end delay and range, with or without line of sight (MODELE § 15.2).",
+    "type": "Family of the means: filaire, radio, satellite or optique; sets the line style in the network diagram.",
+    "latence_s": "End-to-end delay of a message: propagation, processing and formatting included.",
+    "portee_km": "Maximum distance between both ends; 40,000 km: no practical limit.",
+    "visibilite_directe": "True if the link requires the antennas to see each other: the range is then bounded by the radio horizon (k = 4/3).",
+    "hauteur_antenne_m": "Height of the ground antenna (mast); the airborne end is at the aircraft's altitude."
+   }
+  },
+  "liaisons/filaire_notionnelle": {
+   "nom": "Wired link (notional)",
+   "sources": [
+    "Notional order of magnitude: fibre or copper ground network, no range limit at theatre scale"
+   ]
+  },
+  "liaisons/optique_notionnelle": {
+   "nom": "Free-space optical link (notional)",
+   "sources": [
+    "Notional order of magnitude: point-to-point optical beam, short range and line of sight"
+   ]
+  },
+  "liaisons/radio_vhf_uhf_notionnelle": {
+   "nom": "Line-of-sight V/UHF radio (notional)",
+   "sources": [
+    "Notional order of magnitude: ground-to-air V/UHF radio link, range bounded by the radio horizon"
+   ]
+  },
+  "liaisons/satellite_notionnelle": {
+   "nom": "Satellite link (notional)",
+   "sources": [
+    "Notional order of magnitude: geostationary satellite relay, about 0.25 s one-way propagation, plus processing"
+   ]
+  },
+  "sites/postes/batterie_moyenne_portee_notionnelle": {
+   "nom": "Medium-range surface-to-air battery (notional)",
+   "sources": [
+    "Notional order of magnitude: medium-range surface-to-air defence, bubble of a few tens of km"
+   ]
+  },
+  "sites/postes/chn_lierre_12": {
+   "nom": "Ivy 12 (CHN, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "sites/postes/deu_genet_35": {
+   "nom": "Broom 35 (DEU, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "sites/postes/fra_frene_cp": {
+   "nom": "Ash CP (FRA, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "sites/postes/isr_houx_35": {
+   "nom": "Holly 35 (ISR, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "sites/postes/kor_meleze_25": {
+   "nom": "Larch 25 (KOR, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "sites/postes/poste_sol_air_notionnel": {
+   "nom": "Short-range surface-to-air post (notional)",
+   "sources": [
+    "Notional order of magnitude: very short-range surface-to-air defence, rockets and missiles"
+   ],
+   "aide": {
+    "portee_km": "Radius of the post's engagement bubble.",
+    "pk": "Kill probability per shot.",
+    "portee_conduite_km": "Range of the fire-control sensor; 0: not declared, facteur_conduite x portee_km is used (MODELE § 25.2).",
+    "facteur_conduite": "Fire control relative to the weapon's range, for a unit that does not declare portee_conduite_km.",
+    "hauteur_conduite_m": "Height of the fire-control sensor above the ground: its horizon bounds the firing bubble (MODELE § 25.2).",
+    "engagements_par_passage": "Useful shots of the post while a drone crosses its bubble (MODELE § 5).",
+    "acquisition_s": "Delay for a post not designated by a centre to acquire on its own a drone that entered its bubble; when designated, it fires at once (MODELE § 18.3).",
+    "anti_balistique": "True: the post can engage a ballistic trajectory (MODELE § 27.4)."
+   }
+  },
+  "sites/postes/rus_if_20": {
+   "nom": "Yew 20 (RUS, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "sites/postes/swe_myrte_6": {
+   "nom": "Myrtle 6 (SWE, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "sites/postes/usa_gui_m30": {
+   "nom": "Mistletoe M30 (USA, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "terrains/_terrain": {
+   "nom": "Terrain",
+   "aide": {
+    "_": "Base of terrains: regular grid of ground altitudes in latitude and longitude, read by the engine to mask radars and links (MODELE § 16). Made by node outils/terrain.js.",
+    "lat_sud_deg": "Latitude of the grid's first row (southern edge).",
+    "lon_ouest_deg": "Longitude of the grid's first column (western edge).",
+    "pas_lat_deg": "Latitude spacing between two rows.",
+    "pas_lon_deg": "Longitude spacing between two columns.",
+    "pas_km": "Nominal ground spacing of the grid; sets the sampling step of the horizon masks.",
+    "lignes": "Number of rows (south to north).",
+    "colonnes": "Number of columns (west to east).",
+    "altitudes_b64": "Ground altitudes in m, signed 16-bit little-endian integers, row by row from south to north, base64-encoded."
+   }
+  },
+  "terrains/centre_france": {
+   "nom": "Real terrain around 47° N, 2.5° E, 320 km",
+   "sources": [
+    "Terrain: Terrain Tiles (Mapzen, AWS Open Data) — SRTM, GMTED, ETOPO1 and national sources; terrarium tiles at zoom 9, sampled at 1 km spacing",
+    "AWS Open Data open dataset; see the “Terrain Tiles” page for detailed per-source attributions."
+   ]
+  },
+  "terrains/crete_notionnelle": {
+   "nom": "Synthetic terrain around 47° N, 2.5° E (notional)",
+   "sources": [
+    "Synthetic demonstration terrain (outils/terrain.js --synthetique): east–west ridge and massif, unrelated to real terrain"
+   ]
+  },
+  "vecteurs/avions/_avion": {
+   "aide": {
+    "_": "Base of the aircraft of the air layer: positioning then engagement (MODELE § 3 and § 8.4).",
+    "vitesse_mise_a_poste_kmh": "Speed when heading to an interception point (not pursuit).",
+    "vitesse_engagement_kmh": "Speed once on station, while firing: sets the firing window (MODELE § 4.1).",
+    "facteur_charge_max_g": "Maximum load factor in a turn.",
+    "emport": "Identifier of the carried weapon (effector catalogue).",
+    "emport_nombre": "Number of weapons carried, with no reloading during the raid.",
+    "portee_conduite_km": "Range of the on-board sensor that locks on and tracks a drone; 0: not declared, facteur_conduite x weapon range is used (MODELE § 25.2).",
+    "facteur_conduite": "Fire control relative to the weapon's range, for a unit that does not declare portee_conduite_km.",
+    "type_vecteur": "Family of the vehicle: 'avion', 'drone_arme', 'kamikaze' or 'brouilleur'; sets the symbol and, for a kamikaze or a jammer, the behaviour (MODELE § 19).",
+    "consomme_au_tir": "True: the vehicle is its own weapon (kamikaze interceptor) and is lost on its first shot."
+   }
+  },
+  "vecteurs/avions/bra_noisetier_t": {
+   "nom": "Hazel T (BRA, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/avions/chn_saule_t": {
+   "nom": "Willow T (CHN, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/avions/fra_orpin_h": {
+   "nom": "Stonecrop H (FRA, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/avions/gbr_prunelle_j": {
+   "nom": "Sloe J (GBR, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/avions/ita_sauge_j": {
+   "nom": "Sage J (ITA, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/avions/rus_romarin_h": {
+   "nom": "Rosemary H (RUS, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/avions/turbopropulseur_ir_notionnel": {
+   "nom": "Light attack turboprop, IR rockets (notional)",
+   "sources": [
+    "Notional order of magnitude: class of light attack turboprops, 450 to 600 km/h"
+   ]
+  },
+  "vecteurs/avions/turbopropulseur_laser_notionnel": {
+   "nom": "Light attack turboprop, laser rockets (notional)",
+   "sources": [
+    "Notional order of magnitude: class of light attack turboprops, 450 to 600 km/h"
+   ]
+  },
+  "vecteurs/avions/usa_orme_at": {
+   "nom": "Elm AT (USA, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones/_drone": {
+   "aide": {
+    "_": "Base of attack drones: flight at constant speed and altitude, with no reaction to the defence (MODELE § 8.2).",
+    "vitesse_kmh": "Cruise speed, assumed constant.",
+    "altitude_croisiere_m": "Flight altitude above the ellipsoid; sets the radar detection range at the horizon.",
+    "ser_m2": "Radar cross-section; null: the catalogue range applies as is (MODELE § 27.1)."
+   }
+  },
+  "vecteurs/drones/chn_aubepine_d": {
+   "nom": "Hawthorn D (CHN, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones/drone_reaction_notionnel": {
+   "nom": "Jet-powered attack drone (notional)",
+   "sources": [
+    "Notional order of magnitude: class of turbojet attack drones, 600 to 900 km/h, very low flight"
+   ]
+  },
+  "vecteurs/drones/irn_chardon_d": {
+   "nom": "Thistle D (IRN, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones/isr_prele_r": {
+   "nom": "Horsetail R (ISR, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones/rus_ronce_d": {
+   "nom": "Bramble D (RUS, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones/tur_ciste_j": {
+   "nom": "Rockrose J (TUR, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones/ukr_fougere_l": {
+   "nom": "Fern L (UKR, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones/usa_epicea_j": {
+   "nom": "Spruce J (USA, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones_defensifs/_drone_defensif": {
+   "aide": {
+    "_": "Base of defensive drones: same positioning, assignment by a centre and engagement rules as aircraft, at drone speed and payload (MODELE § 19)."
+   }
+  },
+  "vecteurs/drones_defensifs/brouilleur_notionnel": {
+   "nom": "Jamming drone (notional)",
+   "sources": [
+    "Notional order of magnitude: jamming effect represented by a neutralisation probability, no signal model"
+   ]
+  },
+  "vecteurs/drones_defensifs/chn_arbousier_a": {
+   "nom": "Arbutus A (CHN, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones_defensifs/deu_camerisier_b": {
+   "nom": "Honeysuckle B (DEU, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones_defensifs/drone_arme_notionnel": {
+   "nom": "Armed defensive drone (notional)",
+   "sources": [
+    "Notional order of magnitude: reusable interception drone with a small payload, 150 to 200 km/h class"
+   ]
+  },
+  "vecteurs/drones_defensifs/intercepteur_kamikaze_notionnel": {
+   "nom": "Single-use interceptor drone (notional)",
+   "sources": [
+    "Notional order of magnitude: expendable interceptor that rams its target, 250 to 300 km/h class"
+   ]
+  },
+  "vecteurs/drones_defensifs/isr_bourdaine_b": {
+   "nom": "Buckthorn B (ISR, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones_defensifs/tur_tilleul_a": {
+   "nom": "Linden A (TUR, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones_defensifs/ukr_sureau_i": {
+   "nom": "Elder I (UKR, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  },
+  "vecteurs/drones_defensifs/usa_thym_i": {
+   "nom": "Thyme I (USA, notional)",
+   "sources": [
+    "Notional order of magnitude for the class, rounded values; fictional name, no correspondence with any real system"
+   ]
+  }
+ },
+ "algos": {
+  "global/allocation/densite_pistes": {
+   "nom": "Track density, analytical interception",
+   "description": "Each free aircraft is sent to the most worthwhile interception point: the track's strength divided by the aircraft already sent to the same place. The interception is the shortest delay at which the aircraft, flying straight, comes within range of the extrapolated track.",
+   "equations": [
+    "|D + V t|² = (v t + r)², D = target − aircraft (ECEF)",
+    "score = strength / (1 + aircraft already assigned to the point's cell)"
+   ],
+   "hypotheses": [
+    "Straight-line extrapolation of tracks, unaware of their destination",
+    "15-min interception horizon",
+    "Greedy assignment, aircraft by aircraft"
+   ],
+   "domaine_validite": "Tracks at constant speed over the positioning time.",
+   "references": [
+    "Égide, docs/MODELE.md § 8.3 and § 9.4"
+   ],
+   "parametres": {
+    "vitesse_mise_a_poste": "Speed of the aircraft heading to its point.",
+    "altitude": "Altitude of the group."
+   }
+  },
+  "global/allocation/plus_proche": {
+   "nom": "Nearest track",
+   "description": "Each free aircraft is sent to the current position of the track nearest to it, without extrapolating its route or taking the other aircraft into account.",
+   "equations": [
+    "chosen track = argmin distance(aircraft, track)",
+    "point = current position of the track, at the aircraft's altitude"
+   ],
+   "hypotheses": [
+    "No anticipation: the aircraft aims at where the track is, not where it will be",
+    "Several aircraft may aim at the same track"
+   ],
+   "domaine_validite": "Teaching reference: slow or nearby tracks; to compare in a duel with density allocation.",
+   "references": [
+    "Égide, docs/MODELE.md § 10",
+    "Égide, docs/CATALOGUE.md (example algorithm)"
+   ],
+   "parametres": {
+    "vitesse_mise_a_poste": "Speed of the aircraft heading to its point, for the announced delay.",
+    "altitude": "Altitude of the group: the aimed point is taken at this altitude."
+   }
+  },
+  "global/comportement/essaim_direct": {
+   "nom": "Swarm in direct groups",
+   "description": "Each group arrives from a random heading, in a tight wave, and flies straight at its target.",
+   "equations": [
+    "start = point at rayon_apparition on the group's azimuth, offset sideways by U(−1 km, 1 km)"
+   ],
+   "hypotheses": [
+    "The group does not react to the defence",
+    "One heading per group, drawn uniformly over 360°"
+   ],
+   "domaine_validite": "Saturating raids with no coordination between groups.",
+   "references": [
+    "Égide, docs/MODELE.md § 8.2"
+   ],
+   "parametres": {}
+  },
+  "global/comportement/essaim_disperse": {
+   "nom": "Scattered swarm",
+   "description": "Each drone comes alone, from its own heading, with a departure drawn in a spread window.",
+   "equations": [
+    "azimuth ~ U(0, 2π)",
+    "departure ~ U(0, spread)"
+   ],
+   "hypotheses": [
+    "Drones do not coordinate",
+    "Independent headings and departures"
+   ],
+   "domaine_validite": "Diffuse harassment, probing for gaps in the defence.",
+   "references": [
+    "Égide, docs/MODELE.md § 8.2"
+   ],
+   "parametres": {
+    "etalement": "Departure window (scenario: rouge.etalement_s)."
+   }
+  },
+  "global/comportement/essaim_fourmi": {
+   "nom": "Ant swarm (corridor then burst)",
+   "description": "The whole swarm enters through the same narrow corridor, in a column, up to a burst point from which each drone heads for its target.",
+   "equations": [
+    "entry = rayon_apparition + U(0, 4 km) on the common heading",
+    "burst at fourmi_eclatement_rayon from the centre, same lateral offset"
+   ],
+   "hypotheses": [
+    "Common heading drawn uniformly",
+    "Column 4 km deep",
+    "No reaction to the defence"
+   ],
+   "domaine_validite": "Saturation of one sector then late dispersal, to hide numbers and targets.",
+   "references": [
+    "Égide, docs/MODELE.md § 8.2"
+   ],
+   "parametres": {
+    "fourmi_largeur_couloir": "Corridor width (rouge.fourmi_largeur_couloir_km).",
+    "fourmi_eclatement_rayon": "Distance from the centre to the burst point (rouge.fourmi_eclatement_rayon_km)."
+   }
+  },
+  "global/comportement/plan_de_vol": {
+   "nom": "Flight plan",
+   "description": "The whole swarm follows the drawn waypoints, in a column of given width; after the last point, each drone heads for its target.",
+   "equations": [
+    "start = first point, moved back by U(0, 4 km) along the first leg and offset by U(−l/2, l/2)",
+    "each next point keeps the same lateral offset, measured perpendicular to the leg leading to it"
+   ],
+   "hypotheses": [
+    "A single plan for the whole swarm",
+    "No reaction to the defence",
+    "Simultaneous departures"
+   ],
+   "domaine_validite": "Raids whose route is set by the user; with no plan, the swarm starts from the centre of the area.",
+   "references": [
+    "Égide, docs/MODELE.md § 12"
+   ],
+   "parametres": {
+    "plan_de_vol": "Waypoints (rouge.plan_de_vol).",
+    "fourmi_largeur_couloir": "Column width (rouge.fourmi_largeur_couloir_km)."
+   }
+  },
+  "global/detection/couverture_frontiere": {
+   "nom": "Continuous border coverage",
+   "description": "Radars line the border: a drone is seen as soon as it is within the radar horizon of the area, measured on the ground from the centre.",
+   "equations": [
+    "d_h = √(2 k R_T) (√h_r + √h_c), k = 4/3",
+    "seen ⇔ geodesic distance to centre ≤ R_zone + min(d_h, max range)"
+   ],
+   "hypotheses": [
+    "Perfect radar within its coverage: no false alarm, no track loss",
+    "Terrain ignored",
+    "Standard atmosphere (k = 4/3)"
+   ],
+   "domaine_validite": "Orders of magnitude of detection delay at low altitude; no terrain masking.",
+   "references": [
+    "Égide, docs/MODELE.md § 2",
+    "M. I. Skolnik, Introduction to Radar Systems, 3rd ed., McGraw-Hill, 2001 — radar horizon"
+   ],
+   "parametres": {
+    "hauteur_antenne": "Antenna height.",
+    "portee_max": "Instrumented range."
+   }
+  },
+  "global/detection/sites_radar": {
+   "nom": "Placed radars",
+   "description": "Each radar is a site placed on the map; a drone is seen as soon as it enters the range of at least one of them (slant distance).",
+   "equations": [
+    "d = min(√(2 k R_T) (√h_r + √h_c), max range), k = 4/3",
+    "seen ⇔ ∃ site: ‖P_drone − P_site‖² ≤ d² + (h_c − h_r)²  (ECEF positions)"
+   ],
+   "hypotheses": [
+    "Perfect radar within its range: no false alarm, no track loss",
+    "Terrain ignored",
+    "Standard atmosphere (k = 4/3)",
+    "Detection shared by the whole defence (fully connected network)"
+   ],
+   "domaine_validite": "Orders of magnitude of low-altitude coverage, sites at ground level.",
+   "references": [
+    "Égide, docs/MODELE.md § 2 and § 15.1",
+    "M. I. Skolnik, Introduction to Radar Systems, 3rd ed., McGraw-Hill, 2001 — radar horizon"
+   ],
+   "parametres": {
+    "hauteur_antenne": "Antenna height.",
+    "portee_max": "Instrumented range.",
+    "sites": "Radar positions (scenario: bleu.radar.sites).",
+    "sites_unites": "Each site's own unit, if any (scenario: bleu.radar.sites[].unite); otherwise the common radar's."
+   }
+  },
+  "global/mouvement/balistique": {
+   "nom": "Ballistic arc",
+   "description": "The vehicle follows the geodesic from start to target at constant ground speed, at the altitude of a parabola peaking halfway.",
+   "equations": [
+    "h(s) = 4 H (s / L) (1 − s / L)"
+   ],
+   "hypotheses": [
+    "Constant ground speed",
+    "Symmetric parabola: no propulsion, no re-entry, no manoeuvre"
+   ],
+   "domaine_validite": "Order of magnitude of altitude and flight time, to place detection and engagement; describes no real missile.",
+   "references": [
+    "Égide, docs/MODELE.md § 27.3"
+   ],
+   "parametres": {}
+  },
+  "global/mouvement/croisiere_geodesique": {
+   "nom": "Geodesic cruise",
+   "description": "The vehicle moves horizontally towards the next waypoint at constant altitude; the direction is recomputed at each step in the tangent plane, which follows the geodesic.",
+   "equations": [
+    "Δφ = Δn / (M + h)",
+    "Δλ = Δe / ((N + h) cos φ)"
+   ],
+   "hypotheses": [
+    "Instant turns (zero radius)",
+    "Constant altitude",
+    "Constant speed"
+   ],
+   "domaine_validite": "Time steps short compared with the flight; turns negligible compared with distances (turn radius ≪ distances flown).",
+   "references": [
+    "Égide, docs/MODELE.md § 9.3",
+    "WGS84 radii of curvature: NIMA TR8350.2"
+   ],
+   "parametres": {}
+  },
+  "global/pistage/cellules": {
+   "nom": "Tracks by cells",
+   "description": "Detected drones are grouped by 5 km cubic cells of geocentric space; each occupied cell becomes a track weighted by its strength.",
+   "equations": [
+    "track = cell ⌊ECEF / 5 km⌋, strength = number of drones in the cell"
+   ],
+   "hypotheses": [
+    "Perfect association: the track carries the true position and velocity of one drone of the cell"
+   ],
+   "domaine_validite": "Planning of positioning; no measurement noise.",
+   "references": [
+    "Égide, docs/MODELE.md § 8.3"
+   ],
+   "parametres": {}
+  },
+  "global/reaction/essaim_adaptatif": {
+   "nom": "Adaptive swarm (shared losses)",
+   "description": "Through the swarm's mesh network, each drone learns where its fellows fall and where they hit: it leaves a target that kills for one that lets through, bypasses loss hotspots on its route and manoeuvres when a rocket targets it.",
+   "equations": [
+    "ŝ_k = (F_k + 1) / (F_k + P_k + 2) (Laplace's rule of succession)",
+    "reassignment if F_k ≥ 1, ŝ_k − ŝ_c ≥ g and d_k ≤ (1 + a) d_c",
+    "y = R asin(sin(d_f / R) sin(α_f − α_w)); x = R acos(cos(d_f / R) / cos(y / R))",
+    "detour: azimuth α_f ∓ asin(ρ / d_f), distance √(d_f² − ρ²), ρ = 1.3 r_d",
+    "dodged Pk = Pk (1 − e); progress × (1 − v_e) during the rocket's flight"
+   ],
+   "hypotheses": [
+    "Connected mesh network: every loss and every hit is known to the whole swarm after a delay",
+    "The swarm does not see the defence, it only learns from its losses",
+    "Only hotspots around another target (fixed defended sites) are bypassed",
+    "Spherical approximation (R = 6,371 km) for the bypass decision only",
+    "Aggregated dodge: reduced Pk, with no guidance or manoeuvre law"
+   ],
+   "domaine_validite": "Raids where losses concentrate in a few hotspots (posts on targets, aircraft orbits); decisions at the scale of about ten kilometres.",
+   "references": [
+    "Égide, docs/MODELE.md § 22",
+    "Laplace, Essai philosophique sur les probabilités (1814), rule of succession"
+   ],
+   "parametres": {
+    "reaction_delai": "Delay for a loss or a hit to spread through the swarm (rouge.reaction_delai_s).",
+    "reaction_pas": "Period of reaction decisions (rouge.reaction_pas_s).",
+    "reaction_rayon_danger": "Radius of a loss hotspot (rouge.reaction_rayon_danger_km).",
+    "reaction_seuil_pertes": "Losses from which a hotspot is deemed defended (rouge.reaction_seuil_pertes).",
+    "reaction_allongement_max": "Relative lengthening accepted for a reassignment or a detour (rouge.reaction_allongement_max).",
+    "reaction_seuil_gain": "Estimated survival gain that triggers a reassignment (rouge.reaction_seuil_gain).",
+    "reaction_reaffectations_max": "Maximum reassignments per drone (rouge.reaction_reaffectations_max).",
+    "reaction_detours_max": "Maximum detours per drone (rouge.reaction_detours_max).",
+    "reaction_esquive_reduction": "Fraction of the air Pk removed by the dodge (rouge.reaction_esquive_reduction).",
+    "reaction_esquive_perte_vitesse": "Fraction of progress lost during the dodge (rouge.reaction_esquive_perte_vitesse)."
+   }
+  },
+  "global/tir/guidage_laser_semi_actif": {
+   "nom": "Semi-active laser guidance",
+   "description": "The shooter designates the target until impact: it cannot fire again while designating.",
+   "equations": [
+    "flight = busy time = designation time"
+   ],
+   "hypotheses": [
+    "Fixed designation time, whatever the distance",
+    "Designation never interrupted"
+   ],
+   "domaine_validite": "Shots within effective range; clear weather (no cloud effect modelled).",
+   "references": [
+    "Égide, docs/MODELE.md § 4.2",
+    "Principle of semi-active laser guidance: P. Zarchan, Tactical and Strategic Missile Guidance, AIAA"
+   ],
+   "parametres": {
+    "duree_designation": "Designation time until impact."
+   }
+  },
+  "global/tir/tire_et_oublie": {
+   "nom": "Fire and forget",
+   "description": "The weapon guides itself after launch: the shooter may fire again after its rate interval, and the flight time is the distance over the mean speed.",
+   "equations": [
+    "flight = distance / mean speed",
+    "busy time = rate interval"
+   ],
+   "hypotheses": [
+    "Constant mean speed",
+    "Lock acquired at launch"
+   ],
+   "domaine_validite": "IR or active radar seekers within their effective range.",
+   "references": [
+    "Égide, docs/MODELE.md § 4.2",
+    "P. Zarchan, Tactical and Strategic Missile Guidance, AIAA"
+   ],
+   "parametres": {
+    "vitesse": "Mean speed of the weapon.",
+    "cadence": "Minimum interval between two shots."
+   }
+  },
+  "global/tir_sol/cadence_par_passage": {
+   "nom": "Rate per pass",
+   "description": "A drone crosses the post's bubble in range / speed seconds; the post must fit its engagements per pass within it.",
+   "equations": [
+    "rate = (r_sol / v_drone) / engagements_par_passage"
+   ],
+   "hypotheses": [
+    "Immediate shot result",
+    "Fire at the nearest drone in the bubble"
+   ],
+   "domaine_validite": "Short-range posts facing drones that fly over them.",
+   "references": [
+    "Égide, docs/MODELE.md § 5 and § 8.6"
+   ],
+   "parametres": {
+    "portee": "Radius of the bubble.",
+    "engagements_par_passage": "Useful shots during the crossing."
+   }
+  }
+ },
+ "scenarios": {
+  "auto_france": {
+   "nom": "Auto-configuration — France"
+  },
+  "reference": {
+   "nom": "Reference: 1,000 fast drones against a mixed defence"
+  }
+ },
+ "cartes": {
+  "batiments/openfreemap": {
+   "nom": "OpenStreetMap buildings (OpenFreeMap)",
+   "attribution": "© OpenFreeMap © OpenMapTiles © OpenStreetMap contributors",
+   "conditions": "Free service, no key; attribution required."
+  },
+  "fonds/aucun": {
+   "nom": "No background (offline)",
+   "conditions": "No external data: works without a network."
+  },
+  "fonds/ign_ortho": {
+   "nom": "IGN aerial photographs (France)",
+   "conditions": "Open IGN data (Etalab Open Licence 2.0), Géoplateforme service with no key."
+  },
+  "fonds/ign_plan": {
+   "nom": "IGN map (France)",
+   "conditions": "Open IGN data (Etalab Open Licence 2.0), Géoplateforme service with no key."
+  },
+  "fonds/osm": {
+   "nom": "OpenStreetMap",
+   "attribution": "© OpenStreetMap contributors",
+   "conditions": "OSM tile usage policy: moderate interactive use, no bulk download, attribution required."
+  },
+  "fonds/sombre_carto": {
+   "nom": "Dark (CARTO)",
+   "attribution": "© OpenStreetMap contributors © CARTO",
+   "conditions": "CARTO basemaps: free non-commercial use and modest volumes, attribution required."
+  },
+  "relief/terrarium_aws": {
+   "nom": "Global terrain (Terrain Tiles, AWS)",
+   "attribution": "Terrain: Terrain Tiles (Mapzen, AWS Open Data) — SRTM, GMTED, ETOPO1 and national sources",
+   "conditions": "AWS Open Data open dataset; see the “Terrain Tiles” page for detailed per-source attributions."
+  }
+ }
+}

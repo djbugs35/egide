@@ -82,3 +82,39 @@ test("langues : l'anglais par défaut, l'adresse puis la mémoire priment, un co
   assert.equal(choisir_langue({adresse: "?lang=en", memorisee: "fr"}), "en");
   assert.equal(choisir_langue({adresse: "?lang=xx", memorisee: "zz"}), "en");
 });
+
+// Catalogue (lot 27.4) : traductions à côté des fichiers, qui ne changent pas — ni leur empreinte.
+import {aide_unite, installer_catalogue, meta_traduite, nom_unite, sans_mention, sources_unite, traduire_index} from "../src/catalogue_langue.js";
+import {couverture_langues} from "../outils/valider.js";
+
+test("catalogue : chaque unité, algorithme et scénario public a sa traduction anglaise, conforme à son fichier", async () => {
+  for (const r of await couverture_langues()) {
+    assert.deepEqual(r.defauts, [], `${r.fichier} : défauts`);
+    assert.deepEqual(r.manquants, [], `${r.fichier} : entrées manquantes`);
+  }
+});
+
+test("catalogue : noms, aides et fiches traduits sans toucher aux originaux ; repli sur le français", () => {
+  const anglais = JSON.parse(lire("langues/catalogue.en.json"));
+  installer_catalogue(anglais);
+  try {
+    assert.equal(nom_unite("capteurs/radars/fra_ajonc_300", "Ajonc 300 (FRA, notionnel)"), "Gorse 300 (FRA, notional)");
+    assert.equal(nom_unite("prive/mon_radar", "Mon radar"), "Mon radar", "une unité privée garde son nom");
+    assert.equal(sources_unite("prive/x", ["a"])[0], "a");
+    const fichiers = {_unite: {_aide: {nom: "Nom affiche de l'unite."}}, "a/b": {herite_de: "_unite", _aide: {nom: "Nom propre."}}};
+    assert.equal(aide_unite(["_unite", "a/b"], fichiers, "nom", "Nom propre."), "Nom propre.", "l'aide du fichier le plus proche, non traduite, l'emporte");
+    assert.equal(aide_unite(["_unite"], fichiers, "nom", "x"), "Displayed name of the unit.");
+    const meta = {nom: "Piste la plus proche", parametres: {altitude: {unite: "m", aide: "Altitude"}}, equations: []};
+    const traduite = meta_traduite("global/allocation/plus_proche", meta);
+    assert.equal(traduite.nom, "Nearest track");
+    assert.equal(traduite.parametres.altitude.unite, "m");
+    assert.equal(meta.nom, "Piste la plus proche", "la fiche d'origine ne change pas");
+    assert.equal(traduire_index("algos/index.json", [{id: "global/allocation/plus_proche", nom: "x"}])[0].nom, "Nearest track");
+    assert.deepEqual(traduire_index("cartes/index.json", [{id: "a", nom: "b"}]), [{id: "a", nom: "b"}]);
+  } finally {
+    installer_catalogue(null);
+  }
+  assert.equal(nom_unite("capteurs/radars/fra_ajonc_300", "Ajonc 300 (FRA, notionnel)"), "Ajonc 300 (FRA, notionnel)", "en français, le fichier");
+  assert.equal(sans_mention("Gorse 300 (FRA, notional)"), "Gorse 300");
+  assert.equal(sans_mention("Liaison filaire (notionnelle)"), "Liaison filaire");
+});

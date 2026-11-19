@@ -45,6 +45,7 @@ import {INTERVALLE_RADIO_MS, message_du_lot} from "./radio.js";
 import {creer_sons, sons_du_lot} from "./sons.js";
 import {creer_traces, echantillonner} from "./traces.js";
 import {t} from "../i18n.js";
+import {sans_mention, traduire_index} from "../catalogue_langue.js";
 
 const $ = (selecteur) => document.querySelector(selecteur);
 const mouvementReduit = matchMedia("(prefers-reduced-motion: reduce)");
@@ -61,7 +62,7 @@ const brut_courant = () => modifier_scenario(etat.base, etat.modifications);
 async function lire_json(chemin) {
   const reponse = await fetch(chemin);
   if (!reponse.ok) throw new Error(`${reponse.status} sur ${chemin}`);
-  return reponse.json();
+  return traduire_index(chemin, await reponse.json());
 }
 
 /** Charger les unités du catalogue que cite `brut` et qui ne sont pas encore en mémoire. */
@@ -221,12 +222,12 @@ function rafraichir_fiche() {
 /** Rendre le HTML d'un contrôle de fiche, repéré par sa fiche `i` et son rang `j`. */
 function controle_html(c, i, j) {
   const repere = `data-fiche="${i}" data-controle="${j}"`;
-  const option = (o) => `<option value="${echapper_html(o.valeur)}" ${o.valeur === c.valeur ? "selected" : ""}>${echapper_html(o.libelle.replace(/ \(notionnel(le)?\)$/, ""))}</option>`;
+  const option = (o) => `<option value="${echapper_html(o.valeur)}" ${o.valeur === c.valeur ? "selected" : ""}>${echapper_html(sans_mention(o.libelle))}</option>`;
   if (c.type === "choix") return `<label>${c.libelle}<select ${repere}>${c.options.map(option).join("")}</select></label>`;
   if (c.type === "nombre") return `<label>${c.libelle}<input type="number" ${repere} value="${c.valeur}" min="${c.min}" step="${c.pas}"></label>`;
   if (c.type === "texte") return `<label>${c.libelle}<input ${repere} value="${echapper_html(c.valeur)}"></label>`;
   return `<fieldset ${repere}><legend>${t("vue.fiche.moyens_legende", {libelle: c.libelle})}</legend>${c.options.map((o) =>
-    `<label><input type="checkbox" value="${echapper_html(o.valeur)}" ${c.valeur.includes(o.valeur) ? "checked" : ""}>${echapper_html(o.libelle.replace(/ \(notionnel(le)?\)$/, ""))}</label>`).join("")}</fieldset>`;
+    `<label><input type="checkbox" value="${echapper_html(o.valeur)}" ${c.valeur.includes(o.valeur) ? "checked" : ""}>${echapper_html(sans_mention(o.libelle))}</label>`).join("")}</fieldset>`;
 }
 
 /** Appliquer le réglage d'un contrôle de fiche changé par l'utilisateur. */
@@ -829,7 +830,7 @@ async function remplir_moyens() {
   etat.noms_unites = etat.panneau_deploiement.noms;
   const moyens = index.filter((u) => u.famille === "liaisons" && !u.base);
   const choix = $("[name='moyen_liaison']");
-  choix.innerHTML = moyens.map((u) => `<option value="${u.id}">${u.nom.replace(/ \(notionnelle?\)$/, "")}</option>`).join("");
+  choix.innerHTML = moyens.map((u) => `<option value="${u.id}">${sans_mention(u.nom)}</option>`).join("");
   // En remplacement, la radio publique par défaut peut manquer : on prend alors une radio V/UHF, sinon le premier moyen.
   const repli = moyens.find((u) => /UHF/i.test(u.nom)) ?? moyens[0];
   choix.value = moyens.some((u) => u.id === MOYENS_PAR_DEFAUT.avions) ? MOYENS_PAR_DEFAUT.avions : repli?.id ?? "";

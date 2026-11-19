@@ -1,6 +1,7 @@
 // Page catalogue.html : index cherchable des unités et des algorithmes publics, et leurs fiches (fiches.js) ; import
 // du catalogue privé (catalogue_prive.js), fusionné au public ou à sa place.
 import {t} from "../i18n.js";
+import {meta_traduite, traduire_index} from "../catalogue_langue.js";
 import {charger_langue, traduire_page} from "./langue.js";
 import {charger_algos} from "../moteur/algos.js";
 import {charger_unites, unite_brute} from "../moteur/catalogue.js";
@@ -13,7 +14,7 @@ const $ = (selecteur) => document.querySelector(selecteur);
 async function lire_json(chemin) {
   const reponse = await fetch(chemin);
   if (!reponse.ok) throw new Error(`${reponse.status} sur ${chemin}`);
-  return reponse.json();
+  return traduire_index(chemin, await reponse.json());
 }
 
 function remplir_index(indexUnites, indexAlgos) {
@@ -57,7 +58,7 @@ async function demarrer() {
   brancher_mode_prive(mode, privees, erreur);
   const fichiers = await charger_unites(indexUnites.map((u) => u.id), lire_json);
   const registre = await charger_algos(indexAlgos.map((a) => a.id), (chemin) => import(new URL(chemin, document.baseURI).href));
-  const metas = Object.fromEntries(Object.entries(registre).map(([id, module]) => [id, module.meta]));
+  const metas = Object.fromEntries(Object.entries(registre).map(([id, module]) => [id, meta_traduite(id, module.meta)]));
   const unites = Object.fromEntries(indexUnites.map((u) => [u.id, unite_brute(u.id, fichiers)]));
   const usages = utilisations(unites, scenario);
   remplir_index(indexUnites, indexAlgos);

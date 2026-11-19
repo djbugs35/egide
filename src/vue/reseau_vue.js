@@ -7,6 +7,7 @@ import {inverse} from "../moteur/geodesie.js";
 import {portee_liaison} from "../moteur/reseau.js";
 import {positions_radars} from "../moteur/radars.js";
 import {region, t} from "../i18n.js";
+import {nom_unite, sans_mention} from "../catalogue_langue.js";
 
 /** Tracer une croix rouge sur chaque élément hors service : radars en panne, CDC en panne ou détruit. */
 export function dessiner_pannes(ctx, camera, monde) {
@@ -152,7 +153,7 @@ export function connexions_noeud(monde, noeud) {
   const vecteurs = monde.scenario.reseau.liaisons.filter((l) => l.de.startsWith("avions:") || l.vers.startsWith("avions:")).map((l) => lien_vecteurs(monde, l));
   const liens = [...monde.reseau.fixes, ...vecteurs].filter((l) => l && l.distance !== null && (l.de === noeud || l.vers === noeud)).map((l) => {
     const autre = l.de === noeud ? l.vers : l.de;
-    return {famille: l.moyen.type, noeud: autre, nom: libelle_noeud(monde, autre), moyen: l.moyen.nom, distance: l.distance, portee: l.portee, latence: l.moyen.latence, etat: etat_lien(l), active: l.active};
+    return {famille: l.moyen.type, noeud: autre, nom: libelle_noeud(monde, autre), moyen: nom_unite(l.moyen.id, l.moyen.nom), distance: l.distance, portee: l.portee, latence: l.moyen.latence, etat: etat_lien(l), active: l.active};
   }).sort((x, y) => x.nom.localeCompare(y.nom, region(), {numeric: true}));
   return FAMILLES_LIENS.map(([famille, titre]) => ({famille, titre: t(titre), liens: liens.filter((l) => l.famille === famille)})).filter((f) => f.liens.length);
 }
@@ -161,7 +162,7 @@ export function connexions_noeud(monde, noeud) {
 function detail_lien(l) {
   const km = (m) => `${Math.round(m / 1000)} km`;
   const portee = l.portee >= PORTEE_SANS_LIMITE || l.etat === "panne" ? "" : ` / ${km(l.portee)}`;
-  return `${l.moyen.replace(/ \(notionnelle?\)$/, "")} · ${km(l.distance)}${portee} · ${format_decimal(l.latence)} s · ${t(ETATS_LIEN[l.etat])}`;
+  return `${sans_mention(l.moyen)} · ${km(l.distance)}${portee} · ${format_decimal(l.latence)} s · ${t(ETATS_LIEN[l.etat])}`;
 }
 
 /** Rendre le HTML de la liste des connexions du nœud `noeud`, par famille de moyen. */

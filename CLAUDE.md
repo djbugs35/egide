@@ -92,6 +92,8 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
   radio, messages, lignes de commande) passe par `t("clé")` de `src/i18n.js` et vit dans `langues/en.json` ET
   `langues/fr.json` ; dans les pages, attributs `data-i18n`, `data-i18n-html`, `data-i18n-attr`. Le code, les clés des
   fichiers et les identifiants restent en français. `tests/langues.test.js` vérifie que tout est aligné.
+  Le catalogue public (unités, fiches `meta`, noms de scénarios) se traduit dans `langues/catalogue.en.json`, sans
+  toucher aux fichiers ; toute unité ou tout algorithme ajouté y reçoit son entrée (`node outils/valider.js --langues`).
 - Ne jamais tuer un processus qu'on n'a pas lancé soi-même.
 
 ## Vérifications avant commit

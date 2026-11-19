@@ -1,5 +1,6 @@
 // Aides au déploiement (jalon 13, MODELE § 21.6) : règle, aimantation, aperçus avant pose, regroupement des unités
 // proches. Pur, sans DOM, testé ; editeur.js ne fait que lire les gestes et dessiner ce qui est rendu ici.
+import {sans_mention} from "../catalogue_langue.js";
 import {unite_si} from "../moteur/catalogue.js";
 import {direct, inverse, vers_degres} from "../moteur/geodesie.js";
 import {enveloppe_poste} from "../moteur/couvertures.js";
@@ -105,7 +106,7 @@ export function consigne_outil({outil, mode, nom_depot, efface, liaison, nom_moy
   if (mode === "ordres") return choisis ? t("vue.consigne.ordres_choisis", {n: choisis}) : t("vue.consigne.ordres");
   if (outil === "depot") return efface ? t("vue.consigne.effacer") : t("vue.consigne.depot", {nom: nom_depot});
   if (outil === "liaison") {
-    const moyen = nom_moyen.replace(/ \(notionnelle?\)$/, "");
+    const moyen = sans_mention(nom_moyen);
     return liaison ? t("vue.consigne.liaison_seconde", {moyen, origine}) : t("vue.consigne.liaison_premiere", {moyen});
   }
   if (outil === "zone" && sommets) return `${t("vue.consigne.sommets", {n: sommets})} · ${t(CONSIGNES.zone)}`;

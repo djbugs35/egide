@@ -1,5 +1,6 @@
 // Panneau de déploiement de l'éditeur (MODELE § 12) : recherche, onglets par famille et réglages du théâtre. Il ne calcule
 // rien : la palette vient de deploiement.js et les réglages deviennent des modifications par chemin dans edition.js.
+import {sans_mention} from "../catalogue_langue.js";
 import {t} from "../i18n.js";
 import {chemin_icone} from "../moteur/catalogue.js";
 import {filtrer_palette, palette} from "./deploiement.js";
@@ -17,7 +18,7 @@ const FAMILLES_QUANTITE = new Set(["avions", "drones_defensifs"]);
 const CHAMPS_THEATRE = {theatre_lat: "theatre.origine_lat_deg", theatre_lon: "theatre.origine_lon_deg", theatre_rayon: "theatre.zone_rayon_km", theatre_cibles: "theatre.cibles_nombre"};
 
 /** Rendre le nom court d'une unité : sans la mention « (notionnel) » ni le pays, montré à part. */
-const nom_court = (nom) => nom.replace(/ \((?:[A-Z]{3}, )?notionnel(le)?\)$/, "");
+const nom_court = sans_mention;
 
 /** Rendre le bouton d'une unité : son icône de jeu sur la pastille de son pays, son nom, son pays. */
 function bouton_unite(e, famille) {

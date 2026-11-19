@@ -303,6 +303,23 @@ aucune dépendance cachée, algorithmes cités existants et du bon rôle, param�
 présente pour chaque clé, déterminisme, et invariants du rôle (un mouvement ne va jamais plus loin que demandé ; un
 pistage compte chaque drone une seule fois ; un comportement mène chaque drone sur sa cible…).
 
+### 6.1 Traductions
+
+Les fichiers du catalogue restent en français ; leurs traductions vivent à côté, dans
+`langues/catalogue.<code>.json` (aujourd'hui `catalogue.en.json`) : par unité son `nom`, ses `sources` et les phrases
+de son bloc `_aide` ; par algorithme les textes de sa fiche `meta` (`nom`, `description`, `equations`, `hypotheses`,
+`domaine_validite`, `references`, et l'`aide` de chaque paramètre) ; par scénario du dépôt son `nom` ; par source de carte son `nom`, son `attribution` et ses `conditions`. Les fichiers ne
+changent pas : l'empreinte de reproductibilité ne dépend pas de la langue. Une entrée absente montre le texte
+français, si bien qu'une unité privée s'affiche telle quelle.
+
+```sh
+node outils/valider.js --langues   # entrées manquantes et fautives de chaque dictionnaire du catalogue
+```
+
+Pour le catalogue public, `npm test` exige une traduction complète et conforme (mêmes clés d'aide, même nombre de
+sources, d'équations, d'hypothèses et de références) : ajouter une unité ou un algorithme, c'est aussi ajouter son
+entrée anglaise.
+
 ## 7 · Autres données
 
 | Donnée | Où | Comment l'ajouter |
