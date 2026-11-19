@@ -22,6 +22,7 @@ import {creer_atelier_scenario} from "./serveur/atelier_scenario.js";
 import {creer_atelier_terrain, message_terrain} from "./serveur/atelier_terrain.js";
 import {CommandeInvalide, creer_salle} from "./serveur/salle.js";
 import {cle_acceptation, creer_lecteur, OPCODES, origine_admise, trame, TrameInvalide} from "./serveur/websocket.js";
+import {t} from "./i18n.js";
 
 const ADRESSE = "127.0.0.1";
 export const PORT_DEFAUT = 8767;
@@ -40,7 +41,7 @@ async function archiver(scenario_joue, registre) {
   const chemin = join(dossier, `partie-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
   writeFileSync(`${chemin}.tmp`, JSON.stringify(scenario_joue, null, 1));
   renameSync(`${chemin}.tmp`, chemin);
-  console.log(`Partie enregistrée : ${chemin}`);
+  console.log(t("cli.direct.enregistree", {chemin}));
   return {chemin, empreinte: trace.empreinte};
 }
 
@@ -58,11 +59,11 @@ function creer_bibliotheque() {
   return {
     lister,
     lire(id) {
-      if (!lister().some((s) => s.id === id)) throw new CommandeInvalide(`scénario inconnu : ${id}`);
+      if (!lister().some((s) => s.id === id)) throw new CommandeInvalide(t("cli.serveur.scenario_inconnu", {id}));
       return JSON.parse(readFileSync(join(RACINE, id), "utf-8"));
     },
     ecrire(nom, brut) {
-      if (typeof nom !== "string" || !NOM_VALIDE.test(nom)) throw new CommandeInvalide("nom invalide : lettres, chiffres, - et _ seulement");
+      if (typeof nom !== "string" || !NOM_VALIDE.test(nom)) throw new CommandeInvalide(t("cli.serveur.nom_invalide"));
       mkdirSync(dossier_joueur, {recursive: true});
       ecrire_json(join(dossier_joueur, `${nom}.json`), brut);
       return `prive/scenarios/${nom}.json`;
@@ -121,14 +122,14 @@ function brancher_client(socket, salle, clients) {
       lire(morceau).forEach(traiter);
     } catch (erreur) {
       if (!(erreur instanceof TrameInvalide || erreur instanceof SyntaxError)) throw erreur;
-      console.error(`client refusé : ${erreur.message}`);
+      console.error(t("cli.direct.client_refuse", {erreur: erreur.message}));
       const code = Buffer.alloc(2);
       code.writeUInt16BE(FERMETURE_PROTOCOLE);
       socket.end(trame(OPCODES.fermeture, code));
     }
   });
   socket.on("close", () => clients.delete(client));
-  socket.on("error", (erreur) => console.error(`liaison coupée : ${erreur.message}`));
+  socket.on("error", (erreur) => console.error(t("cli.direct.liaison_coupee", {erreur: erreur.message})));
   clients.add(client);
   salle.arrivee(envoyer);
 }
@@ -163,15 +164,15 @@ async function principal() {
     extensions: extensions_salle(index, catalogue),
   });
   await salle.demarrer();
-  const serveur = createServer((_, reponse) => reponse.writeHead(426, {"Content-Type": "text/plain; charset=utf-8"}).end("Serveur de partie Égide : connexion WebSocket attendue.\n"));
+  const serveur = createServer((_, reponse) => reponse.writeHead(426, {"Content-Type": "text/plain; charset=utf-8"}).end(`${t("cli.direct.websocket_attendu")}\n`));
   serveur.on("upgrade", (requete, socket) => accepter(requete, socket, salle, clients));
-  serveur.listen(options.port, ADRESSE, () => console.log(`Partie prête, en pause : ws://${ADRESSE}:${options.port}`));
+  serveur.listen(options.port, ADRESSE, () => console.log(t("cli.direct.prete", {adresse: `ws://${ADRESSE}:${options.port}`})));
   let precedent = performance.now();
   setInterval(() => {
     const instant = performance.now();
     const dt_s = (instant - precedent) / 1000;
     precedent = instant;
-    salle.tic(dt_s)?.catch((erreur) => console.error(`archivage impossible : ${erreur.message}`));
+    salle.tic(dt_s)?.catch((erreur) => console.error(t("cli.direct.archivage", {erreur: erreur.message})));
   }, PERIODE_TIC_MS);
 }
 

@@ -16,6 +16,8 @@ import {charger_tous_algos, charger_unites_scenario, lire_fichier, RACINE} from 
 import {bilan, simuler} from "../src/moteur/monde.js";
 import {creer_rejeu, texte_rejeu} from "../src/moteur/rejeu.js";
 import {modifier_scenario, resoudre_scenario} from "../src/moteur/scenario.js";
+import {preparer_langue} from "../src/langue_node.js";
+import {t} from "../src/i18n.js";
 
 // Node 22 : `node --test --test-skip-pattern` de npm test n'existe pas avant.
 export const VERSIONS_MINIMALES = {node: [22, 0], python: [3, 12], godot: [4, 4]};
@@ -25,7 +27,7 @@ const DELAI_COMMANDE_MS = 30_000;
 const DELAI_GODOT_MS = 120_000;
 const DELAI_TESTS_MS = 600_000;
 const RAID_ESSAI = {"rouge.nombre": 30, "bleu.sol.nombre": 10, "bleu.sol.munitions": 50};
-const REINSTALLER = "relancer installer.command (macOS) ou installer.bat (Windows)";
+const reinstaller = () => t("cli.verif.reinstaller");
 
 /** Rendre [majeur, mineur, correctif] de la première version trouvée dans `texte`, ou null. */
 export function extraire_version(texte) {
@@ -63,13 +65,19 @@ export function resumer(resultats) {
   return {pret: compter("echec") === 0, echecs: compter("echec"), avertissements: compter("avertissement")};
 }
 
-const MARQUES = {ok: "  ok  ", echec: "ÉCHEC ", avertissement: "  !   ", info: " info "};
+const MARQUES = {ok: "cli.verif.m_ok", echec: "cli.verif.m_echec", avertissement: "cli.verif.m_avertissement", info: "cli.verif.m_info"};
+/** Rendre la marque d'un statut, centrée sur six caractères. */
+const marque = (statut) => {
+  const texte = t(MARQUES[statut]);
+  const avant = Math.max(0, Math.floor((6 - texte.length) / 2));
+  return `${" ".repeat(avant)}${texte}`.padEnd(6);
+};
 
 /** Rendre le rapport lisible : une ligne par contrôle, et le remède sous ceux qui en ont besoin. */
 export function texte_rapport(resultats) {
-  const lignes = resultats.flatMap((r) => [`[${MARQUES[r.statut]}] ${r.libelle} : ${r.detail}`, ...(r.remede && r.statut !== "ok" ? [`         → ${r.remede}`] : [])]);
+  const lignes = resultats.flatMap((r) => [t("cli.verif.ligne", {marque: marque(r.statut), libelle: r.libelle, detail: r.detail}), ...(r.remede && r.statut !== "ok" ? [`         → ${r.remede}`] : [])]);
   const {pret, echecs, avertissements} = resumer(resultats);
-  const fin = pret ? `Égide est prêt${avertissements ? ` (${avertissements} avertissement${avertissements > 1 ? "s" : ""})` : ""}.` : `Égide n'est pas prêt : ${echecs} contrôle${echecs > 1 ? "s" : ""} en échec.`;
+  const fin = pret ? (avertissements ? t("cli.verif.pret_avertissements", {n: avertissements}) : t("cli.verif.pret")) : t("cli.verif.pas_pret", {n: echecs});
   return [...lignes, "", fin].join("\n");
 }
 
@@ -85,26 +93,27 @@ const resultat = (libelle, statut, detail, remede = null) => ({libelle, statut, 
 function controler_node() {
   const version = extraire_version(process.versions.node);
   const assez = version_suffisante(version, VERSIONS_MINIMALES.node);
-  return resultat("Node.js", assez ? "ok" : "echec", process.versions.node, `version ${VERSIONS_MINIMALES.node.join(".")} ou plus récente requise : ${REINSTALLER}`);
+  return resultat("Node.js", assez ? "ok" : "echec", process.versions.node, t("cli.verif.version_requise", {version: VERSIONS_MINIMALES.node.join("."), remede: reinstaller()}));
 }
 
 function controler_python() {
   const python = chemin_python(RACINE);
-  const remede = `environnement Python à refaire : ${REINSTALLER}`;
+  const remede = t("cli.verif.python_refaire", {remede: reinstaller()});
+  const libelle = t("cli.verif.python");
   const lu = lancer(python, ["--version"]);
   const version = extraire_version(lu.sortie);
-  if (!lu.reussi || !version) return [resultat("Python du projet", "echec", "environnement .venv absent ou cassé", remede)];
-  if (!version_suffisante(version, VERSIONS_MINIMALES.python)) return [resultat("Python du projet", "echec", version.join("."), remede)];
+  if (!lu.reussi || !version) return [resultat(libelle, "echec", t("cli.verif.venv_absent"), remede)];
+  if (!version_suffisante(version, VERSIONS_MINIMALES.python)) return [resultat(libelle, "echec", version.join("."), remede)];
   const bibliotheques = lancer(python, ["-c", "import matplotlib, numpy, pytest, ruff"]);
   return [
-    resultat("Python du projet", "ok", version.join(".")),
-    resultat("Bibliothèques Python", bibliotheques.reussi ? "ok" : "echec", bibliotheques.reussi ? "matplotlib, numpy, pytest, ruff" : bibliotheques.sortie.trim().split("\n").at(-1), remede),
+    resultat(libelle, "ok", version.join(".")),
+    resultat(t("cli.verif.bibliotheques_python"), bibliotheques.reussi ? "ok" : "echec", bibliotheques.reussi ? "matplotlib, numpy, pytest, ruff" : bibliotheques.sortie.trim().split("\n").at(-1), remede),
   ];
 }
 
 function controler_fichiers_tiers() {
   const manquants = FICHIERS_TIERS.filter((f) => !existsSync(join(RACINE, f)));
-  return resultat("Bibliothèques de cartes", manquants.length ? "echec" : "ok", manquants.length ? `manquent : ${manquants.join(", ")}` : "CesiumJS et MapLibre présents", "récupérer un dépôt complet (git status, puis git restore vendor)");
+  return resultat(t("cli.verif.cartes"), manquants.length ? "echec" : "ok", manquants.length ? t("cli.verif.manquent", {liste: manquants.join(", ")}) : t("cli.verif.cartes_ok"), t("cli.verif.cartes_remede"));
 }
 
 async function controler_simulation() {
@@ -112,21 +121,21 @@ async function controler_simulation() {
     const brut = modifier_scenario(await lire_fichier("scenarios/reference.json"), RAID_ESSAI);
     const [fichiers, registre] = [await charger_unites_scenario(brut), await charger_tous_algos()];
     const {duree} = bilan(simuler(resoudre_scenario(brut, fichiers), {registre, journal: false}));
-    return {ligne: resultat("Simulation", "ok", `raid d'essai de 30 drones terminé en ${duree} s simulées`), brut, fichiers, registre};
+    return {ligne: resultat(t("cli.verif.simulation"), "ok", t("cli.verif.simulation_ok", {duree})), brut, fichiers, registre};
   } catch (erreur) {
-    return {ligne: resultat("Simulation", "echec", erreur.message, "catalogue ou algorithme invalide : node outils/valider.js <fichier>")};
+    return {ligne: resultat(t("cli.verif.simulation"), "echec", erreur.message, t("cli.verif.simulation_remede"))};
   }
 }
 
 function controler_catalogue_prive() {
   const dossier = join(RACINE, "prive", "unites");
-  if (!existsSync(dossier)) return resultat("Catalogue privé", "info", "absent (facultatif)");
+  if (!existsSync(dossier)) return resultat(t("cli.verif.prive"), "info", t("cli.verif.prive_absent"));
   const nombre = readdirSync(dossier, {recursive: true}).filter((f) => String(f).endsWith(".json") && !String(f).endsWith("index.json")).length;
   const indexe = existsSync(join(dossier, "index.json"));
-  return resultat("Catalogue privé", indexe ? "ok" : "avertissement", `${nombre} fichiers${indexe ? ", index présent" : ", index absent"}`, "node outils/indexer.js");
+  return resultat(t("cli.verif.prive"), indexe ? "ok" : "avertissement", t(indexe ? "cli.verif.prive_indexe" : "cli.verif.prive_sans_index", {n: nombre}), "node outils/indexer.js");
 }
 
-const REMEDE_GODOT = `installer Godot 4 : ${REINSTALLER}, ou donner son chemin par la variable EGIDE_GODOT`;
+const remede_godot = () => t("cli.verif.godot_remede", {remede: reinstaller()});
 
 /** Faire relire à Godot un petit rejeu : c'est le seul essai qui prouve que le client compile et lit le format. */
 async function controler_client_godot(godot, {brut, fichiers, registre}) {
@@ -136,7 +145,7 @@ async function controler_client_godot(godot, {brut, fichiers, registre}) {
     writeFileSync(rejeu, gzipSync(texte_rejeu(await creer_rejeu(brut, fichiers, registre))));
     const lu = lancer(godot, ["--headless", "--path", join(RACINE, "clients", "godot"), "--script", "res://scripts/verifier.gd", "--", "--rejeu", rejeu, "--sortie", join(dossier, "dump.json")], DELAI_GODOT_MS);
     const reussi = lu.reussi && lu.sortie.includes("identique");
-    return resultat("Client Godot", reussi ? "ok" : "echec", reussi ? "relit un rejeu et retrouve son bilan" : lu.sortie.trim().split("\n").slice(-3).join(" | "), "voir clients/README.md");
+    return resultat(t("cli.verif.client_godot"), reussi ? "ok" : "echec", reussi ? t("cli.verif.client_godot_ok") : lu.sortie.trim().split("\n").slice(-3).join(" | "), t("cli.verif.client_godot_remede"));
   } finally {
     rmSync(dossier, {recursive: true, force: true});
   }
@@ -147,9 +156,9 @@ async function controler_godot(simulation) {
     const lu = lancer(commande, ["--headless", "--version"]);
     return lu.reussi ? lu.sortie.trim().split("\n").at(-1) : null;
   });
-  if (!trouve) return [resultat("Godot", "echec", "introuvable", REMEDE_GODOT)];
+  if (!trouve) return [resultat("Godot", "echec", t("cli.verif.introuvable"), remede_godot())];
   const version = trouve.version.join(".");
-  if (!version_suffisante(trouve.version, VERSIONS_MINIMALES.godot)) return [resultat("Godot", "echec", version, REMEDE_GODOT)];
+  if (!version_suffisante(trouve.version, VERSIONS_MINIMALES.godot)) return [resultat("Godot", "echec", version, remede_godot())];
   const ligne = resultat("Godot", "ok", `${version} (${trouve.commande})`);
   return simulation.brut ? [ligne, await controler_client_godot(trouve.commande, simulation)] : [ligne];
 }
@@ -163,14 +172,14 @@ const port_libre = (port) => new Promise((rendre) => {
 
 async function controler_port() {
   const libre = await port_libre(PORT_SITE);
-  return resultat("Port du site", libre ? "ok" : "avertissement", libre ? `${PORT_SITE} libre` : `${PORT_SITE} déjà occupé`, "Égide tourne peut-être déjà ; sinon, fermer le programme qui occupe ce port");
+  return resultat(t("cli.verif.port"), libre ? "ok" : "avertissement", t(libre ? "cli.verif.port_libre" : "cli.verif.port_occupe", {port: PORT_SITE}), t("cli.verif.port_remede"));
 }
 
 function controler_tests() {
   const js = lancer("npm", ["test"], DELAI_TESTS_MS);
   const py = lancer(chemin_python(RACINE), ["-m", "pytest", "-q", "tests"], DELAI_TESTS_MS);
-  const detail = (lu) => (lu.reussi ? "réussis" : lu.sortie.trim().split("\n").slice(-2).join(" | "));
-  return [resultat("Tests JavaScript", js.reussi ? "ok" : "echec", detail(js)), resultat("Tests Python", py.reussi ? "ok" : "echec", detail(py))];
+  const detail = (lu) => (lu.reussi ? t("cli.verif.reussis") : lu.sortie.trim().split("\n").slice(-2).join(" | "));
+  return [resultat(t("cli.verif.tests_js"), js.reussi ? "ok" : "echec", detail(js)), resultat(t("cli.verif.tests_py"), py.reussi ? "ok" : "echec", detail(py))];
 }
 
 /** Rendre les résultats de tous les contrôles ; `complet` ajoute les suites de tests. */
@@ -183,7 +192,7 @@ export async function verifier({complet = false} = {}) {
 }
 
 async function principal() {
-  const options = process.argv.slice(2);
+  const options = preparer_langue(process.argv.slice(2));
   const resultats = await verifier({complet: options.includes("--complet")});
   console.log(options.includes("--json") ? JSON.stringify({...resumer(resultats), resultats}, null, 2) : texte_rapport(resultats));
   process.exitCode = resumer(resultats).pret ? 0 : 1;

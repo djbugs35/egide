@@ -16,7 +16,9 @@ import {importer_module, lire_fichier, RACINE} from "../src/moteur/catalogue_nod
 import {ids_unites, resoudre_scenario} from "../src/moteur/scenario.js";
 import {PAYS} from "../src/vue/pays.js";
 import {LANGUES} from "../src/i18n.js";
+import {preparer_langue} from "../src/langue_node.js";
 import {chemin_catalogue, couverture_catalogue} from "../src/catalogue_langue.js";
+import {t} from "../src/i18n.js";
 
 const TYPES_LIAISON = ["filaire", "radio", "satellite", "optique"];
 
@@ -39,14 +41,14 @@ function defauts_famille(id, valeurs) {
     try {
       readFileSync(resolve(RACINE, chemin_icone(valeurs.icone)));
     } catch {
-      defauts.push(`icône absente : ${chemin_icone(valeurs.icone)}`);
+      defauts.push(t("cli.valider.icone", {chemin: chemin_icone(valeurs.icone)}));
     }
   }
-  if (valeurs.pays && !(valeurs.pays in PAYS)) defauts.push(`pays inconnu « ${valeurs.pays} » (codes connus : ${Object.keys(PAYS).join(", ")})`);
-  if (famille.startsWith("liaisons/") && !TYPES_LIAISON.includes(valeurs.type)) defauts.push(`liaison : type « ${valeurs.type} » inconnu (${TYPES_LIAISON.join(", ")})`);
+  if (valeurs.pays && !(valeurs.pays in PAYS)) defauts.push(t("cli.valider.pays", {pays: valeurs.pays, codes: Object.keys(PAYS).join(", ")}));
+  if (famille.startsWith("liaisons/") && !TYPES_LIAISON.includes(valeurs.type)) defauts.push(t("cli.valider.type_liaison", {type: valeurs.type, types: TYPES_LIAISON.join(", ")}));
   if (famille.startsWith("terrains/") && valeurs.lignes > 0) {
     const octets = Buffer.from(valeurs.altitudes_b64 ?? "", "base64").length;
-    if (octets !== valeurs.lignes * valeurs.colonnes * 2) defauts.push(`terrain : ${octets} octets d'altitudes pour ${valeurs.lignes} × ${valeurs.colonnes} × 2 attendus`);
+    if (octets !== valeurs.lignes * valeurs.colonnes * 2) defauts.push(t("cli.valider.terrain", {octets, lignes: valeurs.lignes, colonnes: valeurs.colonnes}));
   }
   return defauts;
 }
@@ -59,10 +61,10 @@ async function valider_unite(id) {
   const registre = await charger_algos(Object.values(brute.algos ?? {}), importer_module);
   const defauts = [];
   for (const [role, idAlgo] of Object.entries(brute.algos ?? {})) {
-    if (registre[idAlgo].meta.role !== role) defauts.push(`${idAlgo} tient le rôle ${registre[idAlgo].meta.role}, pas ${role}`);
+    if (registre[idAlgo].meta.role !== role) defauts.push(t("cli.valider.role", {algo: idAlgo, tenu: registre[idAlgo].meta.role, role}));
     if (!ROLES_D_UNITE.includes(role)) continue;
     for (const parametre of Object.keys(registre[idAlgo].meta.parametres)) {
-      if (!(parametre in valeurs) && parametre !== "sites" && parametre !== "sites_unites") defauts.push(`${idAlgo} lit « ${parametre} », absent de l'unité`);
+      if (!(parametre in valeurs) && parametre !== "sites" && parametre !== "sites_unites") defauts.push(t("cli.valider.lit", {algo: idAlgo, parametre}));
     }
   }
   return [...defauts, ...defauts_famille(id, valeurs)];
@@ -70,11 +72,11 @@ async function valider_unite(id) {
 
 async function valider_algorithme(id) {
   const source = readFileSync(resolve(RACINE, chemin_algo(id)), "utf-8");
-  const defauts = INTERDITS.filter((motif) => motif.test(source)).map((motif) => `interdit dans un algorithme : ${motif}`);
+  const defauts = INTERDITS.filter((motif) => motif.test(source)).map((motif) => t("cli.valider.interdit", {motif}));
   const registre = await charger_algos([id], importer_module);
   const dossier = id.replace(/^prive\//, "").split("/");
   const role = registre[id].meta.role;
-  if (dossier[0] === "global" && dossier[1] !== role) defauts.push(`rangé sous ${dossier[1]}/ mais tient le rôle ${role} : algos/global/${role}/`);
+  if (dossier[0] === "global" && dossier[1] !== role) defauts.push(t("cli.valider.range", {dossier: dossier[1], role}));
   return defauts;
 }
 
@@ -95,7 +97,7 @@ export async function valider_fichier(chemin) {
     if (genre === "unite") defauts = await valider_unite(id);
     else if (genre === "algo") defauts = await valider_algorithme(id);
     else if (genre === "scenario") defauts = await valider_scenario(resolve(chemin));
-    else defauts = ["fichier non reconnu : unites/…json, prive/unites/…json, algos/…js, prive/algos/…js ou scénario .json"];
+    else defauts = [t("cli.valider.non_reconnu")];
   } catch (erreur) {
     defauts = [erreur.message];
   }
@@ -126,23 +128,23 @@ export async function couverture_langues() {
     if (!fichier) continue;
     const contenu = lire_racine(fichier);
     const couverture = couverture_catalogue(contenu, attendus);
-    const defauts = Object.entries(couverture).flatMap(([genre, c]) => c.inconnus.map((id) => `${genre} : « ${id} » n'existe pas`));
+    const defauts = Object.entries(couverture).flatMap(([genre, c]) => c.inconnus.map((id) => t("cli.valider.inexistant", {genre, id})));
     for (const [id, x] of Object.entries(contenu.unites ?? {})) {
       const brut = unites[id];
       if (!brut) continue;
-      if ("nom" in x !== "nom" in brut) defauts.push(`unites ${id} : nom traduit sans nom d'origine, ou l'inverse`);
-      if (longueur(x.sources) !== longueur(brut.sources)) defauts.push(`unites ${id} : ${longueur(x.sources)} sources pour ${longueur(brut.sources)}`);
+      if ("nom" in x !== "nom" in brut) defauts.push(t("cli.valider.nom_traduit", {id}));
+      if (longueur(x.sources) !== longueur(brut.sources)) defauts.push(t("cli.valider.sources", {id, n: longueur(x.sources), attendu: longueur(brut.sources)}));
       const cles = (o) => Object.keys(o ?? {}).sort().join(", ");
-      if (cles(x.aide) !== cles(brut._aide)) defauts.push(`unites ${id} : aides [${cles(x.aide)}] pour [${cles(brut._aide)}]`);
+      if (cles(x.aide) !== cles(brut._aide)) defauts.push(t("cli.valider.aides", {id, cles: cles(x.aide), attendu: cles(brut._aide)}));
     }
     for (const [id, x] of Object.entries(contenu.algos ?? {})) {
       const meta = metas[id];
       if (!meta) continue;
       for (const champ of ["equations", "hypotheses", "references"]) {
-        if (champ in x && longueur(x[champ]) !== longueur(meta[champ])) defauts.push(`algos ${id} : ${longueur(x[champ])} ${champ} pour ${longueur(meta[champ])}`);
+        if (champ in x && longueur(x[champ]) !== longueur(meta[champ])) defauts.push(t("cli.valider.champ", {id, n: longueur(x[champ]), champ, attendu: longueur(meta[champ])}));
       }
       const inconnus = Object.keys(x.parametres ?? {}).filter((cle) => !(cle in meta.parametres));
-      if (inconnus.length) defauts.push(`algos ${id} : paramètres inconnus ${inconnus.join(", ")}`);
+      if (inconnus.length) defauts.push(t("cli.valider.parametres", {id, liste: inconnus.join(", ")}));
     }
     const manquants = Object.entries(couverture).flatMap(([genre, c]) => c.manquants.map((id) => `${genre} ${id}`));
     rapports.push({langue: code, fichier, manquants, defauts});
@@ -155,19 +157,19 @@ async function principal(args) {
   if (args.includes("--langues")) {
     const rapports = await couverture_langues();
     if (json) console.log(JSON.stringify(rapports, null, 2));
-    else for (const r of rapports) console.log(`${r.defauts.length ? "REFUSÉ " : "OK     "} ${r.fichier} : ${r.manquants.length} entrée(s) manquante(s), ${r.defauts.length} défaut(s)${[...r.manquants.map((m) => `\n        manque ${m}`), ...r.defauts.map((d) => `\n        - ${d}`)].join("")}`);
+    else for (const r of rapports) console.log(`${(r.defauts.length ? t("cli.valider.refuse") : t("cli.valider.ok")).padEnd(7)} ${t("cli.valider.couverture", {fichier: r.fichier, manquants: r.manquants.length, defauts: r.defauts.length})}${[...r.manquants.map((m) => `\n        ${t("cli.valider.manque", {entree: m})}`), ...r.defauts.map((d) => `\n        - ${d}`)].join("")}`);
     return rapports.every((r) => !r.defauts.length) ? 0 : 1;
   }
   const chemins = args.filter((a) => a !== "--json");
   if (!chemins.length) {
-    console.error("usage : node outils/valider.js [--json] fichier…  |  --langues  (voir docs/FORMATS.md)");
+    console.error(t("cli.valider.usage"));
     return 2;
   }
   const rapports = [];
   for (const chemin of chemins) rapports.push(await valider_fichier(chemin));
   if (json) console.log(JSON.stringify(rapports, null, 2));
-  else for (const r of rapports) console.log(r.valide ? `OK      ${r.fichier}` : `REFUSÉ  ${r.fichier}\n${r.defauts.map((d) => `        - ${d}`).join("\n")}`);
+  else for (const r of rapports) console.log(r.valide ? `${t("cli.valider.ok").padEnd(7)} ${r.fichier}` : `${t("cli.valider.refuse").padEnd(7)} ${r.fichier}\n${r.defauts.map((d) => `        - ${d}`).join("\n")}`);
   return rapports.every((r) => r.valide) ? 0 : 1;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) process.exitCode = await principal(process.argv.slice(2));
+if (import.meta.url === pathToFileURL(process.argv[1]).href) process.exitCode = await principal(preparer_langue(process.argv.slice(2)));

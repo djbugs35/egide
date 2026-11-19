@@ -1,12 +1,14 @@
 // Régénère unites/index.json, algos/index.json et cartes/index.json, lus par l'interface (palette, explorateur) qui ne peut pas lister
 // un dossier. `node outils/indexer.js` ; tests/conformite.test.js échoue si un index est périmé.
 import {schemas} from "./schemas.js";
+import {preparer_langue} from "../src/langue_node.js";
 import {readdirSync, readFileSync, renameSync, writeFileSync, mkdirSync} from "node:fs";
 import {join} from "node:path";
 import {pathToFileURL} from "node:url";
 import {charger_algos} from "../src/moteur/algos.js";
 import {chemin_unite, unite_brute} from "../src/moteur/catalogue.js";
 import {RACINE, ids_algos_disque, ids_unites_disque, importer_module} from "../src/moteur/catalogue_node.js";
+import {t} from "../src/i18n.js";
 
 /** Rendre les entrées d'index des unités `ids` ; la famille se lit sans le préfixe « prive/ ». */
 function entrees_index(ids) {
@@ -61,6 +63,7 @@ function ecrire(chemin, contenu) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  preparer_langue(process.argv.slice(2));
   ecrire(join(RACINE, "unites", "index.json"), index_unites());
   ecrire(join(RACINE, "algos", "index.json"), await index_algos());
   ecrire(join(RACINE, "cartes", "index.json"), index_cartes());
@@ -70,5 +73,5 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const prive = index_unites_prive();
   // Hors git comme le reste de prive/ : la page Catalogue le lit pour importer le catalogue privé.
   if (prive.length) ecrire(join(RACINE, "prive", "unites", "index.json"), prive);
-  console.log(`Index régénérés : unites/index.json, algos/index.json, cartes/index.json, scenarios/index.json, schemas/*.schema.json${prive.length ? `, prive/unites/index.json (${prive.length})` : ""}`);
+  console.log(t("cli.indexer.fait", {prive: prive.length ? `, prive/unites/index.json (${prive.length})` : ""}));
 }

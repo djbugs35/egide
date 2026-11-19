@@ -5,6 +5,8 @@ import {mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
 import {dirname, join} from "node:path";
 import {pathToFileURL} from "node:url";
 import {RACINE} from "../src/moteur/catalogue_node.js";
+import {preparer_langue} from "../src/langue_node.js";
+import {t} from "../src/i18n.js";
 
 const TELECHARGEMENTS_SIMULTANES = 4;
 const ZOOM_MIN = 4;
@@ -68,12 +70,12 @@ function lire_options(argv) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const o = lire_options(process.argv.slice(2));
+  const o = lire_options(preparer_langue(process.argv.slice(2)));
   const [fond, relief] = [lire_source(o.fond), lire_source(o.relief)];
   const tuiles = tuiles_emprise(o.lat, o.lon, o.rayonKm, ZOOM_MIN, o.zoomMax);
-  console.log(`${tuiles.length} tuiles par source, zoom ${ZOOM_MIN} à ${o.zoomMax}`);
+  console.log(t("cli.hors_ligne.tuiles", {n: tuiles.length, min: ZOOM_MIN, max: o.zoomMax}));
   const decrire = (source, nom) => ({...source, tuiles: [`hors_ligne/${nom}/{z}/{x}/{y}.tuile`], zoom_max: o.zoomMax});
   const [nFond, nRelief] = [await telecharger(fond, tuiles, join(o.dossier, "fond")), await telecharger(relief, tuiles, join(o.dossier, "relief"))];
   ecrire(join(o.dossier, "index.json"), `${JSON.stringify({fond: decrire(fond, "fond"), relief: decrire(relief, "relief")}, null, 2)}\n`);
-  console.log(`Écrit dans ${o.dossier} : ${nFond} tuiles de fond, ${nRelief} de relief.`);
+  console.log(t("cli.hors_ligne.ecrit", {dossier: o.dossier, fond: nFond, relief: nRelief}));
 }

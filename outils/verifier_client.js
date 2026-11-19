@@ -8,6 +8,8 @@ import {bilan, simuler} from "../src/moteur/monde.js";
 import {empreinte} from "../src/moteur/preuve.js";
 import {creer_repere} from "../src/moteur/rejeu.js";
 import {en_v2, resoudre_scenario} from "../src/moteur/scenario.js";
+import {preparer_langue} from "../src/langue_node.js";
+import {t} from "../src/i18n.js";
 
 const TOLERANCE_POSITION_M = 1;
 const TOLERANCE_DUREE_S = 1e-3;
@@ -53,12 +55,12 @@ export function ecarts_bilan(bilan_client, bilan_moteur) {
 }
 
 async function principal() {
-  const argv = process.argv.slice(2);
+  const argv = preparer_langue(process.argv.slice(2));
   const option = (nom, defaut) => (argv.includes(`--${nom}`) ? argv[argv.indexOf(`--${nom}`) + 1] : defaut);
   const client = JSON.parse(readFileSync(option("client"), "utf-8"));
   const brut = en_v2(JSON.parse(readFileSync(option("scenario", "scenarios/reference.json"), "utf-8")));
   const [fichiers, registre] = [await charger_unites_scenario(brut), await charger_tous_algos()];
-  if ((await empreinte(brut, fichiers, registre)).empreinte !== client.empreinte) throw new Error("ce dump ne vient pas de ce scénario : empreintes différentes");
+  if ((await empreinte(brut, fichiers, registre)).empreinte !== client.empreinte) throw new Error(t("cli.client.empreintes"));
   const scenario = resoudre_scenario(brut, fichiers);
   const voulus = new Set(client.images.map((i) => i.t));
   const etats = new Map();
@@ -71,7 +73,7 @@ async function principal() {
   const repere = creer_repere({...scenario.theatre.origine, alt: scenario.theatre.origine.alt ?? 0});
   const resultat = comparer_images(client.images, etats, repere);
   const bilans = [...ecarts_bilan(client.bilan_recalcule, bilan(monde)), ...ecarts_bilan(client.bilan_fichier, bilan(monde))];
-  console.log(`${resultat.points} positions, écart maximal ${resultat.ecart_max.toFixed(3)} m, ${resultat.manquants} entités sans correspondance ; bilan : ${bilans.length ? JSON.stringify(bilans) : "identique"}`);
+  console.log(t("cli.client.resultat", {points: resultat.points, ecart: resultat.ecart_max.toFixed(3), manquants: resultat.manquants, bilan: bilans.length ? JSON.stringify(bilans) : t("cli.client.identique")}));
   if (resultat.ecart_max > TOLERANCE_POSITION_M || resultat.manquants || bilans.length || !resultat.points) process.exitCode = 1;
 }
 

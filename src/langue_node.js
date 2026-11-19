@@ -15,3 +15,18 @@ export function installer_langue_node(code = process.env.EGIDE_LANGUE ?? LANGUE_
   installer_catalogue(catalogue && existsSync(catalogue) ? JSON.parse(readFileSync(catalogue, "utf-8")) : null);
   return choisi;
 }
+
+/**
+ * Ôter « --langue <code> » (ou « --langue=<code> ») de `argv` et installer cette langue, sinon celle de EGIDE_LANGUE,
+ * sinon l'anglais ; rendre les arguments restants, pour la lecture propre à chaque outil.
+ */
+export function preparer_langue(argv) {
+  const i = argv.findIndex((a) => a === "--langue" || a.startsWith("--langue="));
+  if (i < 0) {
+    installer_langue_node();
+    return argv;
+  }
+  const egal = argv[i].startsWith("--langue=");
+  installer_langue_node(egal ? argv[i].slice("--langue=".length) : argv[i + 1]);
+  return [...argv.slice(0, i), ...argv.slice(i + (egal ? 1 : 2))];
+}

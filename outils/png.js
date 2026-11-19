@@ -1,6 +1,7 @@
 // PNG minimal sans dépendance, avec le zlib de Node (RFC 2083) : décodeur 8 bits RVB ou RVBA non entrelacé pour lire les
 // tuiles de relief terrarium, encodeur 16 bits en niveaux de gris pour exporter les cartes de hauteur.
 import {deflateSync, inflateSync} from "node:zlib";
+import {t} from "../src/i18n.js";
 
 const SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 
@@ -12,7 +13,7 @@ function paeth(a, b, c) {
 
 /** Rendre {largeur, hauteur, canaux, pixels} d'un PNG 8 bits RVB(A) non entrelacé. Lève une erreur sinon. */
 export function decoder_png(octets) {
-  if (!SIGNATURE.every((o, i) => octets[i] === o)) throw new Error("pas un PNG");
+  if (!SIGNATURE.every((o, i) => octets[i] === o)) throw new Error(t("cli.png.pas_png"));
   const vue = new DataView(octets.buffer, octets.byteOffset, octets.byteLength);
   let [position, largeur, hauteur, canaux] = [8, 0, 0, 0];
   const donnees = [];
@@ -23,7 +24,7 @@ export function decoder_png(octets) {
     if (type === "IHDR") {
       [largeur, hauteur] = [vue.getUint32(position + 8), vue.getUint32(position + 12)];
       const [profondeur, couleur, entrelace] = [corps[8], corps[9], corps[12]];
-      if (profondeur !== 8 || ![2, 6].includes(couleur) || entrelace) throw new Error("PNG non pris en charge (8 bits RVB ou RVBA, non entrelacé)");
+      if (profondeur !== 8 || ![2, 6].includes(couleur) || entrelace) throw new Error(t("cli.png.non_pris"));
       canaux = couleur === 2 ? 3 : 4;
     } else if (type === "IDAT") donnees.push(corps);
     else if (type === "IEND") break;
@@ -40,7 +41,7 @@ export function decoder_png(octets) {
       const b = y > 0 ? pixels[(y - 1) * ligne + x] : 0;
       const c = x >= canaux && y > 0 ? pixels[(y - 1) * ligne + x - canaux] : 0;
       const predit = [0, a, b, (a + b) >> 1, paeth(a, b, c)][filtre];
-      if (predit === undefined) throw new Error(`filtre PNG inconnu ${filtre}`);
+      if (predit === undefined) throw new Error(t("cli.png.filtre", {filtre}));
       pixels[y * ligne + x] = (valeur + predit) & 255;
     }
   }

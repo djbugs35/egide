@@ -7,6 +7,7 @@ import {choisir_moyen, modifications_depot, palette} from "../vue/deploiement.js
 import {elements_editables, modifications_ajout_liaison, modifications_ajout_passage, modifications_ajout_zone, modifications_deplacement, modifications_suppression, noeud_element} from "../vue/edition.js";
 import {position_noeud} from "../vue/reseau_vue.js";
 import {CommandeInvalide} from "./salle.js";
+import {t} from "../i18n.js";
 
 const HISTORIQUE_MAX = 100;
 const MOYEN_DEFAUT = "liaisons/radio_vhf_uhf_notionnelle";
@@ -16,13 +17,13 @@ const finis = (...valeurs) => valeurs.every(Number.isFinite);
 
 /** Rendre le point au sol du geste `{e, n}`, ou lever CommandeInvalide. */
 function point_du_geste(partie, {e, n}) {
-  if (!finis(e, n)) throw new CommandeInvalide(`point invalide : e=${e}, n=${n}`);
+  if (!finis(e, n)) throw new CommandeInvalide(t("cli.serveur.point_invalide", {e, n}));
   return partie.point(e, n);
 }
 
 /** Rendre `cles` si c'est une liste de textes non vide, ou lever CommandeInvalide. */
 function cles_du_geste(cles) {
-  if (!Array.isArray(cles) || !cles.length || !cles.every((c) => typeof c === "string")) throw new CommandeInvalide("aucun élément désigné");
+  if (!Array.isArray(cles) || !cles.length || !cles.every((c) => typeof c === "string")) throw new CommandeInvalide(t("cli.serveur.aucun_element"));
   return cles;
 }
 
@@ -60,12 +61,12 @@ export function creer_atelier_scenario({index, fichiers, bibliotheque}) {
     const partie = () => acces.partie();
 
     function exiger_debut() {
-      if (partie().instant() !== 0) throw new CommandeInvalide("l'édition se fait à l'instant initial : lancer d'abord une nouvelle partie");
+      if (partie().instant() !== 0) throw new CommandeInvalide(t("cli.serveur.instant_initial"));
     }
 
     /** Relancer sur le scénario modifié, dont l'échec laisse l'historique tel qu'il était. */
     async function appliquer(modifications) {
-      if (!Object.keys(modifications).length) throw new CommandeInvalide("ce geste n'a pas d'effet ici");
+      if (!Object.keys(modifications).length) throw new CommandeInvalide(t("cli.serveur.sans_effet"));
       const avant = partie().brut;
       await acces.relancer(modifier_scenario(avant, modifications));
       passe.push(avant);
@@ -77,19 +78,19 @@ export function creer_atelier_scenario({index, fichiers, bibliotheque}) {
 
     function relier({de, vers, moyen = MOYEN_DEFAUT}) {
       const [a, b] = [element_de(de), element_de(vers)].map((e) => e && noeud_element(partie().monde, e));
-      if (!a || !b) throw new CommandeInvalide("une liaison relie deux unités du réseau");
+      if (!a || !b) throw new CommandeInvalide(t("cli.serveur.liaison_deux"));
       const choisi = choisir_moyen(partie().brut, fichiers, a, b, moyen);
-      if (!choisi) throw new CommandeInvalide("ces deux unités ne partagent aucun moyen de communication");
+      if (!choisi) throw new CommandeInvalide(t("cli.serveur.aucun_moyen"));
       return modifications_ajout_liaison(partie().monde, partie().brut, a, b, choisi);
     }
 
     function zone({points}) {
-      if (!Array.isArray(points) || points.length < ZONE_POINTS_MIN) throw new CommandeInvalide(`une zone demande au moins ${ZONE_POINTS_MIN} sommets`);
+      if (!Array.isArray(points) || points.length < ZONE_POINTS_MIN) throw new CommandeInvalide(t("cli.serveur.zone_sommets", {n: ZONE_POINTS_MIN}));
       return modifications_ajout_zone(partie().brut, points.map((p) => point_du_geste(partie(), p)));
     }
 
     function deposer({id, e, n, sous = null, quantite = 1}) {
-      if (typeof id !== "string" || !(id.startsWith("special/") || id in fichiers)) throw new CommandeInvalide(`unité inconnue : ${id}`);
+      if (typeof id !== "string" || !(id.startsWith("special/") || id in fichiers)) throw new CommandeInvalide(t("cli.serveur.unite_inconnue", {id}));
       return modifications_depot(partie().monde, partie().brut, id, point_du_geste(partie(), {e, n}), {quantite, sous: sous === null ? null : element_de(sous)});
     }
 
@@ -105,7 +106,7 @@ export function creer_atelier_scenario({index, fichiers, bibliotheque}) {
     /** Revenir à l'état au sommet de `depuis`, en rangeant l'état courant dans `vers_pile`. */
     async function voyager(depuis, vers_pile) {
       exiger_debut();
-      if (!depuis.length) throw new CommandeInvalide("rien à reprendre");
+      if (!depuis.length) throw new CommandeInvalide(t("cli.serveur.rien_a_reprendre"));
       const courant = partie().brut;
       await acces.relancer(depuis.at(-1));
       depuis.pop();
@@ -118,7 +119,7 @@ export function creer_atelier_scenario({index, fichiers, bibliotheque}) {
       commandes: {
         editer: (message) => {
           exiger_debut();
-          if (!Object.hasOwn(GESTES, message.geste)) throw new CommandeInvalide(`geste inconnu : ${message.geste}`);
+          if (!Object.hasOwn(GESTES, message.geste)) throw new CommandeInvalide(t("cli.serveur.geste_inconnu", {geste: message.geste}));
           return appliquer(GESTES[message.geste](message));
         },
         annuler: () => voyager(passe, futur),

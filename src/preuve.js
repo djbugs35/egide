@@ -18,6 +18,9 @@ import {dossier_markdown} from "./moteur/dossier.js";
 import {convergence, differentiel, duel, empreinte} from "./moteur/preuve.js";
 import {en_v2, ids_unites, modifier_scenario} from "./moteur/scenario.js";
 import {morris} from "./moteur/sensibilite.js";
+import {preparer_langue} from "./langue_node.js";
+import {nom_scenario} from "./catalogue_langue.js";
+import {t} from "./i18n.js";
 
 const OPTIONS = {scenario: "scenarios/reference.json", tirages: null, sortie: "resultats/preuves", pas: "1,0.5,0.25",
   variante: null, trajectoires: 6, niveaux: 4, tirages_convergence: 10};
@@ -44,7 +47,7 @@ export function lire_arguments(liste) {
 export function lire_facteur(texte) {
   const [chemin, plage] = texte.split("=");
   const [min, max] = (plage ?? "").split(":").map(Number);
-  if (!chemin || !Number.isFinite(min) || !Number.isFinite(max) || min >= max) throw new Error(`facteur illisible : « ${texte} » (chemin=min:max)`);
+  if (!chemin || !Number.isFinite(min) || !Number.isFinite(max) || min >= max) throw new Error(t("cli.preuve.facteur_illisible", {texte}));
   return {chemin, min, max, entier: Number.isInteger(min) && Number.isInteger(max)};
 }
 
@@ -94,36 +97,38 @@ const OUTILS = {
   },
   async convergence(c, o, commande) {
     const resultat = convergence(c.brut, o.pas.split(",").map(Number), o.tirages ?? o.tirages_convergence, c.fichiers, c.registre);
-    const lignes = resultat.lignes.map((l) => `pas ${String(l.pas_s).padEnd(5)} ${l.conforme ? "conforme" : "ÉCART   "} ${Object.entries(l.ecarts).map(([g, e]) => `${g} z ${fmt(e.z)}`).join(" | ")}`);
-    return {fichiers: {"resultat.json": json({...commun(c, commande), convergence: resultat})}, lignes: [...lignes, resultat.converge ? "→ le pas du scénario a convergé" : "→ le pas du scénario n'a PAS convergé"]};
+    const lignes = resultat.lignes.map((l) => `${t("cli.preuve.pas")} ${String(l.pas_s).padEnd(5)} ${(l.conforme ? t("cli.preuve.conforme") : t("cli.preuve.ecart")).padEnd(8)} ${Object.entries(l.ecarts).map(([g, e]) => `${g} z ${fmt(e.z)}`).join(" | ")}`);
+    return {fichiers: {"resultat.json": json({...commun(c, commande), convergence: resultat})}, lignes: [...lignes, resultat.converge ? `→ ${t("cli.preuve.converge")}` : `→ ${t("cli.preuve.non_converge")}`]};
   },
   async duel(c, o, commande) {
     const resultat = duel(c.brut, lire_modifications(o.variante), o.tirages ?? 30, c.fichiers, c.registre);
     const lignes = Object.entries(resultat.comparaison).map(([g, r]) =>
-      `${g.padEnd(17)} A ${r.a.moyenne.toFixed(1).padStart(7)}  B ${r.b.moyenne.toFixed(1).padStart(7)}  B−A ${r.difference.moyenne.toFixed(1).padStart(7)} ± ${r.difference.ic95.toFixed(1).padEnd(6)} ${r.verdict}`);
+      `${g.padEnd(17)} A ${r.a.moyenne.toFixed(1).padStart(7)}  B ${r.b.moyenne.toFixed(1).padStart(7)}  B−A ${r.difference.moyenne.toFixed(1).padStart(7)} ± ${r.difference.ic95.toFixed(1).padEnd(6)} ${r.verdict === "indiscernable" ? t("cli.preuve.indiscernable") : r.verdict}`);
     return {fichiers: {"resultat.json": json({...commun(c, commande), duel: resultat})}, lignes};
   },
   async morris(c, o, commande, facteurs) {
-    if (facteurs.length === 0) throw new Error("morris : au moins un --facteur chemin=min:max");
+    if (facteurs.length === 0) throw new Error(t("cli.preuve.morris_facteur"));
     const resultat = morris(c.brut, facteurs, {trajectoires: o.trajectoires, niveaux: o.niveaux, tirages: o.tirages ?? 3, graine: 1}, c.fichiers, c.registre);
-    const lignes = Object.entries(resultat.effets).flatMap(([g, liste]) => [`${g} (bruit ${resultat.bruit[g].toFixed(1)})`,
+    const lignes = Object.entries(resultat.effets).flatMap(([g, liste]) => [t("cli.preuve.bruit", {g, bruit: resultat.bruit[g].toFixed(1)}),
       ...liste.map((e) => `  ${e.chemin.padEnd(34)} μ* ${e.mu_etoile.toFixed(1).padStart(8)}  μ ${e.mu.toFixed(1).padStart(8)}  σ ${e.sigma.toFixed(1).padStart(8)}`)]);
-    return {fichiers: {"resultat.json": json({...commun(c, commande), morris: resultat})}, lignes: [`${resultat.evaluations} évaluations`, ...lignes]};
+    return {fichiers: {"resultat.json": json({...commun(c, commande), morris: resultat})}, lignes: [t("cli.preuve.evaluations", {n: resultat.evaluations}), ...lignes]};
   },
   async dossier(c, o, commande) {
     const tirages = o.tirages ?? 30;
     const resume = mener_campagne(c.brut, tirages, c.fichiers, c.registre);
     const conv = convergence(c.brut, o.pas.split(",").map(Number), o.tirages_convergence, c.fichiers, c.registre);
+    // Nom affiché dans la langue choisie pour un scénario du dépôt (scenarios/<id>.json) ; résultat.json garde l'original.
+    const id = /(?:^|[\\/])scenarios[\\/](.+)\.json$/.exec(o.scenario)?.[1];
     const donnees = {...commun(c, commande), nom: c.brut.nom, tirages, resume, convergence: conv};
-    const markdown = dossier_markdown({...donnees, fichiers: c.fichiers, registre: c.registre});
-    return {fichiers: {"resultat.json": json(donnees), "dossier.md": markdown}, lignes: [`empreinte ${c.trace.empreinte}`, conv.converge ? "pas convergé" : "pas NON convergé"]};
+    const markdown = dossier_markdown({...donnees, nom: id ? nom_scenario(id, c.brut.nom) : c.brut.nom, fichiers: c.fichiers, registre: c.registre});
+    return {fichiers: {"resultat.json": json(donnees), "dossier.md": markdown}, lignes: [t("cli.preuve.empreinte", {e: c.trace.empreinte}), conv.converge ? t("cli.preuve.pas_converge") : t("cli.preuve.pas_non_converge")]};
   },
 };
 
 async function principal() {
   const argv = process.argv.slice(2);
-  const {outil, options, modifications, facteurs} = lire_arguments(argv);
-  if (!(outil in OUTILS)) throw new Error(`outil inconnu « ${outil} » (${Object.keys(OUTILS).join(", ")})`);
+  const {outil, options, modifications, facteurs} = lire_arguments(preparer_langue(argv));
+  if (!(outil in OUTILS)) throw new Error(t("cli.preuve.outil_inconnu", {outil, liste: Object.keys(OUTILS).join(", ")}));
   const c = await contexte(options, modifications, outil === "duel" ? lire_modifications(options.variante) : {});
   const commande = `node src/preuve.js ${argv.join(" ")}`.trim();
   const {fichiers, lignes} = await OUTILS[outil](c, options, commande, facteurs);

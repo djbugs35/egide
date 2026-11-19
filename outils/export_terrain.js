@@ -15,6 +15,8 @@ import {en_v2, modifier_scenario, resoudre_scenario} from "../src/moteur/scenari
 import {grille_terrain} from "../src/moteur/terrain.js";
 import {ecrire, telecharger, tuile_du_point} from "./hors_ligne.js";
 import {encoder_png_gris16} from "./png.js";
+import {preparer_langue} from "../src/langue_node.js";
+import {t} from "../src/i18n.js";
 
 export const FORMAT_TERRAIN = "egide-terrain";
 export const VERSION_TERRAIN = 1;
@@ -36,7 +38,7 @@ export function decouper_grille(grille, origine, {rayon = null, pas = null} = {}
   };
   const lignes = rangs(grille.lignes, grille.lat_sud, grille.pas_lat, origine.lat, dLat);
   const colonnes = rangs(grille.colonnes, grille.lon_ouest, grille.pas_lon, origine.lon, dLon);
-  if (lignes.length < 2 || colonnes.length < 2) throw new Error(`emprise vide : ${lignes.length} × ${colonnes.length} nœuds autour de l'origine`);
+  if (lignes.length < 2 || colonnes.length < 2) throw new Error(t("cli.export.emprise_vide", {lignes: lignes.length, colonnes: colonnes.length}));
   return {lignes, colonnes};
 }
 
@@ -165,7 +167,7 @@ export function emprise_degres(grille, {lignes, colonnes}) {
 /** Rendre la source d'imagerie `id`, ou lever une erreur si ses conditions n'autorisent pas l'export d'une emprise. */
 export function source_imagerie(id, lire = (chemin) => JSON.parse(readFileSync(join(RACINE, "cartes", `${chemin}.json`), "utf-8"))) {
   const source = lire(id);
-  if (source.export_imagerie !== true) throw new Error(`imagerie ${id} : la source n'autorise pas ce téléchargement (${source.conditions})`);
+  if (source.export_imagerie !== true) throw new Error(t("cli.export.imagerie_refusee", {id, conditions: source.conditions}));
   return source;
 }
 
@@ -173,7 +175,7 @@ function lire_options(argv) {
   const o = {scenario: "scenarios/reference.json", terrain: null, "rayon-km": null, "pas-km": null, plat: false, imagerie: null, "zoom-imagerie": ZOOM_IMAGERIE_DEFAUT, dossier: null};
   for (let i = 0; i < argv.length; i++) {
     const cle = argv[i].replace(/^--/, "");
-    if (!(cle in o)) throw new Error(`option inconnue : ${argv[i]}`);
+    if (!(cle in o)) throw new Error(t("cli.option_inconnue", {option: argv[i]}));
     if (cle === "plat") o.plat = true;
     else o[cle] = ["rayon-km", "pas-km", "zoom-imagerie"].includes(cle) ? Number(argv[++i]) : argv[++i];
   }
@@ -181,10 +183,10 @@ function lire_options(argv) {
 }
 
 async function principal() {
-  const o = lire_options(process.argv.slice(2));
+  const o = lire_options(preparer_langue(process.argv.slice(2)));
   const lu = en_v2(JSON.parse(readFileSync(o.scenario, "utf-8")));
   const brut = o.terrain ? modifier_scenario(lu, {"theatre.terrain": o.terrain}) : lu;
-  if (!brut.theatre.terrain) throw new Error("ce scénario n'a pas de terrain : préciser --terrain terrains/<nom>");
+  if (!brut.theatre.terrain) throw new Error(t("cli.export.sans_terrain"));
   const {origine: lue, terrain} = resoudre_scenario(brut, await charger_unites_scenario(brut)).theatre;
   const origine = {...lue, alt: lue.alt ?? 0};
   const source = o.imagerie ? source_imagerie(o.imagerie) : null;
@@ -204,7 +206,7 @@ async function principal() {
     const tuiles = Array.from({length: emprise.colonnes * emprise.lignes}, (_, k) => ({z: emprise.zoom, x: emprise.x_min + (k % emprise.colonnes), y: emprise.y_min + Math.floor(k / emprise.colonnes)}));
     const ecrites = await telecharger(source, tuiles, join(dossier, "imagerie"));
     imagerie = {source: o.imagerie, dossier: "imagerie/{z}/{x}/{y}.tuile", taille_tuile: source.taille_tuile, ...emprise, tuiles_ecrites: ecrites, attribution: source.attribution, conditions: source.conditions};
-    console.log(`Imagerie : ${ecrites} tuiles sur ${tuiles.length}.`);
+    console.log(t("cli.export.imagerie", {n: ecrites, total: tuiles.length}));
   }
   const description = {
     format: FORMAT_TERRAIN, version: VERSION_TERRAIN, terrain: {id: brut.theatre.terrain, nom: terrain.nom, sources: terrain.sources},
@@ -213,7 +215,7 @@ async function principal() {
     maillage: {fichier: "terrain.glb", uv: source ? "mosaique" : "grille"}, imagerie,
   };
   ecrire(join(dossier, "terrain.json"), `${JSON.stringify(description, null, 2)}\n`);
-  console.log(`${nc} × ${nl} nœuds, altitudes ${hauteurs.alt_min_m} à ${Math.round(hauteurs.alt_min_m + hauteurs.echelle_m * VALEUR_MAX_PNG)} m → ${dossier}`);
+  console.log(t("cli.export.fait", {nc, nl, min: hauteurs.alt_min_m, max: Math.round(hauteurs.alt_min_m + hauteurs.echelle_m * VALEUR_MAX_PNG), dossier}));
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) await principal();

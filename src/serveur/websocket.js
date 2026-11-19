@@ -1,6 +1,7 @@
 // Protocole WebSocket (RFC 6455), réduit à ce qu'il faut à une liaison locale : aucune dépendance, le dépôt n'a pas de
 // paquet npm et vendor/ ne porte que du code de navigateur. Pur : ni socket, ni horloge.
 import {createHash} from "node:crypto";
+import {t} from "../i18n.js";
 
 export const OPCODES = {texte: 1, fermeture: 8, ping: 9, pong: 10};
 // Un client n'envoie que des commandes : 1 Mio laisse passer une grosse modification de scénario, pas n'importe quoi.
@@ -52,9 +53,9 @@ function demasquer(charge, masque) {
 
 /** Lever TrameInvalide si la trame en tête de `octets` n'est pas masquée et entière, ou si elle est trop longue. */
 function verifier_trame(octets, longueur) {
-  if ((octets[0] & 0x80) === 0 || (octets[0] & 0x0f) === 0) throw new TrameInvalide("trame fragmentée non prise en charge");
-  if ((octets[1] & 0x80) === 0) throw new TrameInvalide("trame client non masquée (RFC 6455 § 5.1)");
-  if (longueur > CHARGE_ENTRANTE_MAX) throw new TrameInvalide(`trame de ${longueur} octets, au-delà de ${CHARGE_ENTRANTE_MAX}`);
+  if ((octets[0] & 0x80) === 0 || (octets[0] & 0x0f) === 0) throw new TrameInvalide(t("cli.serveur.trame_fragmentee"));
+  if ((octets[1] & 0x80) === 0) throw new TrameInvalide(t("cli.serveur.trame_non_masquee"));
+  if (longueur > CHARGE_ENTRANTE_MAX) throw new TrameInvalide(t("cli.serveur.trame_longue", {n: longueur, max: CHARGE_ENTRANTE_MAX}));
 }
 
 /**

@@ -1,6 +1,7 @@
 // La salle (docs/FORMATS.md § 10) : la partie en cours, son horloge et les commandes des clients. Ne connaît ni socket ni
 // temps réel : `tic` reçoit le temps écoulé et `maintenant` mesure le coût des pas, si bien que tout se teste sans réseau.
 import {modifier_scenario} from "../moteur/scenario.js";
+import {t} from "../i18n.js";
 
 export const VITESSE_MAX = 60;
 // Temps de calcul accordé à chaque tic de la période nominale : le reste sert à envoyer et à répondre aux commandes.
@@ -65,14 +66,14 @@ export function creer_salle({brut, preparer, diffuser, archiver, maintenant, ext
       diffuser(etat());
     },
     vitesse: ({valeur}) => {
-      if (!(valeur > 0 && valeur <= VITESSE_MAX)) throw new CommandeInvalide(`vitesse hors de ]0, ${VITESSE_MAX}] : ${valeur}`);
+      if (!(valeur > 0 && valeur <= VITESSE_MAX)) throw new CommandeInvalide(t("cli.serveur.vitesse", {max: VITESSE_MAX, valeur}));
       vitesse = valeur;
       diffuser(etat());
     },
     ordre: (message) => partie.ordonner(message),
     recommencer: () => relancer(partie.brut),
     modifier: ({modifications}) => {
-      if (!modifications_valides(modifications)) throw new CommandeInvalide("modifications illisibles : un objet {chemin: valeur} est attendu");
+      if (!modifications_valides(modifications)) throw new CommandeInvalide(t("cli.serveur.modifications"));
       return relancer(modifier_scenario(partie.brut, modifications));
     },
   };
@@ -101,12 +102,12 @@ export function creer_salle({brut, preparer, diffuser, archiver, maintenant, ext
     /** Exécuter la commande `message` du client ; une commande refusée s'annonce à tous, sans toucher la partie. */
     async commander(message) {
       try {
-        if (occupee || !partie) throw new CommandeInvalide("partie en cours de préparation");
-        if (!Object.hasOwn(COMMANDES, message?.type)) throw new CommandeInvalide(`commande inconnue : ${message?.type}`);
+        if (occupee || !partie) throw new CommandeInvalide(t("cli.serveur.preparation"));
+        if (!Object.hasOwn(COMMANDES, message?.type)) throw new CommandeInvalide(t("cli.serveur.commande_inconnue", {type: message?.type}));
         await COMMANDES[message.type](message);
       } catch (erreur) {
         // Frontière réseau : une commande mauvaise, quelle qu'elle soit, ne doit pas arrêter la partie.
-        console.error(`commande ${message?.type} refusée : ${erreur.message}`);
+        console.error(t("cli.serveur.commande_refusee", {type: message?.type, erreur: erreur.message}));
         diffuser({genre: "erreur", commande: message?.type ?? null, message: erreur.message});
       }
     },

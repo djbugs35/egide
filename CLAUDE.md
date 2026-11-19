@@ -94,6 +94,8 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
   fichiers et les identifiants restent en français. `tests/langues.test.js` vérifie que tout est aligné.
   Le catalogue public (unités, fiches `meta`, noms de scénarios) se traduit dans `langues/catalogue.en.json`, sans
   toucher aux fichiers ; toute unité ou tout algorithme ajouté y reçoit son entrée (`node outils/valider.js --langues`).
+  Un outil en ligne de commande commence par `preparer_langue(process.argv.slice(2))` (`src/langue_node.js`) :
+  `--langue fr` ou `EGIDE_LANGUE`, anglais par défaut ; ses messages sont des clés `cli.*`.
 - Ne jamais tuer un processus qu'on n'a pas lancé soi-même.
 
 ## Vérifications avant commit

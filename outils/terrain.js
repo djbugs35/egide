@@ -10,6 +10,8 @@ import {join} from "node:path";
 import {pathToFileURL} from "node:url";
 import {RACINE} from "../src/moteur/catalogue_node.js";
 import {decoder_png} from "./png.js";
+import {preparer_langue} from "../src/langue_node.js";
+import {t} from "../src/i18n.js";
 
 const KM_PAR_DEGRE = 111.32;
 
@@ -74,7 +76,7 @@ async function altitudes_tuiles(g, zoom) {
       const k = (p.py * image.largeur + p.px) * image.canaux;
       altitudes[i * g.colonnes + j] = altitude_terrarium(image.pixels[k], image.pixels[k + 1], image.pixels[k + 2]);
     }
-    if (i % 50 === 0) process.stdout.write(`\rligne ${i + 1}/${g.lignes}, ${memoire.size} tuiles`);
+    if (i % 50 === 0) process.stdout.write(`\r${t("cli.terrain.ligne", {i: i + 1, n: g.lignes, tuiles: memoire.size})}`);
   }
   process.stdout.write("\n");
   return {altitudes, source};
@@ -87,12 +89,12 @@ function lire_arguments(liste) {
     if (cle === "synthetique") o.synthetique = true;
     else o[cle] = cle === "nom" ? liste[++i] : Number(liste[++i]);
   }
-  if (!o.nom || o.lat === null || o.lon === null) throw new Error("usage : --nom <nom> --lat <deg> --lon <deg> [--rayon_km 320] [--pas_km 1] [--zoom 9] [--synthetique]");
+  if (!o.nom || o.lat === null || o.lon === null) throw new Error(t("cli.terrain.usage"));
   return o;
 }
 
 async function principal() {
-  const o = lire_arguments(process.argv.slice(2));
+  const o = lire_arguments(preparer_langue(process.argv.slice(2)));
   const g = geometrie_grille(o.lat, o.lon, o.rayon_km, o.pas_km);
   let altitudes;
   let sources;
@@ -113,7 +115,7 @@ async function principal() {
   const chemin = join(RACINE, "unites", "terrains", `${o.nom}.json`);
   writeFileSync(`${chemin}.tmp`, `${JSON.stringify(terrain, null, 2)}\n`);
   renameSync(`${chemin}.tmp`, chemin);
-  console.log(`→ ${chemin} (${g.lignes} × ${g.colonnes}) ; lancer node outils/indexer.js`);
+  console.log(`→ ${t("cli.terrain.fait", {chemin, lignes: g.lignes, colonnes: g.colonnes})}`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) await principal();

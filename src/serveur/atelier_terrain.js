@@ -3,6 +3,7 @@
 import {vers_degres} from "../moteur/geodesie.js";
 import {modifier_scenario} from "../moteur/scenario.js";
 import {CommandeInvalide} from "./salle.js";
+import {t} from "../i18n.js";
 
 // Bornes des altitudes acceptées : au-delà, une erreur de pinceau plutôt qu'un relief.
 const ALTITUDE_MIN = -500;
@@ -24,7 +25,7 @@ export function grille_depuis_unite(unite) {
   const octets = Buffer.from(unite.altitudes_b64, "base64");
   const z = new Int16Array(octets.length / 2);
   for (let k = 0; k < z.length; k++) z[k] = octets.readInt16LE(2 * k);
-  if (z.length !== unite.lignes * unite.colonnes) throw new CommandeInvalide(`terrain : ${z.length} altitudes pour ${unite.lignes} × ${unite.colonnes}`);
+  if (z.length !== unite.lignes * unite.colonnes) throw new CommandeInvalide(t("cli.serveur.terrain_altitudes", {n: z.length, lignes: unite.lignes, colonnes: unite.colonnes}));
   const {lat_sud_deg, lon_ouest_deg, pas_lat_deg, pas_lon_deg, pas_km, lignes, colonnes} = unite;
   return {lat_sud_deg, lon_ouest_deg, pas_lat_deg, pas_lon_deg, pas_km, lignes, colonnes, z};
 }
@@ -139,19 +140,19 @@ export function creer_atelier_terrain({lire_unite, ecrire_terrain}) {
     }
 
     const exiger_grille = () => {
-      if (!grille) throw new CommandeInvalide("aucun terrain ouvert");
+      if (!grille) throw new CommandeInvalide(t("cli.serveur.aucun_terrain"));
     };
 
     function voyager(depuis, vers_pile) {
       exiger_grille();
-      if (!depuis.length) throw new CommandeInvalide("rien à reprendre");
+      if (!depuis.length) throw new CommandeInvalide(t("cli.serveur.rien_a_reprendre"));
       vers_pile.push(grille.z.slice());
       grille.z = depuis.pop();
       acces.diffuser(message_grille("atelier_terrain", id, grille, true));
     }
 
     const lire_point = ({e, n}) => {
-      if (!Number.isFinite(e) || !Number.isFinite(n)) throw new CommandeInvalide(`point invalide : e=${e}, n=${n}`);
+      if (!Number.isFinite(e) || !Number.isFinite(n)) throw new CommandeInvalide(t("cli.serveur.point_invalide", {e, n}));
       const point = acces.partie().point(e, n);
       return {lat_deg: vers_degres(point.lat), lon_deg: vers_degres(point.lon)};
     };
@@ -159,11 +160,11 @@ export function creer_atelier_terrain({lire_unite, ecrire_terrain}) {
     return {
       commandes: {
         terrain_ouvrir: async ({id: voulu}) => {
-          if (typeof voulu !== "string") throw new CommandeInvalide("terrain non désigné");
+          if (typeof voulu !== "string") throw new CommandeInvalide(t("cli.serveur.terrain_non_designe"));
           ouvrir(grille_depuis_unite(await lire_unite(voulu)), voulu, voulu);
         },
         terrain_nouveau: ({rayon_km = 320, pas_km = 2}) => {
-          if (!(rayon_km > 0 && pas_km > 0 && rayon_km / pas_km <= 1000)) throw new CommandeInvalide("dimensions de terrain invalides");
+          if (!(rayon_km > 0 && pas_km > 0 && rayon_km / pas_km <= 1000)) throw new CommandeInvalide(t("cli.serveur.dimensions"));
           const {lat_deg, lon_deg} = acces.partie().origine_deg();
           ouvrir(grille_plate({lat_deg, lon_deg, rayon_km, pas_km}), null, "un terrain plat");
         },
@@ -178,8 +179,8 @@ export function creer_atelier_terrain({lire_unite, ecrire_terrain}) {
         },
         terrain_pinceau: ({outil, rayon_m, force_m, e, n}) => {
           exiger_grille();
-          if (!OUTILS.has(outil)) throw new CommandeInvalide(`outil inconnu : ${outil}`);
-          if (!(rayon_m >= RAYON_MIN_M && rayon_m <= RAYON_MAX_M && force_m > 0 && force_m <= FORCE_MAX_M)) throw new CommandeInvalide("réglage de pinceau hors bornes");
+          if (!OUTILS.has(outil)) throw new CommandeInvalide(t("cli.serveur.outil_inconnu", {outil}));
+          if (!(rayon_m >= RAYON_MIN_M && rayon_m <= RAYON_MAX_M && force_m > 0 && force_m <= FORCE_MAX_M)) throw new CommandeInvalide(t("cli.serveur.pinceau"));
           const rectangle = appliquer_pinceau(grille, {outil, ...lire_point({e, n}), rayon_m, force_m, cible});
           if (rectangle) acces.diffuser(retouche_de(grille, rectangle));
         },
@@ -187,7 +188,7 @@ export function creer_atelier_terrain({lire_unite, ecrire_terrain}) {
         terrain_retablir: () => voyager(futur, passe),
         terrain_enregistrer: async ({nom}) => {
           exiger_grille();
-          if (typeof nom !== "string" || !NOM_VALIDE.test(nom)) throw new CommandeInvalide("nom invalide : lettres, chiffres, - et _ seulement");
+          if (typeof nom !== "string" || !NOM_VALIDE.test(nom)) throw new CommandeInvalide(t("cli.serveur.nom_invalide"));
           id = ecrire_terrain(nom, unite_de_grille(grille, nom, origine_texte));
           acces.diffuser({genre: "enregistre", chemin: id});
           await acces.relancer(modifier_scenario(acces.partie().brut, {"theatre.terrain": id}));
