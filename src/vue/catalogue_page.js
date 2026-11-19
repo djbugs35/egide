@@ -1,5 +1,6 @@
 // Page catalogue.html : index cherchable des unités et des algorithmes publics, et leurs fiches (fiches.js) ; import
 // du catalogue privé (catalogue_prive.js), fusionné au public ou à sa place.
+import {charger_langue, traduire_page} from "./langue.js";
 import {charger_algos} from "../moteur/algos.js";
 import {charger_unites, unite_brute} from "../moteur/catalogue.js";
 import {charger_index, ecrire_mode, lire_mode} from "./catalogue_prive.js";
@@ -47,6 +48,8 @@ function brancher_mode_prive(mode, privees, erreur) {
 }
 
 async function demarrer() {
+  await charger_langue(lire_json);
+  traduire_page();
   publier_couleurs(document.documentElement);
   const mode = lire_mode();
   const [{index: indexUnites, privees, erreur}, indexAlgos, scenario] = await Promise.all([charger_index(lire_json, mode), lire_json("algos/index.json"), lire_json("scenarios/reference.json")]);

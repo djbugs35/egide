@@ -1,754 +1,767 @@
 # Égide
 
-Simulation de défense du territoire face à un essaim de drones rapides, jouable comme un jeu de stratégie vu de
-dessus et assez rigoureuse pour en prouver les résultats. Vous déployez radars, centres de commandement et de contrôle
-(C2), batteries sol-air, avions et drones défensifs sur la vraie Terre et son relief ; vous les reliez par radio,
-satellite, fil ou optique ; l'essaim attaque selon la tactique choisie ou le plan de vol que vous dessinez, et peut
-**réagir** : il apprend de ses pertes, se reporte sur les cibles qui cèdent, contourne vos sites et esquive vos tirs.
-Égide compte les frappes, raconte qui a vu quoi, et dit pourquoi chaque unité a agi.
+**English** · [Français](README.fr.md)
 
-Deux façons de s'en servir, sur le même moteur : le **navigateur** pour analyser et prouver, **Godot** pour jouer la défense en
-temps réel, à la manière d'un jeu de stratégie, et pour y éditer scénarios et relief.
+Territorial air-defence simulation against a swarm of fast drones, playable like a top-down strategy game and rigorous
+enough to prove its results. You deploy radars, command and control centres (C2), ground air-defence batteries,
+aircraft and defensive drones on the real Earth and its terrain; you link them by radio, satellite, wire or optics; the
+swarm attacks with the chosen tactic or along the flight plan you draw, and can **react**: it learns from its losses,
+switches to the targets that give way, bypasses your sites and dodges your fire. Égide counts the hits, tells who saw
+what, and explains why each unit acted.
 
-![L'interface en lecture : attaque « fourmi », les avions convergent sur l'essaim, le bilan évolue en direct](docs/images/interface.gif)
+Two ways to use it, on the same engine: the **browser** to analyse and prove, **Godot** to play the defence in real
+time, like a strategy game, and to edit scenarios and terrain there.
 
-> Scénario notionnel : ordres de grandeur publics, aucune performance réelle de système identifié. Le dépôt public
-> ne contient que des modèles notionnels ; les modèles de systèmes réels se rangent dans un catalogue privé
-> (`prive/`, ignoré par git) que l'outil charge de la même façon.
+![The interface playing: "ant" attack, aircraft converge on the swarm, the summary updates live](docs/images/interface.gif)
 
-## Sommaire
+> Notional scenario: public orders of magnitude, no real performance of any identified system. The public repository
+> only contains notional models; models of real systems go into a private catalogue (`prive/`, ignored by git) that
+> the tool loads the same way.
 
-1. [Installer et lancer](#1--installer-et-lancer)
-2. [Prise en main en cinq minutes](#2--prise-en-main-en-cinq-minutes)
-3. [L'écran](#3--lécran)
-4. [Jouer un raid](#4--jouer-un-raid)
-5. [Jouer dans Godot](#5--jouer-dans-godot)
-6. [Déployer ses forces](#6--déployer-ses-forces)
-7. [Le réseau d'information](#7--le-réseau-dinformation)
-8. [Drones défensifs](#8--drones-défensifs)
-9. [Relief](#9--relief)
-10. [Configuration automatique](#10--configuration-automatique)
-11. [Comprendre : inspecteur et catalogue](#11--comprendre--inspecteur-et-catalogue)
-12. [Analyser et prouver](#12--analyser-et-prouver)
-13. [Étendre : unités, algorithmes, cartes](#13--étendre--unités-algorithmes-cartes)
-14. [Questions fréquentes](#14--questions-fréquentes)
-15. [Ce que montre le scénario de référence](#15--ce-que-montre-le-scénario-de-référence)
+The interface is available in **English** (default) and **French**: the language selector sits in the top bar, and
+`?lang=fr` in the address forces French.
 
-## 1 · Installer et lancer
+## Contents
 
-Pour l'interface du navigateur, il faut Python 3 (présent sur macOS et la plupart des Linux) et un navigateur récent :
-JavaScript sans compilation, bibliothèques embarquées dans `vendor/`. Les campagnes en ligne de commande et le jeu demandent
-aussi Node, et le jeu demande Godot 4 : `installer.command` (macOS) ou `installer.bat` (Windows) installe ce qui manque,
-puis vérifie le poste ; on peut le relancer sans risque.
+1. [Install and run](#1--install-and-run)
+2. [Getting started in five minutes](#2--getting-started-in-five-minutes)
+3. [The screen](#3--the-screen)
+4. [Playing a raid](#4--playing-a-raid)
+5. [Playing in Godot](#5--playing-in-godot)
+6. [Deploying your forces](#6--deploying-your-forces)
+7. [The information network](#7--the-information-network)
+8. [Defensive drones](#8--defensive-drones)
+9. [Terrain](#9--terrain)
+10. [Automatic configuration](#10--automatic-configuration)
+11. [Understanding: inspector and catalogue](#11--understanding-inspector-and-catalogue)
+12. [Analysing and proving](#12--analysing-and-proving)
+13. [Extending: units, algorithms, maps](#13--extending-units-algorithms-maps)
+14. [Frequently asked questions](#14--frequently-asked-questions)
+15. [What the reference scenario shows](#15--what-the-reference-scenario-shows)
 
-| Système | Lancer |
+## 1 · Install and run
+
+The browser interface needs Python 3 (present on macOS and most Linux systems) and a recent browser: JavaScript
+without a build step, libraries bundled in `vendor/`. Command-line campaigns and the game also need Node, and the game
+needs Godot 4: `installer.command` (macOS) or `installer.bat` (Windows) installs what is missing, then checks the
+machine; it is safe to run again.
+
+| System | Run |
 |---|---|
-| macOS | double-clic sur `lancer.command` |
-| Windows | double-clic sur `lancer.bat` |
-| Linux, ou tout terminal | `python3 -m http.server 8766 --bind 127.0.0.1`, puis ouvrir http://127.0.0.1:8766 |
-| Jouer dans Godot | `jouer.command` (macOS), `jouer.bat` (Windows) ; voir [§ 5](#5--jouer-dans-godot) |
+| macOS | double-click `lancer.command` |
+| Windows | double-click `lancer.bat` |
+| Linux, or any terminal | `python3 -m http.server 8766 --bind 127.0.0.1`, then open http://127.0.0.1:8766 |
+| Play in Godot | `jouer.command` (macOS), `jouer.bat` (Windows); see [§ 5](#5--playing-in-godot) |
 
-La page s'ouvre sur http://127.0.0.1:8766 avec le scénario de référence : 1 000 drones à 800 km/h contre 10 sites,
-200 postes sol, 50 avions et une couronne de radars. Le fond de carte vient d'Internet ; sans réseau, la simulation
-tourne quand même (panneau Calques, « Scope seul »).
+The page opens at http://127.0.0.1:8766 with the reference scenario: 1,000 drones at 800 km/h against 10 sites,
+200 ground posts, 50 aircraft and a ring of radars. The base map comes from the Internet; without a network the
+simulation still runs (Layers panel, "Scope only").
 
-## 2 · Prise en main en cinq minutes
+## 2 · Getting started in five minutes
 
-1. **Lire un raid** : « Lire » (ou Espace). Les drones (demi-losanges rouges) entrent par un couloir, les avions
-   (dômes bleus) convergent, le bilan en haut à droite compte drones en vol, abattus en l'air, abattus au sol et
-   frappes. La frise et les vitesses ×0,25 à ×16 sont en bas ; ← et → sautent de 30 s.
-2. **Changer de tactique** : en haut, « Directs », « Dispersés », « Fourmi » ou « Plan de vol ». Le raid se recalcule
-   aussitôt ; « Autre raid » tire une autre graine. Cochez « Réactif » (R) pour que l'essaim manœuvre contre vous.
-3. **Demander pourquoi** : cliquez un avion, un drone, un radar ou un site. L'inspecteur, à droite, dit pourquoi l'avion
-   a été envoyé là, quels tirs le drone a subis, ce que le radar voit.
-4. **Déployer** : « Éditer » (E). La palette du catalogue s'ouvre à gauche ; cliquez « Radar de veille longue
-   portée », puis un point de la carte : le radar y est, avec sa couverture. Échap pour finir, Ctrl+Z pour annuler.
-5. **Comparer** : « Terminer », puis « Lire » ; le bilan a changé. Le panneau Balayage dira si l'écart tient sur
-   plusieurs raids.
+1. **Play a raid**: "Play" (or Space). The drones (red half-diamonds) come in through a corridor, the aircraft (blue
+   domes) converge, and the summary at the top right counts drones airborne, air kills, ground kills and hits. The
+   timeline and the ×0.25 to ×16 speeds are at the bottom; ← and → jump 30 s.
+2. **Change tactic**: at the top, "Direct", "Scattered", "Ant" or "Flight plan". The raid is recomputed at once;
+   "Another raid" draws another seed. Tick "Reactive" (R) to make the swarm manoeuvre against you.
+3. **Ask why**: click an aircraft, a drone, a radar or a site. The inspector, on the right, tells why the aircraft was
+   sent there, which shots the drone took, what the radar sees.
+4. **Deploy**: "Edit" (E). The catalogue palette opens on the left; click "Long-range surveillance radar", then a point
+   on the map: the radar is there, with its coverage. Esc to finish, Ctrl+Z to undo.
+5. **Compare**: "Done", then "Play"; the summary has changed. The Sweep panel tells whether the difference holds over
+   several raids.
 
-## 3 · L'écran
+## 3 · The screen
 
-La carte occupe tout l'écran ; le reste flotte par-dessus et se replie.
+The map fills the screen; everything else floats above it and folds away.
 
-- **En haut** : la tactique de l'essaim, « Éditer », la « Vue du CDC » (ce que sait le centre), le lien Catalogue.
-- **À gauche** : un rail de sept panneaux, un à la fois — Scénario, Calques, Balayage, Profil, Journal,
-  Auto-configuration, Aide. En édition, la palette « Déployer » prend leur place.
-- **À droite** : le bilan en quatre chiffres et ses détails repliés (munitions, flotte, frappes par site), puis
-  l'inspecteur au clic, ou en édition la fiche de l'unité sélectionnée.
-- **En bas** : la lecture (frise, vitesses, graine) et, en édition, la barre d'outils.
+- **Top**: the swarm tactic, "Edit", the "CRC view" (what the control centre knows), the language, the Catalogue link.
+- **Left**: a rail of panels, one at a time — Scenario, Layers, Sweep, Profile, Log, Auto-configuration, Help,
+  Debrief. While editing, the "Deploy" palette takes their place.
+- **Right**: the four-figure summary and its folded details (ammunition, fleet, hits per site), then the inspector on
+  click, or while editing the sheet of the selected unit.
+- **Bottom**: playback (timeline, speeds, seed) and, while editing, the toolbar.
 
-Symbologie inspirée d'APP-6 :
+Symbology inspired by APP-6:
 
-| Symbole | Entité |
+| Symbol | Entity |
 |---|---|
-| Dôme bleu plein / creux | Avion à roquettes IR / laser |
-| Losange, triangle, cercle bleus | Drone défensif armé, intercepteur à usage unique, brouilleur |
-| Cadre bleu R1, R2… | Radar, avec sa couverture en tirets |
-| Cadre bleu CDC | Centre de commandement et de contrôle |
-| Carré C1, C2… | Site sensible à défendre ; cercle ocre : la bulle de ses postes sol, qui pâlit à mesure qu'ils s'épuisent |
-| Triangle ocre B1, B2… | Batterie sol-air placée une à une, avec sa propre bulle |
-| Demi-losange rouge / gris | Drone ennemi détecté / pas encore détecté |
-| Traits entre unités | Liaisons : plein pour le fil, tirets pour la radio, pointillés pour le satellite ; barré rouge si coupée |
+| Solid / hollow blue dome | Aircraft with IR / laser rockets |
+| Blue diamond, triangle, circle | Armed defensive drone, single-use interceptor, jammer |
+| Blue frame R1, R2… | Radar, with its coverage dashed |
+| Blue frame CDC | Control and reporting centre (CRC) |
+| Square C1, C2… | Sensitive site to defend; ochre circle: the bubble of its ground posts, paling as they run out |
+| Ochre triangle B1, B2… | Ground air-defence battery placed individually, with its own bubble |
+| Red / grey half-diamond | Enemy drone detected / not yet detected |
+| Lines between units | Links: solid for wire, dashes for radio, dots for satellite; crossed in red when cut |
 
-### Icônes de jeu et pays
+### Game icons and countries
 
-Par défaut, chaque unité est dessinée en **icône de jeu** : une silhouette vue de dessus (radar sur pylône ou mobile,
-batterie, canon, turbopropulseur, chasseur, hélicoptère, drone armé, intercepteur, brouilleur…) sur une pastille à la
-couleur de son pays, cerclée de bleu pour les unités amies et d'ocre pour les batteries. L'essaim apparaît en petites
-silhouettes rouges, grises tant qu'il n'est pas détecté. Tout ce qui se déplace est orienté selon sa route, dans toutes les vues. Le calque « Icônes de jeu » ramène les symboles APP-6.
+By default each unit is drawn as a **game icon**: a top-down silhouette (mast or mobile radar, battery, gun,
+turboprop, fighter, helicopter, armed drone, interceptor, jammer…) on a disc in its country's colour, ringed in blue
+for friendly units and in ochre for batteries. The swarm shows as small red silhouettes, grey while undetected.
+Everything that moves is oriented along its track, in every view. The "Game icons" layer brings back the APP-6 symbols.
 
-Le catalogue compte 35 unités fictives inspirées de classes de 14 pays : radars, batteries à missiles ou à canons,
-avions et hélicoptères, drones défensifs, drones d'attaque. Leurs noms sont des noms de plantes (Ajonc 300, Genêt 35,
-Orpin H, Chardon D…) et leurs valeurs celles de leur classe, arrondies : aucune ne correspond à un système réel.
+The catalogue holds 35 fictional units inspired by classes from 14 countries: radars, missile or gun batteries,
+aircraft and helicopters, defensive drones, attack drones. Their names are plant names (Ajonc 300, Genêt 35, Orpin H,
+Chardon D…) and their values those of their class, rounded: none of them matches a real system.
 
-![Unités de plusieurs pays déployées en icônes de jeu ; la palette filtrée sur la France](docs/images/icones.png)
+![Units from several countries deployed as game icons; the palette filtered on France](docs/images/icones.png)
 
-Le panneau **Calques** choisit le fond de carte (photographies IGN par défaut, sombre, OpenStreetMap ou plan, relief ombré ou
-3D, bâtiments 3D, globe) et affiche ou masque chaque famille d'entités. Ce qui est masqué ne se survole, ne s'inspecte
-ni ne s'édite.
+The **Layers** panel picks the base map (IGN aerial photographs by default, dark, OpenStreetMap or plan, hillshade or
+3D terrain, 3D buildings, globe) and shows or hides each family of entities. What is hidden cannot be hovered,
+inspected or edited.
 
-![Le panneau Calques : fond de carte et quinze familles d'entités, chacune avec sa pastille de légende](docs/images/calques.png)
+![The Layers panel: base map and fifteen families of entities, each with its legend swatch](docs/images/calques.png)
 
-### Raccourcis
+### Shortcuts
 
-| Touche | Action | Touche | Action |
+| Key | Action | Key | Action |
 |---|---|---|---|
-| Espace | Lire / pause | ← → | Reculer / avancer de 30 s |
-| 1 à 8 | Ouvrir un panneau | Échap | Fermer le panneau ou l'inspecteur |
-| E | Éditer | V | Vue du CDC |
-| R | Essaim réactif ou non (hors édition) | O | Vue 3D |
-| M | Bruitages (hors édition), règle (en édition) | | |
-| S, C, R, K, L, P, Z | Outils Sélection, Cible, Radar, CDC, Liaison, Plan de vol, Zone (en édition) | Suppr | Effacer la sélection (en édition) ou la mettre hors service (en plein raid) |
-| X | Gomme : effacer l'unité cliquée | Maj+clic | Pendant un dépôt : effacer l'unité visée (curseur rouge) |
-| Ctrl+1 à 9 | Mémoriser la sélection comme groupe | 1 à 9 | Rappeler le groupe (en édition) |
-| Ctrl+Z | Annuler le dernier geste | Clic droit | Envoyer la sélection au point visé |
-| Molette | Zoom | Alt+glisser, bouton du milieu | Déplacer la vue |
+| Space | Play / pause | ← → | Back / forward 30 s |
+| 1 to 8 | Open a panel | Esc | Close the panel or the inspector |
+| E | Edit | V | CRC view |
+| R | Reactive swarm on or off (outside the editor) | O | 3D view |
+| M | Sound effects (outside the editor), ruler (in the editor) | | |
+| S, C, R, K, L, P, Z | Select, Target, Radar, CRC, Link, Flight plan, Zone tools (in the editor) | Del | Erase the selection (in the editor) or take it out of service (during a raid) |
+| X | Eraser: erase the clicked unit | Shift+click | While placing: erase the targeted unit (red cursor) |
+| Ctrl+1 to 9 | Store the selection as a group | 1 to 9 | Recall the group (in the editor) |
+| Ctrl+Z | Undo the last gesture | Right-click | Send the selection to the targeted point |
+| Wheel | Zoom | Alt+drag, middle button | Move the view |
 
-## 4 · Jouer un raid
+## 4 · Playing a raid
 
-### Trois tactiques adverses, plus la vôtre, et un essaim qui réagit
+### Three enemy tactics, plus yours, and a swarm that reacts
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/eclatement.gif" alt="Tactique fourmi, vue zoomée : le couloir éclate et les avions convergent"></td>
-<td width="50%"><img src="docs/images/direct.gif" alt="Groupes directs : chaque groupe arrive d'un cap différent sur sa cible"></td>
+<td width="50%"><img src="docs/images/eclatement.gif" alt="Ant tactic, zoomed in: the corridor bursts and the aircraft converge"></td>
+<td width="50%"><img src="docs/images/direct.gif" alt="Direct groups: each group comes from a different heading towards its target"></td>
 </tr>
 <tr>
-<td><b>Fourmi</b>, vue zoomée : tout l'essaim entre par un même couloir, éclate, puis se répartit sur ses cibles pendant que les avions convergent.</td>
-<td><b>Groupes directs</b> : chaque groupe arrive d'un cap tiré au hasard, en vague serrée, droit sur sa cible.</td>
+<td><b>Ant</b>, zoomed in: the whole swarm enters through one corridor, bursts, then spreads over its targets while the aircraft converge.</td>
+<td><b>Direct groups</b>: each group comes from a random heading, in a tight wave, straight at its target.</td>
 </tr>
 <tr>
-<td colspan="2" align="center"><img src="docs/images/disperse.gif" alt="Dispersés : un anneau de drones isolés converge sur toute la zone" width="60%"></td>
+<td colspan="2" align="center"><img src="docs/images/disperse.gif" alt="Scattered: a ring of isolated drones converges on the whole area" width="60%"></td>
 </tr>
 <tr>
-<td colspan="2"><b>Dispersés</b> : chaque drone vient seul, de n'importe quel cap, départs étalés. La plus facile à défendre : les avions trouvent des cibles partout. La quatrième tactique, <b>Plan de vol</b>, suit l'itinéraire que vous dessinez (outil P de l'éditeur) ; le panneau Profil trace son altitude au-dessus du relief.</td>
+<td colspan="2"><b>Scattered</b>: each drone comes alone, from any heading, with staggered departures. The easiest to defend: the aircraft find targets everywhere. The fourth tactic, <b>Flight plan</b>, follows the route you draw (editor tool P); the Profile panel plots its altitude above the terrain.</td>
 </tr>
 <tr>
-<td colspan="2" align="center"><img src="docs/images/reactif.gif" alt="Dispersés réactif, de 9:00 à 21:00 : les drones contournent les sites défendus et quittent C3 pour C9 et C10, le journal raconte chaque décision"></td>
+<td colspan="2" align="center"><img src="docs/images/reactif.gif" alt="Reactive scattered, from 9:00 to 21:00: the drones bypass defended sites and leave C3 for C9 and C10, the log tells each decision"></td>
 </tr>
 <tr>
-<td colspan="2"><b>Réactif</b>, ici sur les dispersés, de 9:00 à 21:00 : les drones contournent les sites où l'essaim a déjà perdu des siens, puis quittent C3, qui tue, pour C9 et C10, déjà frappées. Le journal, filtré sur « Réactions de l'essaim », raconte chaque décision. La case Réactif se combine à n'importe quelle tactique (voir ci-dessous).</td>
+<td colspan="2"><b>Reactive</b>, here on scattered, from 9:00 to 21:00: the drones bypass the sites where the swarm has already lost some of its own, then leave C3, which kills, for C9 and C10, already hit. The log, filtered on "Swarm reactions", tells each decision. The Reactive box combines with any tactic (see below).</td>
 </tr>
 </table>
 
-### Un essaim qui réagit
+### A swarm that reacts
 
-Cochez **Réactif** à côté des tactiques : l'essaim cesse de voler droit et cherche à maximiser ses frappes. Il ne voit
-pas votre défense ; il apprend par ses pertes, que son réseau maillé fait connaître à tous les drones en 2 s.
+Tick **Reactive** next to the tactics: the swarm stops flying straight and tries to maximise its hits. It does not see
+your defence; it learns from its losses, which its mesh network shares with every drone within 2 s.
 
-- **Il se reporte sur la brèche.** Un drone dont la cible tue ses semblables la quitte pour une cible déjà frappée, où
-  l'essaim perd moins de drones, si le détour reste court. Engagé à moins de 10 km de sa cible, il n'en change plus.
-- **Il contourne vos sites défendus.** Quand un site où l'essaim a perdu des drones est sur sa route, il passe à la
-  tangente, à bonne distance, sans allonger sa route de plus de 30 %.
-- **Il esquive vos tirs air.** Visé par une roquette, il manœuvre jusqu'à l'impact : le Pk du tir baisse de 30 %, au
-  prix d'une avance ralentie.
+- **It shifts to the breach.** A drone whose target kills its fellows leaves it for a target already hit, where the
+  swarm loses fewer drones, if the detour stays short. Engaged within 10 km of its target, it no longer switches.
+- **It bypasses your defended sites.** When a site where the swarm has lost drones lies on its route, it skirts it
+  tangentially, at a safe distance, without lengthening its route by more than 30 %.
+- **It dodges your air fire.** Targeted by a rocket, it manoeuvres until impact: the shot's Pk drops by 30 %, at the
+  cost of slower progress.
 
-Le tableau de bord compte réaffectations, détours et tirs esquivés ; le journal (famille « Réactions de l'essaim »)
-regroupe les décisions ; cliquez un drone : l'inspecteur dit **pourquoi il a changé de route**.
+The summary counts reassignments, detours and dodged shots; the log ("Swarm reactions" family) groups the decisions;
+click a drone: the inspector tells **why it changed course**.
 
-![Raid dispersé réactif à 18:00 : le journal montre les détours et les reports de C3 vers C9 et C10 ; l'inspecteur explique les deux décisions du drone 27](docs/images/essaim_reactif_inspecteur.png)
+![Reactive scattered raid at 18:00: the log shows the detours and the switches from C3 to C9 and C10; the inspector explains drone 27's two decisions](docs/images/essaim_reactif_inspecteur.png)
 
-Même raid, même graine, avec et sans réaction (duel apparié sur 10 graines du scénario de référence, IC 95 %) :
+Same raid, same seed, with and without reaction (paired duel over 10 seeds of the reference scenario, 95 % CI):
 
-| Tactique | Frappes, essaim inerte | Avec réaction |
+| Tactic | Hits, inert swarm | With reaction |
 |---|---|---|
-| Fourmi | 362 | **+147 ± 80** (+41 %) |
-| Directs | 486 | **+90 ± 68** (+18 %) |
-| Dispersés | 182 | **+115 ± 14** (+63 %) |
+| Ant | 362 | **+147 ± 80** (+41 %) |
+| Direct | 486 | **+90 ± 68** (+18 %) |
+| Scattered | 182 | **+115 ± 14** (+63 %) |
 
-Le dispersé, la tactique la plus facile à défendre, gagne le plus : ses départs étalés laissent aux derniers drones le
-temps d'apprendre des premiers. Les réglages (délai du réseau, rayon d'un site défendu, seuils, esquive) sont des
-clés `rouge.reaction_*` du scénario ; modèle et hypothèses : [docs/MODELE.md § 22](docs/MODELE.md).
+Scattered, the easiest tactic to defend, gains the most: its staggered departures give the last drones time to learn
+from the first. The settings (network delay, radius of a defended site, thresholds, dodging) are the scenario's
+`rouge.reaction_*` keys; model and assumptions: [docs/MODELE.md § 22](docs/MODELE.md).
 
-### Régler le scénario
+### Setting up the scenario
 
-Le panneau **Scénario** règle tout par curseurs : nombre et vitesse des drones, avions par type, postes sol et
-munitions, drones défensifs, délai de réaction du CDC, réseau, terrain. Chaque réglage porte sa phrase d'aide. On y
-trouve aussi la **bibliothèque** (scénarios du dépôt et ceux rangés dans ce navigateur), les réglages enregistrés,
-l'export et l'import d'un scénario, et « Revenir à la référence ». Avec un catalogue privé, la bibliothèque propose
-aussi les scénarios de `prive/scenarios/`.
+The **Scenario** panel sets everything with sliders: number and speed of drones, aircraft per type, ground posts and
+ammunition, defensive drones, CRC reaction delay, network, terrain. Each setting has its help sentence. It also holds
+the **library** (repository scenarios and those stored in this browser), saved settings, scenario export and import,
+and "Back to reference". With a private catalogue, the library also offers the scenarios of `prive/scenarios/`.
 
-L'essaim peut être accompagné d'**autres menaces** : le bloc `rouge.groupes` du scénario ajoute des groupes, chacun avec
-son unité, son départ, sa cible et son altitude ou sa trajectoire balistique. La portée d'un radar dépend de la surface
-équivalente de ce qu'il cherche (MODELE § 27), et le calque « Portée radar par menace » la trace d'une couleur par classe.
+The swarm can be joined by **other threats**: the scenario's `rouge.groupes` block adds groups, each with its unit, its
+departure, its target and its altitude or ballistic trajectory. A radar's range depends on the radar cross-section of
+what it looks for (MODELE § 27), and the "Radar range per threat" layer draws it with one colour per class.
 
-Même raid fourmi, même graine, en fin de raid :
+Same ant raid, same seed, at the end of the raid:
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/fin_de_raid.png" alt="Fin de raid avec 50 avions : 469 frappes"></td>
-<td width="50%"><img src="docs/images/sans_avions.png" alt="Fin de raid sans avions : 713 frappes"></td>
+<td width="50%"><img src="docs/images/fin_de_raid.png" alt="End of raid with 50 aircraft: 469 hits"></td>
+<td width="50%"><img src="docs/images/sans_avions.png" alt="End of raid without aircraft: 713 hits"></td>
 </tr>
-<tr><td>Avec 50 avions : <b>469 frappes</b>.</td><td>Sans avions : <b>713 frappes</b>.</td></tr>
+<tr><td>With 50 aircraft: <b>469 hits</b>.</td><td>Without aircraft: <b>713 hits</b>.</td></tr>
 </table>
 
-### Donner des ordres en plein raid
+### Giving orders during a raid
 
-Mettez en pause, puis « Éditer » : l'éditeur passe en **mode ordres**. Sélectionnez des avions (clic, Maj+clic,
-rectangle) puis clic droit pour les envoyer depuis le CDC ; sélectionnez un radar, un CDC ou une liaison puis Suppr
-pour le mettre hors service à cet instant. Tout est enregistré dans le scénario avec son instant, et le raid se
-rejoue à l'identique.
+Pause, then "Edit": the editor switches to **orders mode**. Select aircraft (click, Shift+click, box) then right-click
+to send them from the CRC; select a radar, a CRC or a link then Del to take it out of service at that instant.
+Everything is recorded in the scenario with its time, and the raid replays identically.
 
-![Ordres à 7:00 : avions envoyés au nord-ouest, radar R4 mis hors service (croix rouge), liaison optique de R1 hors de portée](docs/images/ordres.png)
+![Orders at 7:00: aircraft sent north-west, radar R4 taken out of service (red cross), R1's optical link out of range](docs/images/ordres.png)
 
-### Observer le raid en 3D
+### Watching the raid in 3D
 
-Le bouton **3D** (touche O) montre le même raid sur le globe : même instant, même bilan, mêmes calques, sur la photo
-aérienne et le relief réel. Chaque unité en vol est à sa hauteur, reliée au sol par une tige ; les couvertures radar, les
-bulles sol-air, les liaisons et les tirs sont en volume. Les altitudes (100 m sur un théâtre de 600 km) peuvent être
-étirées à l'affichage, le facteur restant écrit à l'écran : le calcul n'en dépend pas.
+The **3D** button (key O) shows the same raid on the globe: same instant, same summary, same layers, over aerial
+imagery and real terrain. Each flying unit is at its height, tied to the ground by a stem; radar coverages, ground
+air-defence bubbles, links and shots are volumes. Altitudes (100 m over a 600 km theatre) can be stretched for display,
+the factor staying written on screen: the computation does not depend on it.
 
-![Le raid en 3D : vue commandant avec altitudes × 10, puis depuis un radar, puis au plus près de l'essaim](docs/images/vue3d.gif)
+![The raid in 3D: commander view with altitudes × 10, then from a radar, then close to the swarm](docs/images/vue3d.gif)
 
-Près de la caméra, une unité qui a un **modèle 3D** le prend à la place de son pictogramme : à sa taille réelle, peint
-(camouflage, panneaux, marquages), jamais sous 80 pixels. Les 40 drones les plus proches de l'essaim sont aussi
-dessinés en modèle, et « Suivre la sélection » se place à 70 m d'une unité qui en a un. Le dépôt construit un modèle
-notionnel par icône de classe (`node outils/modeles3d/classes.js`, fichiers non versionnés dans `modeles/`) ; un
-catalogue privé range les siens dans `prive/modeles/`. Les altitudes étirées allongent le relief et les hauteurs de vol,
-jamais la forme des modèles.
+Near the camera, a unit that has a **3D model** shows it instead of its pictogram: at its real size, painted
+(camouflage, panels, markings), never below 80 pixels. The 40 drones closest to the swarm are drawn as models too, and
+"Follow selection" places itself 70 m from a unit that has one. The repository builds a notional model per class icon
+(`node outils/modeles3d/classes.js`, unversioned files in `modeles/`); a private catalogue stores its own in
+`prive/modeles/`. Stretched altitudes lengthen the terrain and flight heights, never the shape of the models.
 
-![Depuis le site attaqué à 12:09 : avions d'appui en modèles 3D au-dessus des bulles sol-air, l'essaim en rouge sur l'horizon](docs/images/modeles3d.png)
+![From the attacked site at 12:09: support aircraft as 3D models above the ground bubbles, the swarm in red on the horizon](docs/images/modeles3d.png)
 
-Six caméras au choix : libre, suivi de la sélection, depuis un radar, depuis le site attaqué, vue commandant, vue de
-dessus. Un clic sur une unité ouvre le même inspecteur qu'en 2D. Pour une vue 3D sans réseau, préparez le théâtre :
+Six cameras to choose from: free, follow selection, from a radar, from the attacked site, commander view, top view.
+Clicking a unit opens the same inspector as in 2D. For a 3D view without a network, prepare the theatre:
 
 ```sh
-node outils/hors_ligne.js --lat 47 --lon 2.5 --rayon-km 300 --zoom-max 10   # dans hors_ligne/, hors git
+node outils/hors_ligne.js --lat 47 --lon 2.5 --rayon-km 300 --zoom-max 10   # into hors_ligne/, outside git
 ```
 
-Tant que ce dossier existe, la vue 3D lit ses tuiles plutôt que le fond choisi. Respectez les conditions de chaque
-source : ces tuiles ne se redistribuent pas forcément.
+While this folder exists, the 3D view reads its tiles rather than the chosen base map. Respect each source's terms:
+these tiles may not be redistributable.
 
-### Incidents de scénario
+### Scenario incidents
 
-Un radar gêné par la météo, en maintenance ou en panne, une liaison coupée, une batterie indisponible : une panne datée
-porte maintenant une **cause**, et un radar peut garder une **portée réduite** au lieu de s'arrêter. Le bouton
-« Incidents au hasard » du panneau Scénario en tire quelques-uns à la graine du raid (même graine, mêmes incidents) ;
-« Retirer les incidents » les enlève. Chaque début et chaque fin s'annonce à l'écran et s'inscrit au journal. En 2D,
-un radar gêné porte un anneau orange et son pourcentage, une batterie indisponible une croix ; en 3D, l'élément hors
-service s'estompe. Règles : [docs/MODELE.md § 29](docs/MODELE.md).
+A radar hampered by weather, under maintenance or broken down, a link cut, a battery unavailable: a dated failure now
+carries a **cause**, and a radar can keep a **reduced range** instead of stopping. The "Random incidents" button of the
+Scenario panel draws a few from the raid seed (same seed, same incidents); "Remove incidents" takes them away. Each
+start and end is announced on screen and written to the log. In 2D, a hampered radar has an orange ring and its
+percentage, an unavailable battery a cross; in 3D, the element out of service fades. Rules:
+[docs/MODELE.md § 29](docs/MODELE.md).
 
-![Incidents tirés au hasard : R2 et R8 gênés par la météo, portée réduite à 51 et 69 % ; la radio de la conduite envoie les premières missions](docs/images/incidents.png)
+![Random incidents: R2 and R8 hampered by weather, range reduced to 51 and 69 %; control radio sends the first missions](docs/images/incidents.png)
 
-### Fumées, radio et bruitages
+### Smoke, radio and sound effects
 
-Une cible frappée **fume**, d'autant plus que les frappes s'accumulent ; en flammes, sa base brûle. Le journal se lit
-aussi en **messages radio** sous-titrés : « Égide à Faucon 1 : rejoignez la zone », « Busard 24 : au but »,
-« Égide, à tous : impact sur C5 » (indicatifs inventés, le plus important d'abord). Le bouton **Son** de la barre de
-lecture (touche M) active les **bruitages**, coupés au départ : explosions, départs de missiles et de roquettes,
-interceptions, radio, alerte d'incident. Ils sont calculés par `node outils/sons/generer.js`, sans aucun son emprunté.
-Rien de cela ne touche à la simulation ([docs/MODELE.md § 30](docs/MODELE.md)).
+A hit target **smokes**, more so as hits pile up; on fire, its base burns. The log can also be read as subtitled
+**radio messages**: "Égide to Faucon 1: join the area", "Busard 24: on target", "Égide, all stations: impact on C5"
+(invented call signs, most important first). The **Sound** button of the playback bar (key M) turns on the **sound
+effects**, off at start: explosions, missile and rocket launches, interceptions, radio, incident alert. They are
+computed by `node outils/sons/generer.js`, with no borrowed sound. None of this touches the simulation
+([docs/MODELE.md § 30](docs/MODELE.md)).
 
-![Au plus près de C9 et C10, de 16:12 à 18:38 : les panaches montent des cibles frappées pendant que la radio annonce contacts et tirs au but](docs/images/ambiance.gif)
+![Close to C9 and C10, from 16:12 to 18:38: plumes rise from the hit targets while the radio announces contacts and hits](docs/images/ambiance.gif)
 
-### Le débriefing
+### The debriefing
 
-À la fin du raid, le panneau **Débrief** (touche 8) s'ouvre de lui-même, en 2D comme en 3D : une **note** de A à E
-d'après le taux d'interception, la **cause** de chaque frappe (non détectée, inconnue de la conduite, jamais engagée,
-engagée mais manquée), les frappes par cible, le bilan de chaque tireur avec ses postes à sec, la chronologie par
-tranche de 5 min et au plus cinq **points faibles** chiffrés. Tout est lu dans le journal du raid
-([docs/MODELE.md § 28](docs/MODELE.md)).
+At the end of the raid, the **Debrief** panel (key 8) opens by itself, in 2D as in 3D: a **grade** from A to E based on
+the interception rate, the **cause** of each hit (undetected, unknown to control, never engaged, engaged but missed),
+hits per target, each shooter's record with its posts out of ammunition, the timeline in 5-minute slices and at most
+five quantified **weak points**. Everything is read from the raid log ([docs/MODELE.md § 28](docs/MODELE.md)).
 
-![Débriefing du raid de référence : note D, 53 % interceptés ; 98 % des frappes viennent de drones connus mais jamais engagés, 60 postes à sec dès 9 min](docs/images/debriefing.png)
+![Debriefing of the reference raid: grade D, 53 % intercepted; 98 % of hits come from drones known but never engaged, 60 posts out of ammunition from 9 min](docs/images/debriefing.png)
 
-## 5 · Jouer dans Godot
+## 5 · Playing in Godot
 
-Godot est une interface à part entière, au même titre que le navigateur. La simulation reste unique : un serveur Node local la
-fait tourner, Godot lui envoie les ordres et reçoit l'état en direct. Une partie jouée s'enregistre avec ses ordres et se
-rejoue à l'identique (MODELE § 26).
+Godot is a full interface in its own right, like the browser. The simulation remains single: a local Node server runs
+it, Godot sends it orders and receives the state live. A played game is recorded with its orders and replays
+identically (MODELE § 26).
 
-![Une partie dans Godot : cadre de sélection, 46 avions envoyés au devant de l'essaim, puis combat et frappes vus de plus près](docs/images/godot_partie.gif)
+![A game in Godot: selection box, 46 aircraft sent ahead of the swarm, then combat and hits seen closer](docs/images/godot_partie.gif)
 
-`./jouer.command` (ou `jouer.bat`) lance le serveur et le client. La partie démarre en pause : Espace pour lancer.
+`./jouer.command` (or `jouer.bat`) starts the server and the client. The game starts paused: Space to start.
 
-| Commande | Effet |
+| Control | Effect |
 |---|---|
-| Clic gauche, cadre | Sélectionner des vecteurs ; sur un radar ou un poste, l'inspecter |
-| Clic droit | Envoyer la sélection au point visé, aussi sur la mini-carte |
-| Ctrl+1 à 9, 1 à 9 | Mémoriser un groupe, le rappeler |
-| WASD, flèches, bord d'écran ; molette | Défiler ; zoomer |
-| + et − | Vitesse, de ×1 à ×60 |
-| C, B | Couverture affichée ; brouillard |
-| F5, F6 | Éditeur de scénario ; éditeur de relief |
-| H | Toutes les commandes |
+| Left click, box | Select vehicles; on a radar or a post, inspect it |
+| Right click | Send the selection to the targeted point, also on the minimap |
+| Ctrl+1 to 9, 1 to 9 | Store a group, recall it |
+| WASD, arrows, screen edge; wheel | Scroll; zoom |
+| + and − | Speed, from ×1 to ×60 |
+| C, B | Coverage shown; fog |
+| F5, F6 | Scenario editor; terrain editor |
+| H | All controls |
 
-Sur Mac, les touches F peuvent demander la touche `fn`.
+On a Mac, the F keys may need the `fn` key.
 
-**Éditer le scénario (F5).** La partie revient à l'instant initial. On choisit une unité dans la palette et on la pose sur le sol ;
-liaisons, plans de vol, zones, gomme et annulation sont à la barre du haut. Chaque geste passe par les mêmes calculs que l'éditeur du
-navigateur, et le scénario se relance à chaque geste.
+**Editing the scenario (F5).** The game goes back to the initial instant. Pick a unit in the palette and place it on
+the ground; links, flight plans, zones, eraser and undo are in the top bar. Each gesture goes through the same
+computations as the browser editor, and the scenario restarts at each gesture.
 
-![L'éditeur de scénario dans Godot : quatre radars posés depuis la palette, puis le relief peint au pinceau](docs/images/godot_edition.gif)
+![The scenario editor in Godot: four radars placed from the palette, then the terrain painted with a brush](docs/images/godot_edition.gif)
 
-**Éditer le relief (F6).** Quatre pinceaux : élever, abaisser, aplanir, lisser. Enregistrer applique le relief au scénario, et le
-moteur calcule alors masques radar et vues directes dessus. Sans enregistrer, retourner au jeu abandonne les retouches.
+**Editing the terrain (F6).** Four brushes: raise, lower, flatten, smooth. Saving applies the terrain to the scenario,
+and the engine then computes radar masks and lines of sight on it. Going back to the game without saving discards the
+edits.
 
-Scénarios et reliefs édités s'enregistrent sous `prive/`, jamais dans le dépôt. Les touches, la vérification du client et le portage vers
-un autre moteur sont dans [clients/README.md](clients/README.md). Limites : unités 3D encore génériques, relief édité sans
-imagerie (teintes d'altitude), brouillard tracé en disques sans masque du relief.
+Edited scenarios and terrains are saved under `prive/`, never in the repository. Keys, client checks and porting to
+another engine are in [clients/README.md](clients/README.md). Limits: 3D units still generic, terrain edited without
+imagery (altitude tints), fog drawn as discs without terrain masking.
 
-## 6 · Déployer ses forces
+## 6 · Deploying your forces
 
-« Éditer » au début du raid ouvre l'**éditeur de déploiement** : la palette du catalogue à gauche, la fiche de
-l'unité sélectionnée à droite, la barre d'outils en bas et, au-dessus, une consigne qui dit à tout moment ce que fait
-le prochain clic.
+"Edit" at the start of the raid opens the **deployment editor**: the catalogue palette on the left, the sheet of the
+selected unit on the right, the toolbar at the bottom and, above it, a hint telling at any time what the next click
+does.
 
-![Un radar de veille longue portée posé depuis la palette, glissé à sa place sans changer d'outil, relié au CDC par satellite ; sa fiche liste alors la connexion](docs/images/edition.gif)
+![A long-range surveillance radar placed from the palette, dragged into position without changing tool, linked to the CRC by satellite; its sheet then lists the connection](docs/images/edition.gif)
 
-### Poser des unités
+### Placing units
 
-La palette range le catalogue par onglets (Théâtre, Sites, Radars, Sol-air, Aviation, Drones, Réseau, Armes, Menace,
-Relief), avec une recherche par nom ; chaque unité porte son icône et son pays, et le filtre « Pays » n'affiche que
-les unités d'un pays (et les génériques). L'onglet Théâtre déplace le centre de la carte et règle l'étendue. Pour poser
-une unité :
+The palette sorts the catalogue into tabs (Theatre, Sites, Radars, Air defence, Aviation, Drones, Network, Weapons,
+Threat, Terrain), with a search by name; each unit shows its icon and country, and the "Country" filter only shows the
+units of one country (and the generic ones). The Theatre tab moves the centre of the map and sets its extent. To place
+a unit:
 
-- **cliquez-la dans la palette, puis cliquez la carte**, autant de fois qu'il faut ; clic droit ou Échap pour finir ;
-- **ou glissez-la** de la palette sur la carte.
+- **click it in the palette, then click the map**, as many times as needed; right-click or Esc to finish;
+- **or drag it** from the palette onto the map.
 
-Tant qu'un outil de pose est armé, glisser une unité la déplace et glisser le fond déplace la carte : seul un clic sans
-mouvement pose.
+While a placing tool is armed, dragging a unit moves it and dragging the background moves the map: only a click
+without movement places.
 
-![Déploiement : un radar de veille longue portée (R11) relié au CDC, trois batteries de moyenne portée (B1 à B3) avec leur bulle, autour du dispositif de référence](docs/images/deploiement.png)
+![Deployment: a long-range surveillance radar (R11) linked to the CRC, three medium-range batteries (B1 to B3) with their bubble, around the reference layout](docs/images/deploiement.png)
 
-| Famille | Ce que fait un dépôt |
+| Family | What a drop does |
 |---|---|
-| Infrastructures | Un **site sensible** à défendre (il reçoit sa part des postes sol communs) ou un **centre C2** de plus |
-| Capteurs | Un radar **de ce modèle** : chaque radar garde sa hauteur d'antenne et sa portée. Le premier dépôt fait passer la couronne « frontière » en radars placés un à un |
-| Défense sol | Une **batterie** de ce modèle, avec sa propre bulle et ses munitions (40 par défaut) |
-| Aviation, Drones défensifs | Un vecteur en orbite au point déposé, ou plusieurs (« Vecteurs par dépôt ») en petit cercle autour. Chaque modèle forme un groupe, qui grossit à chaque dépôt |
-| Réseau | **Cliquez un moyen**, puis les deux unités à relier ; **glissez-le sur une unité** pour l'en équiper (voir plus bas) |
-| Armements | À déposer **sur un avion ou un drone défensif** : tout son groupe change d'emport |
-| Menace, Terrain | Le modèle de drone de l'essaim, ou le relief du théâtre, où qu'on le dépose |
+| Infrastructure | One more **sensitive site** to defend (it receives its share of the common ground posts) or **C2 centre** |
+| Sensors | A radar **of this model**: each radar keeps its antenna height and range. The first drop turns the "border" ring into radars placed one by one |
+| Ground defence | A **battery** of this model, with its own bubble and ammunition (40 by default) |
+| Aviation, Defensive drones | One vehicle orbiting at the dropped point, or several ("Vehicles per drop") in a small circle around it. Each model forms a group, which grows with each drop |
+| Network | **Click a means**, then the two units to link; **drag it onto a unit** to equip it (see below) |
+| Weapons | To drop **on an aircraft or a defensive drone**: its whole group changes payload |
+| Threat, Terrain | The swarm's drone model, or the theatre's terrain, wherever it is dropped |
 
-La barre d'outils garde les gestes rapides : **Sélection** (S) pour choisir une unité et la glisser, Maj+glisser pour
-un cadre de sélection ; **Liaison** (L) ; **Plan de vol** (P) ; **Zone** (Z), un clic par sommet, double-clic ou Entrée
-pour fermer, qui compte les incursions ; **Règle** (M) et **Gomme** (X). Les touches **C**, **R** et **K** posent une
-cible, un radar ou un CDC par défaut. Suppr efface la sélection, Ctrl+Z annule, Ctrl+1 à 9 mémorise un groupe et 1 à 9
-le rappelle. Glisser le fond déplace la carte ; la vue ne bouge pas d'elle-même, même quand un radar déposé loin agrandit
-le théâtre. Le raid n'est recalculé qu'en quittant l'éditeur : les gestes restent immédiats.
+The toolbar keeps the quick gestures: **Select** (S) to pick a unit and drag it, Shift+drag for a selection box;
+**Link** (L); **Flight plan** (P); **Zone** (Z), one click per vertex, double-click or Enter to close, which counts
+incursions; **Ruler** (M) and **Eraser** (X). Keys **C**, **R** and **K** place a default target, radar or CRC. Del
+erases the selection, Ctrl+Z undoes, Ctrl+1 to 9 stores a group and 1 to 9 recalls it. Dragging the background moves
+the map; the view never moves by itself, even when a far-away radar enlarges the theatre. The raid is only recomputed
+when leaving the editor: gestures stay instant.
 
-**Effacer** : pendant un dépôt, enfoncez Maj : le curseur passe de « + unité » en vert à « − Effacer » en rouge et
-l'unité visée est barrée ; Maj+clic l'efface. L'outil **Gomme** (X) fait de même à chaque clic. **Tout effacer** vide la
-carte — radars, batteries, postes, vecteurs, autres C2, liaisons, moyens, zones, plan de vol, ordres — pour repartir
-de zéro ; restent le CDC principal et un site à défendre, et Ctrl+Z ramène tout.
+**Erasing**: while placing, hold Shift: the cursor turns from a green "+ unit" to a red "− Erase" and the targeted unit
+is crossed out; Shift+click erases it. The **Eraser** tool (X) does the same at each click. **Clear all** empties the
+map — radars, batteries, posts, vehicles, other C2s, links, means, zones, flight plan, orders — to start from scratch;
+the main CRC and one site to defend remain, and Ctrl+Z brings everything back.
 
-![Éditeur : le radar R11 ajouté puis sélectionné, sa bulle de portée, sa fiche à droite et la consigne au-dessus de la barre d'outils](docs/images/editeur.png)
+![Editor: radar R11 added then selected, its range bubble, its sheet on the right and the hint above the toolbar](docs/images/editeur.png)
 
-### Aides au déploiement
+### Deployment aids
 
-Pendant l'édition, la vue reste de dessus, nord en haut, et reprend son inclinaison à la sortie. La **Règle** (touche M)
-mesure distance et cap le long de la géodésique ; l'**aimant** cale les poses sur une grille de 1 à 25 km ou sur les unités
-proches. Avant de poser, un radar montre sa portée contre l'essaim, une batterie sa bulle, et une liaison en cours de
-tracé sa portée, en rouge si l'autre extrémité est trop loin. Un badge « ×3 » signale les avions superposés.
+While editing, the view stays top-down, north up, and gets its tilt back on exit. The **Ruler** (key M) measures
+distance and heading along the geodesic; **snapping** aligns placements on a 1 to 25 km grid or on nearby units.
+Before placing, a radar shows its range against the swarm, a battery its bubble, and a link being drawn its range, in
+red if the other end is too far. A "×3" badge flags stacked aircraft.
 
-![La règle mesure 158 km au cap 072°, aimantée à la grille de 25 km](docs/images/aides_deploiement.png)
+![The ruler measures 158 km at heading 072°, snapped to the 25 km grid](docs/images/aides_deploiement.png)
 
-### Équiper et relier
+### Equipping and linking
 
-Chaque unité peut déclarer ses **moyens de communication** : filaire, radio V/UHF, satellite, optique (catalogue
-`unites/liaisons/`, chacun avec sa latence, sa portée et son besoin de vue directe). Glissez un moyen sur l'unité, ou
-cochez-le dans sa fiche. Ces cases servent à « Relier automatiquement » ; une unité qui n'en déclare aucun accepte tout moyen.
+Each unit can declare its **means of communication**: wire, V/UHF radio, satellite, optical (catalogue
+`unites/liaisons/`, each with its latency, range and line-of-sight requirement). Drag a means onto the unit, or tick it
+in its sheet. These boxes feed "Link automatically"; a unit that declares none accepts any means.
 
-- **Liaison** (L), ou clic sur un moyen de l'onglet Réseau : un clic sur une unité, un clic sur l'autre. La liaison
-  prend **le moyen choisi**, affiché à côté du bouton Liaison ; il complète au besoin l'équipement déclaré. Entre deux
-  unités au sol, elle est refusée si la distance dépasse la portée, et le message donne les deux chiffres. Un clic à
-  côté garde la première extrémité ; Échap abandonne.
-- **Relier automatiquement** : chaque unité équipée est reliée à chaque C2 avec qui elle partage un moyen à portée,
-  le plus rapide ; les C2 sont reliés entre eux. La portée tient compte de l'horizon : une radio au sol, mâts de 15 m,
-  ne porte qu'à une trentaine de kilomètres, alors qu'un avion à 1 000 m s'entend à 140 km. Les unités qui restent
-  hors réseau sont nommées ; le relief est vérifié pendant la simulation.
-- **Réseau complet** revient à « tout le monde parle avec tout le monde, sans délai ».
+- **Link** (L), or click a means in the Network tab: click one unit, then the other. The link takes **the chosen
+  means**, shown next to the Link button; it complements the declared equipment if needed. Between two ground units, it
+  is refused if the distance exceeds the range, and the message gives both figures. A click beside keeps the first end;
+  Esc cancels.
+- **Link automatically**: each equipped unit is linked to each C2 it shares a means in range with, the fastest one;
+  the C2s are linked to each other. Range accounts for the horizon: a ground radio on 15 m masts only carries about
+  thirty kilometres, whereas an aircraft at 1,000 m is heard at 140 km. Units left off the network are named; terrain
+  is checked during the simulation.
+- **Full network** goes back to "everyone talks to everyone, with no delay".
 
-### Régler une unité : la fiche
+### Setting a unit: the sheet
 
-Sélectionnez une unité (ou plusieurs, jusqu'à quatre fiches) : sa fiche s'ouvre à droite.
+Select a unit (or several, up to four sheets): its sheet opens on the right.
 
-| Unité | Ce que la fiche règle |
+| Unit | What the sheet sets |
 |---|---|
-| Radar | Son modèle (ou celui commun à tous), ses moyens de communication |
-| Batterie | Son modèle, ses munitions, son algorithme de tir sol, ses moyens |
-| Avion ou drone défensif | Pour tout son groupe : modèle, nombre, altitude, armement, algorithmes de mouvement et de tir, moyens |
-| CDC principal | Algorithmes d'allocation et de pistage, délai de réaction, moyens |
-| Autre C2 | Son nom, son propre algorithme d'allocation (ou celui du principal), ses moyens |
-| Site sensible | Les moyens de ses postes sol |
-| Liaison | Son moyen |
+| Radar | Its model (or the one common to all), its means of communication |
+| Battery | Its model, its ammunition, its ground-fire algorithm, its means |
+| Aircraft or defensive drone | For its whole group: model, number, altitude, weapon, movement and fire algorithms, means |
+| Main CRC | Allocation and tracking algorithms, reaction delay, means |
+| Other C2 | Its name, its own allocation algorithm (or the main one's), its means |
+| Sensitive site | The means of its ground posts |
+| Link | Its means |
 
-Pour chaque algorithme, « hérité » garde celui du modèle ; un choix le remplace pour cette unité ou ce groupe
-seulement. Les algorithmes proposés sont ceux du dossier `algos/` (et de votre catalogue privé).
+For each algorithm, "inherited" keeps the model's; a choice replaces it for this unit or group only. The algorithms
+offered are those of the `algos/` folder (and of your private catalogue).
 
-La fiche liste aussi les **connexions** de l'unité, rangées par famille de moyen (filaire, radio, satellite, optique) :
-l'autre extrémité, le moyen, la distance sur la portée, la latence et l'état (active, hors de portée, masquée, en panne).
+The sheet also lists the unit's **connections**, sorted by family of means (wire, radio, satellite, optical): the
+other end, the means, the distance against the range, the latency and the state (active, out of range, masked, failed).
 
-![Fiche du radar R11 : son modèle, ses moyens déclarés et sa connexion satellite au CDC, 156 km, 3 s, active](docs/images/fiche_unite.png)
+![Sheet of radar R11: its model, its declared means and its satellite connection to the CRC, 156 km, 3 s, active](docs/images/fiche_unite.png)
 
-### Enregistrer et recharger
+### Saving and reloading
 
-En haut de la palette, donnez un nom au déploiement :
+At the top of the palette, give the deployment a name:
 
-- **Enregistrer** le range dans la bibliothèque de ce navigateur ; il se recharge depuis la liste Bibliothèque du
-  panneau Scénario ;
-- **Exporter** télécharge le scénario complet en JSON, à archiver, versionner ou partager ;
-- **Importer** recharge un fichier exporté (aussi depuis le panneau Scénario).
+- **Save** stores it in this browser's library; it reloads from the Library list of the Scenario panel;
+- **Export** downloads the complete scenario as JSON, to archive, version or share;
+- **Import** reloads an exported file (also from the Scenario panel).
 
-Chaque geste et chaque réglage de fiche est une modification du scénario, comme un curseur : l'annulation, l'export,
-la bibliothèque et la reproductibilité par la graine valent pour tout ce que vous déployez.
+Each gesture and each sheet setting is a change to the scenario, like a slider: undo, export, the library and
+reproducibility by seed apply to everything you deploy.
 
-## 7 · Le réseau d'information
+## 7 · The information network
 
-Par défaut, tout le monde parle avec tout le monde, sans délai. Dès la première liaison tracée, le réseau devient
-explicite, et l'information prend du temps et peut se perdre :
+By default, everyone talks to everyone, with no delay. As soon as the first link is drawn, the network becomes
+explicit, and information takes time and can be lost:
 
-- un C2 n'apprend un drone qu'après la latence du chemin depuis le radar qui le voit ; un radar non relié voit pour rien ;
-- ses consignes, comme vos ordres, n'arrivent à l'avion qu'après la latence de sa liaison ; un avion hors de portée
-  radio n'est plus affecté (croix rouge) ;
-- les pannes se datent ; le CDC peut devenir une cible de l'essaim (panneau Scénario), détruit à la première frappe.
+- a C2 only learns of a drone after the latency of the path from the radar that sees it; an unlinked radar sees for
+  nothing;
+- its instructions, like your orders, only reach the aircraft after the latency of its link; an aircraft out of radio
+  range is no longer assigned (red cross);
+- failures are dated; the CRC can become a target of the swarm (Scenario panel), destroyed at the first hit.
 
-![Réseau en liaisons : fil depuis la plupart des radars, satellite depuis R10, liaison optique de R1 trop longue ; l'inspecteur du CDC liste liaisons et radars non reliés](docs/images/reseau.png)
+![Network in links: wire from most radars, satellite from R10, R1's optical link too long; the CRC inspector lists links and unlinked radars](docs/images/reseau.png)
 
-### Voir l'information circuler
+### Seeing information flow
 
-Impulsion bleue d'un radar vers le C2 avec le nombre de drones signalés (rouge et arrêtée si le radar n'est pas relié),
-impulsion blanche du C2 vers l'avion qu'il envoie, cercle blanc à la réception de la mission, tirets jaunes quand un
-avion accroche un drone avec son propre capteur.
+Blue pulse from a radar to the C2 with the number of drones reported (red and stopped if the radar is not linked),
+white pulse from the C2 to the aircraft it sends, white circle when the mission is received, yellow dashes when an
+aircraft locks a drone with its own sensor.
 
-![Dispersés, de 2:45 à 3:35 : les radars signalent les drones au CDC, puis, le délai de réaction écoulé, la salve des missions part vers les avions](docs/images/information.gif)
+![Scattered, from 2:45 to 3:35: the radars report the drones to the CRC, then, once the reaction delay has elapsed, the burst of missions goes out to the aircraft](docs/images/information.gif)
 
-Le panneau **Journal** raconte la même histoire en phrases, filtrable ; l'inspecteur d'un drone en donne la chaîne
-complète : vu par tel radar, connu du C2, délai de réaction, accroché, tiré.
+The **Log** panel tells the same story in sentences, filterable; a drone's inspector gives the whole chain: seen by
+such radar, known to the C2, reaction delay, locked, fired at.
 
-![Journal de l'information et chaîne du drone 999 : vu par R10 à 1:58, connu du CDC aussitôt, actionnable à 3:28, accroché par l'avion 31, détruit à 5:40](docs/images/journal.png)
+![Information log and chain of drone 999: seen by R10 at 1:58, known to the CRC at once, actionable at 3:28, locked by aircraft 31, destroyed at 5:40](docs/images/journal.png)
 
-### Plusieurs centres
+### Several centres
 
-Chaque C2 reçoit ses radars, en fait des pistes, envoie les avions qu'il joint le plus vite et désigne les drones aux
-postes sol qu'il joint. Il échange ses pistes avec les autres par le réseau et reprend les avions d'un centre qui
-tombe. Un poste sol désigné tire dès que le drone entre dans sa bulle ; seul, il doit d'abord l'acquérir (10 s,
-notionnel).
+Each C2 receives its radars, turns them into tracks, sends the aircraft it reaches fastest and designates drones to
+the ground posts it reaches. It exchanges its tracks with the others over the network and takes over the aircraft of a
+centre that falls. A designated ground post fires as soon as the drone enters its bubble; alone, it must first acquire
+it (10 s, notional).
 
-![Un second centre au sud-ouest, relié par radio aux postes de C2 : son inspecteur liste les radars qu'il reçoit et les postes qu'il désigne](docs/images/cdc.png)
+![A second centre to the south-west, linked by radio to the posts of C2: its inspector lists the radars it receives and the posts it designates](docs/images/cdc.png)
 
-| Scénario de référence en liaisons, 8 raids | Détruits au sol | Frappes |
+| Reference scenario with links, 8 raids | Ground kills | Hits |
 |---|---|---|
-| Postes sol reliés au CDC | 312 | 432 ± 52 |
-| Postes sol seuls | 231 | 515 ± 42 |
+| Ground posts linked to the CRC | 312 | 432 ± 52 |
+| Ground posts alone | 231 | 515 ± 42 |
 
-**Vue du CDC** (V) : l'écran ne montre plus que ce que sait le centre — les drones qu'il connaît, regroupés en pistes
-par son algorithme de pistage. La vérité terrain revient au même bouton.
+**CRC view** (V): the screen only shows what the centre knows — the drones it knows of, grouped into tracks by its
+tracking algorithm. Ground truth comes back with the same button.
 
-![Vue du CDC : les pistes de la conduite, avec leur effectif](docs/images/vue_pc.png)
+![CRC view: control's tracks, with their strength](docs/images/vue_pc.png)
 
-Le **brouillard de guerre** y est rendu : chaque drone apparaît en piste, au dernier plot reçu, mis à jour toutes les
-10 s et écarté d'une erreur d'au plus 300 m, dans un cercle d'incertitude qui grossit avec l'âge du plot. La traînée
-ne garde que les plots déjà reçus. Seul l'affichage change : la simulation garde les positions vraies
+The **fog of war** is rendered there: each drone appears as a track, at the last plot received, updated every 10 s and
+offset by an error of at most 300 m, inside an uncertainty circle that grows with the plot's age. The trail only keeps
+plots already received. Only the display changes: the simulation keeps the true positions
 ([docs/MODELE.md § 31](docs/MODELE.md)).
 
-![Vue du CDC à 7:17 : l'essaim qui entre près de R1 n'est plus qu'un faisceau de pistes, chacune dans son cercle d'incertitude](docs/images/brouillard.png)
+![CRC view at 7:17: the swarm entering near R1 is just a bundle of tracks, each in its uncertainty circle](docs/images/brouillard.png)
 
-### Couvertures : détecter, conduire le tir, intercepter
+### Coverages: detect, control fire, intercept
 
-Chaque objet porte jusqu'à trois enveloppes, calculées une seule fois par le moteur et lues par toutes les interfaces (MODELE § 25) :
-la **détection** d'un radar, la **conduite de tir** (distance à laquelle un effecteur suit assez bien sa cible pour tirer) et
-l'**interception**. La conduite de tir est une vraie contrainte : un effecteur ne tire pas au-delà. La **résultante** d'un C2 réunit
-les enveloppes des objets qui lui sont reliés. Le panneau Calques affiche conduite de tir et résultante ; l'objet inspecté montre
-toujours les siennes.
+Each object carries up to three envelopes, computed once by the engine and read by every interface (MODELE § 25):
+a radar's **detection**, **fire control** (the distance at which an effector tracks its target well enough to fire)
+and **interception**. Fire control is a real constraint: an effector does not fire beyond it. A C2's **resultant**
+merges the envelopes of the objects linked to it. The Layers panel shows fire control and resultant; the inspected
+object always shows its own.
 
-![Scénario de référence avec le calque « Couverture des C2 » : en violet, la réunion des enveloppes des objets reliés au CDC](docs/images/couvertures.png)
+![Reference scenario with the "C2 coverage" layer: in purple, the union of the envelopes of the objects linked to the CRC](docs/images/couvertures.png)
 
-## 8 · Drones défensifs
+## 8 · Defensive drones
 
-Trois familles notionnelles, soumises aux mêmes règles que les avions (mission du centre, mise à poste, accroche,
-engagement) : **drones armés** (deux charges de courte portée), **intercepteurs à usage unique** (ils percutent leur
-cible et se perdent), **brouilleurs** (neutralisation à taux constant dans un rayon, sans modèle de signal). Posez-les
-depuis la palette, ou réglez leur nombre dans le panneau Scénario.
+Three notional families, under the same rules as aircraft (mission from the centre, getting on station, lock,
+engagement): **armed drones** (two short-range charges), **single-use interceptors** (they ram their target and are
+lost), **jammers** (neutralisation at a constant rate within a radius, with no signal model). Place them from the
+palette, or set their number in the Scenario panel.
 
-![Drones armés (losanges), intercepteurs (triangles) et brouilleurs (cercles et leur rayon) au contact de l'essaim ; le bilan compte les drones neutralisés par brouillage et les intercepteurs perdus](docs/images/drones_defensifs.png)
+![Armed drones (diamonds), interceptors (triangles) and jammers (circles and their radius) in contact with the swarm; the summary counts drones neutralised by jamming and interceptors lost](docs/images/drones_defensifs.png)
 
-| Ajoutés aux 50 avions, tactique fourmi, 6 raids | Frappes |
+| Added to the 50 aircraft, ant tactic, 6 raids | Hits |
 |---|---|
-| Référence | 404 ± 51 |
-| + 100 drones armés | 390 ± 52 |
-| + 200 intercepteurs | 364 ± 51 |
-| + 30 brouilleurs | 134 ± 98 (paramètre de brouillage notionnel, à calibrer) |
+| Reference | 404 ± 51 |
+| + 100 armed drones | 390 ± 52 |
+| + 200 interceptors | 364 ± 51 |
+| + 30 jammers | 134 ± 98 (notional jamming parameter, to be calibrated) |
 
-## 9 · Relief
+## 9 · Terrain
 
-Un terrain du catalogue, choisi dans le panneau Scénario ou déposé depuis la palette, donne au moteur le relief du
-théâtre : chaque radar a son masque d'horizon, un drone qui vole bas derrière une crête n'est pas vu, et les liaisons
-radio et optiques exigent la vue directe. L'écran trace la couverture réelle de chaque radar.
+A catalogue terrain, chosen in the Scenario panel or dropped from the palette, gives the engine the theatre's relief:
+each radar has its horizon mask, a drone flying low behind a ridge is not seen, and radio and optical links require
+line of sight. The screen draws each radar's real coverage.
 
-![Relief de démonstration : une crête au nord et un massif au sud-est entament la couverture de R1, R2, R10 et R5](docs/images/relief.png)
+![Demonstration terrain: a ridge to the north and a massif to the south-east cut into the coverage of R1, R2, R10 and R5](docs/images/relief.png)
 
-Le dépôt livre un relief synthétique de démonstration. Pour le vrai relief d'un théâtre, depuis un poste qui a le réseau :
+The repository ships a synthetic demonstration terrain. For a theatre's real relief, from a machine with a network:
 
 ```sh
 node outils/terrain.js --nom centre_france --lat 47 --lon 2.5 --rayon_km 320 --pas_km 1
 node outils/indexer.js
 ```
 
-Le terrain est ensuite un fichier : le moteur travaille hors ligne.
+The terrain is then a file: the engine works offline.
 
-## 10 · Configuration automatique
+## 10 · Automatic configuration
 
-Le panneau **Auto** propose un déploiement complet à partir de trois questions :
+The **Auto** panel proposes a complete deployment from three questions:
 
-1. **Les menaces** à considérer : tactiques et nombre de drones ;
-2. **Les moyens disponibles** : radars, C2, sites, postes, munitions, avions et drones défensifs par type ;
-3. **La zone** : un pays (frontières Natural Earth) ou une zone dessinée avec l'outil Zone.
+1. **The threats** to consider: tactics and number of drones;
+2. **The available assets**: radars, C2s, sites, posts, ammunition, aircraft and defensive drones per type;
+3. **The area**: a country (Natural Earth borders) or an area drawn with the Zone tool.
 
-« Lancer » construit le scénario (zone protégée, sites et centres bien répartis, radars le long de la frontière,
-avions et drones défensifs placés) et cherche en simulation la répartition qui minimise les frappes, toutes menaces
-confondues. Une barre de progression donne l'avancement et le temps restant ; « Arrêter » interrompt. Le résultat est
-comparé à une répartition uniforme avec son intervalle de confiance, puis s'applique, se range dans la bibliothèque
-ou s'exporte — et se retouche ensuite à la main dans l'éditeur.
+"Run" builds the scenario (protected zone, well-spread sites and centres, radars along the border, aircraft and
+defensive drones placed) and searches in simulation for the layout that minimises hits, all threats combined. A
+progress bar gives the progress and the time left; "Stop" interrupts. The result is compared with a uniform layout with
+its confidence interval, then applied, stored in the library or exported — and can then be touched up by hand in the
+editor.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/autoconfig.png" alt="Le panneau Auto sur la Belgique : essais successifs et répartition retenue"></td>
-<td width="50%"><img src="docs/images/autoconfig_scenario.png" alt="Le scénario obtenu : frontière belge en zone protégée, radars au-delà, cibles et drones répartis"></td>
+<td width="50%"><img src="docs/images/autoconfig.png" alt="The Auto panel on Belgium: successive trials and the layout kept"></td>
+<td width="50%"><img src="docs/images/autoconfig_scenario.png" alt="The resulting scenario: Belgian border as protected zone, radars beyond, targets and drones spread"></td>
 </tr>
 </table>
 
 ```sh
-node outils/frontieres.js                                     # une fois : frontières Natural Earth (domaine public)
+node outils/frontieres.js                                     # once: Natural Earth borders (public domain)
 node src/autoconfig.js --pays FRA --menaces fourmi:1000,direct:1000 --radars 30 --cibles 12 --centres 3 \
-  --postes 400 --munitions 2000 --avions 20,30,40,0,10 --tirages 3     # écrit scenarios/auto_france.json
+  --postes 400 --munitions 2000 --avions 20,30,40,0,10 --tirages 3     # writes scenarios/auto_france.json
 ```
 
-## 11 · Comprendre : inspecteur et catalogue
+## 11 · Understanding: inspector and catalogue
 
-Un clic sur une entité ouvre l'**inspecteur**, mis à jour en direct : pour un avion, pourquoi le centre l'a envoyé là
-(piste retenue, score, délai, alternatives écartées) et par quelle liaison il le joint ; pour un drone, chaque tir
-subi, sa probabilité de survie Π(1 − Pk) et la cause de sa perte ; pour un site, sa défense ; pour un radar, sa
-portée, son masquage par le relief et sa latence jusqu'au C2 ; pour un C2, l'état de tout le réseau.
+Clicking an entity opens the **inspector**, updated live: for an aircraft, why the centre sent it there (track kept,
+score, delay, alternatives discarded) and over which link it reaches it; for a drone, each shot taken, its survival
+probability Π(1 − Pk) and the cause of its loss; for a site, its defence; for a radar, its range, its terrain masking
+and its latency to the C2; for a C2, the state of the whole network.
 
-![Inspecteur : l'avion 42 a été envoyé sur une piste de 519 drones, au score 519, contre 116 pour l'alternative](docs/images/inspecteur.png)
+![Inspector: aircraft 42 was sent to a track of 519 drones, scoring 519, against 116 for the alternative](docs/images/inspecteur.png)
 
-Le lien **Catalogue** ouvre l'explorateur : une fiche par unité (fidélité, lignée, sources, paramètres avec l'ancêtre
-qui les fixe, algorithmes) et par algorithme (équations, hypothèses, domaine de validité, références, code, utilisateurs).
+The **Catalogue** link opens the explorer: one sheet per unit (fidelity, lineage, sources, parameters with the ancestor
+that sets them, algorithms) and per algorithm (equations, assumptions, validity domain, references, code, users).
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/catalogue_unite.png" alt="Fiche d'unité : turbopropulseur IR, lignée et paramètres hérités"></td>
-<td width="50%"><img src="docs/images/catalogue_algo.png" alt="Fiche d'algorithme : essaim fourmi, équations et hypothèses"></td>
+<td width="50%"><img src="docs/images/catalogue_unite.png" alt="Unit sheet: IR turboprop, lineage and inherited parameters"></td>
+<td width="50%"><img src="docs/images/catalogue_algo.png" alt="Algorithm sheet: ant swarm, equations and assumptions"></td>
 </tr>
 </table>
 
-L'encadré **Catalogue privé** de cette page importe vos unités de `prive/` : **Public seul**, **Fusionner** (elles
-s'ajoutent aux unités publiques) ou **Remplacer** (elles prennent la place des unités publiques de leurs dossiers ;
-terrains, armements et classes de base restent). Le choix est retenu par le navigateur et vaut aussi pour la palette
-de la simulation (voir [§ 12](#12--étendre--unités-algorithmes-cartes)).
+The page's **Private catalogue** box imports your units from `prive/`: **Public only**, **Merge** (they are added to
+the public units) or **Replace** (they take the place of the public units of their folders; terrains, weapons and base
+classes remain). The choice is remembered by the browser and also applies to the simulation palette (see
+[§ 13](#13--extending-units-algorithms-maps)).
 
-![Catalogue : public seul, puis fusion avec un catalogue privé de démonstration (fiche de « Mon radar », lignée et fichier privé), puis remplacement des radars publics](docs/images/catalogue_prive.gif)
+![Catalogue: public only, then merged with a demonstration private catalogue ("Mon radar" sheet, lineage and private file), then replacing the public radars](docs/images/catalogue_prive.gif)
 
-## 12 · Analyser et prouver
+## 12 · Analysing and proving
 
-Un raid est un tirage : seule une série de raids dit si un déploiement fait mieux qu'un autre.
+A raid is one draw: only a series of raids tells whether one deployment does better than another.
 
-### Balayage
+### Sweep
 
-Le panneau **Balayage** fait varier un réglage, rejoue le raid sur plusieurs graines par valeur et trace chaque
-grandeur avec son intervalle de confiance, calculé en arrière-plan.
+The **Sweep** panel varies a setting, replays the raid over several seeds per value and plots each quantity with its
+confidence interval, computed in the background.
 
-![Balayage du nombre d'avions laser : détruits par les avions, au sol, frappes, avec intervalles de confiance](docs/images/balayage.png)
+![Sweep of the number of laser aircraft: air kills, ground kills, hits, with confidence intervals](docs/images/balayage.png)
 
-### En ligne de commande
+### Command line
 
-Toute valeur d'un scénario a un chemin (`bleu.avions.1.nombre`, `rouge.surcharges.vitesse_kmh`…) qui se règle en option :
+Every scenario value has a path (`bleu.avions.1.nombre`, `rouge.surcharges.vitesse_kmh`…) that can be set as an option:
 
 ```sh
-node src/campagne.js                                            # scénario de référence, 50 raids
-node src/campagne.js --scenario scenarios/mon_deploiement.json  # un scénario exporté de l'interface
-node src/campagne.js --tirages 200 --rouge.tactique direct      # toute valeur se règle par son chemin
-node src/campagne.js --balayer bleu.avions.1.nombre=0,10,30,60  # une campagne par valeur
-uv run --with matplotlib python -m analyse.abaques              # abaques analytiques et récapitulatif
+node src/campagne.js                                            # reference scenario, 50 raids
+node src/campagne.js --scenario scenarios/mon_deploiement.json  # a scenario exported from the interface
+node src/campagne.js --tirages 200 --rouge.tactique direct      # any value is set by its path
+node src/campagne.js --balayer bleu.avions.1.nombre=0,10,30,60  # one campaign per value
+uv run --with matplotlib python -m analyse.abaques              # analytical charts and summary
 ```
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/vitesse_minimale.png" alt="Vitesse minimale de mise à poste selon le nombre d'avions"></td>
-<td width="50%"><img src="docs/images/postes_sol.png" alt="Postes sol nécessaires selon la concentration adverse"></td>
+<td width="50%"><img src="docs/images/vitesse_minimale.png" alt="Minimum speed to get on station versus the number of aircraft"></td>
+<td width="50%"><img src="docs/images/postes_sol.png" alt="Ground posts needed versus the enemy concentration"></td>
 </tr>
 <tr>
-<td>Vitesse minimale de mise à poste pour garantir k avions sur une route quelconque.</td>
-<td>Postes sol nécessaires selon la concentration adverse, sans avions puis avec 20, 50 et 100 avions.</td>
+<td>Minimum speed to get on station to guarantee k aircraft on any route.</td>
+<td>Ground posts needed versus the enemy concentration, without aircraft then with 20, 50 and 100 aircraft.</td>
 </tr>
 </table>
 
-### Outils de preuve
+### Proof tools
 
-Chaque résultat porte son **empreinte** (SHA-256 du scénario, des unités, des algorithmes en jeu et du code du
-moteur) et ses écarts au scénario de référence : deux résultats de même empreinte et de mêmes graines sont identiques
-au bit près.
+Each result carries its **fingerprint** (SHA-256 of the scenario, the units, the algorithms in play and the engine
+code) and its differences from the reference scenario: two results with the same fingerprint and seeds are identical
+to the bit.
 
 ```sh
-node src/preuve.js dossier                                   # dossier Markdown : résultats, convergence, modèles, limites
+node src/preuve.js dossier                                   # Markdown dossier: results, convergence, models, limits
 node src/preuve.js convergence --pas 2,1,0.5,0.25 --tirages 10
-node src/preuve.js duel --variante rouge.tactique=direct     # A contre B, mêmes graines, écart et verdict
+node src/preuve.js duel --variante rouge.tactique=direct     # A against B, same seeds, difference and verdict
 node src/preuve.js morris --facteur bleu.avions.1.nombre=0:60 --facteur bleu.sol.nombre=0:200
 node src/preuve.js empreinte
 ```
 
-- **Convergence** : la campagne rejouée à plusieurs pas de temps, chaque pas comparé au plus fin tirage par tirage.
-- **Duel A/B** : deux variantes sur les mêmes graines ; différence appariée, intervalle de confiance, gain des
-  nombres aléatoires communs mesuré.
-- **Morris** : classement des réglages par influence (μ*, μ, σ) et seuil de bruit ; il a révélé, par exemple, que
-  l'étalement des départs n'a aucun effet hors tactique dispersée.
+- **Convergence**: the campaign replayed at several time steps, each step compared with the finest, draw by draw.
+- **A/B duel**: two variants on the same seeds; paired difference, confidence interval, measured gain from common
+  random numbers.
+- **Morris**: ranking of settings by influence (μ*, μ, σ) and noise threshold; it showed, for example, that the
+  spread of departures has no effect outside the scattered tactic.
 
-## 13 · Étendre : unités, algorithmes, cartes
+## 13 · Extending: units, algorithms, maps
 
-Tout ce que la palette propose vient de fichiers ; en ajouter un suffit pour qu'il apparaisse.
+Everything the palette offers comes from files; adding one is enough for it to appear.
 
 ```
-unites/<famille>/<classe>/<unite>.json    une unité par fichier, héritage par herite_de, chaque clé documentée
-icones/<silhouette>.svg                   icônes de jeu des unités
-unites/liaisons/<moyen>.json              moyens de communication : latence, portée, vue directe
-unites/terrains/<terrain>.json            reliefs : grilles d'altitudes (node outils/terrain.js)
-algos/global/<rôle>/<algo>.js             un algorithme par module : fiche « meta » + fonctions du rôle, sans import
-cartes/fonds|relief|batiments/<source>.json   une source de carte par fichier, attribution obligatoire
-prive/unites/…  prive/algos/…             votre catalogue privé (ignoré par git), identifiants préfixés « prive/ »
-prive/icones/<nom>.svg                    icônes de vos unités privées, citées par « icone »: « prive/<nom> »
-prive/scenarios/                          scénarios enregistrés depuis Godot (ignoré par git)
-clients/godot/                            le client de jeu (Godot 4, GDScript)
-scenarios/                                scénarios JSON, chaque clé documentée
-schemas/                                  schémas JSON des fichiers (générés par node outils/indexer.js)
-hors_ligne/                               tuiles préparées pour la vue 3D sans réseau (ignoré par git)
+unites/<family>/<class>/<unit>.json       one unit per file, inheritance through herite_de, every key documented
+icones/<silhouette>.svg                   game icons of the units
+unites/liaisons/<means>.json              means of communication: latency, range, line of sight
+unites/terrains/<terrain>.json            terrains: altitude grids (node outils/terrain.js)
+algos/global/<role>/<algo>.js             one algorithm per module: "meta" sheet + role functions, no imports
+cartes/fonds|relief|batiments/<source>.json   one map source per file, attribution mandatory
+prive/unites/…  prive/algos/…             your private catalogue (ignored by git), identifiers prefixed "prive/"
+prive/icones/<name>.svg                   icons of your private units, cited by "icone": "prive/<name>"
+prive/scenarios/                          scenarios saved from Godot (ignored by git)
+clients/godot/                            the game client (Godot 4, GDScript)
+scenarios/                                JSON scenarios, every key documented
+schemas/                                  JSON schemas of the files (generated by node outils/indexer.js)
+langues/<code>.json                       interface texts, one file per language (en, fr)
+hors_ligne/                               tiles prepared for the offline 3D view (ignored by git)
 ```
 
-- **Unités** : un fichier ne dit que ce qui change par rapport à son parent (`herite_de`) ; les valeurs s'écrivent
-  dans les unités du métier (`vitesse_kmh`, `portee_km`, `acquisition_s`…) et sont converties en SI à la lecture.
-- **Algorithmes** : chaque décision (comportement, réaction, mouvement, détection, pistage, allocation, tir, tir sol) est un
-  module interchangeable, choisi par une unité, un groupe, un centre ou le scénario. Il exporte sa fiche `meta` et les
-  fonctions de son rôle, n'importe rien et reçoit géodésie et hasard à graine : il est pur et reproductible.
-  `algos/global/allocation/plus_proche.js` sert d'exemple commenté.
-- **Pays et icônes** : `pays` (code ISO à trois lettres) classe l'unité et colore sa pastille ; `icone` choisit une
-  silhouette de `icones/` (SVG blanc, 64 × 64, vu de dessus).
-- **Catalogue privé** : `prive/` reçoit vos unités et algorithmes réels, hors du dépôt public. Une unité privée se
-  range dans une famille du moteur (`prive/vecteurs/avions/…`, `prive/sites/postes/…`) et hérite de sa base publique,
-  qui lui apporte ses algorithmes : elle se joue alors comme une unité publique.
+- **Units**: a file only states what differs from its parent (`herite_de`); values are written in the trade's units
+  (`vitesse_kmh`, `portee_km`, `acquisition_s`…) and converted to SI when read.
+- **Algorithms**: each decision (behaviour, reaction, movement, detection, tracking, allocation, fire, ground fire) is
+  an interchangeable module, chosen by a unit, a group, a centre or the scenario. It exports its `meta` sheet and its
+  role functions, imports nothing and receives geodesy and seeded randomness: it is pure and reproducible.
+  `algos/global/allocation/plus_proche.js` is a commented example.
+- **Countries and icons**: `pays` (three-letter ISO code) classifies the unit and colours its disc; `icone` picks a
+  silhouette from `icones/` (white SVG, 64 × 64, top-down).
+- **Private catalogue**: `prive/` holds your real units and algorithms, outside the public repository. A private unit
+  goes into an engine family (`prive/vecteurs/avions/…`, `prive/sites/postes/…`) and inherits from its public base,
+  which brings it its algorithms: it then plays like a public unit.
+- **Languages**: every interface text lives in `langues/<code>.json`; adding a language means adding one file (tests
+  check that it has every key, parameter and markup of the English file).
 
-Après tout ajout : `node outils/indexer.js`, puis `npm test` — la conformité vérifie d'elle-même tout fichier déposé.
-L'indexeur écrit aussi `prive/unites/index.json` (hors git), que lit l'import du catalogue privé : choisissez
-**Fusionner** ou **Remplacer** dans la page Catalogue, et vos unités apparaissent dans la palette, se déposent et se
-battent comme les autres.
+After any addition: `node outils/indexer.js`, then `npm test` — conformance checks every file dropped in by itself. The
+indexer also writes `prive/unites/index.json` (outside git), read by the private catalogue import: choose **Merge** or
+**Replace** on the Catalogue page, and your units appear in the palette, can be dropped and fight like the others.
 
-![Palette en mode Remplacer : radar, batteries et intercepteurs d'un catalogue privé de démonstration déposés sur la carte, menace privée à 400 km/h, puis le raid joué](docs/images/palette_privee.gif)
-Pour mesurer l'effet d'un changement : `node src/preuve.js duel --variante bleu.conduite.allocation=global/allocation/plus_proche`.
+![Palette in Replace mode: radar, batteries and interceptors from a demonstration private catalogue dropped on the map, private threat at 400 km/h, then the raid played](docs/images/palette_privee.gif)
 
-**Depuis un outil externe** (modeleur d'unités, générateur d'algorithmes, export d'un autre simulateur) : le format
-exact de chaque fichier est fixé dans [docs/FORMATS.md](docs/FORMATS.md), avec des schémas JSON par famille dans
-`schemas/` (générés depuis le catalogue) et un validateur qui applique les règles de la conformité :
+To measure the effect of a change: `node src/preuve.js duel --variante bleu.conduite.allocation=global/allocation/plus_proche`.
+
+**From an external tool** (unit modeller, algorithm generator, export from another simulator): the exact format of each
+file is set in [docs/FORMATS.md](docs/FORMATS.md), with JSON schemas per family in `schemas/` (generated from the
+catalogue) and a validator that applies the conformance rules:
 
 ```sh
 node outils/valider.js prive/unites/capteurs/radars/mon_radar.json prive/algos/allocation/mon_algo.js
-node outils/valider.js --json …     # rapport machine, code de sortie 0 ou 1
+node outils/valider.js --json …     # machine report, exit code 0 or 1
 ```
 
-**Le guide complet est dans [docs/CATALOGUE.md](docs/CATALOGUE.md)** : familles d'unités, héritage, suffixes,
-surcharges, rôles et contrat des algorithmes, exemple pas à pas, catalogue privé, conformité, cartes, reliefs,
-liaisons, clés du déploiement, et preuve d'un changement.
+**The complete guide is in [docs/CATALOGUE.md](docs/CATALOGUE.md)** (in French): unit families, inheritance, suffixes,
+overrides, roles and contract of algorithms, step-by-step example, private catalogue, conformance, maps, terrains,
+links, deployment keys, and proving a change.
 
-## 14 · Questions fréquentes
+## 14 · Frequently asked questions
 
-**La page reste blanche, ou affiche une erreur de module.** Elle doit être servie par `lancer.command`, `lancer.bat`
-ou `python3 -m http.server` : un fichier ouvert directement (`file://`) ne charge pas les modules JavaScript.
+**The page stays blank, or shows a module error.** It must be served by `lancer.command`, `lancer.bat` or
+`python3 -m http.server`: a file opened directly (`file://`) does not load JavaScript modules.
 
-**Le fond de carte est vide.** Il vient d'Internet. Hors ligne, cochez « Scope seul » dans le panneau Calques : la
-simulation n'en dépend pas.
+**The base map is empty.** It comes from the Internet. Offline, tick "Scope only" in the Layers panel: the simulation
+does not depend on it.
 
-**« Scénario refusé : … ».** Le message nomme la clé fautive (unité inconnue, surcharge d'une clé que l'unité n'a pas,
-liaison vers un nœud qui n'existe plus). Ctrl+Z annule le dernier geste ; « Revenir à la référence » repart de zéro.
+**"Scenario rejected: …".** The message names the faulty key (unknown unit, override of a key the unit does not have,
+link to a node that no longer exists). Ctrl+Z undoes the last gesture; "Back to reference" starts again.
 
-**F5 ou F6 ne fait rien dans Godot.** Sur Mac, ces touches peuvent commander le système : essayez avec `fn`.
+**F5 or F6 does nothing in Godot.** On a Mac, these keys may control the system: try with `fn`.
 
-**Mon déploiement a disparu.** Les déploiements enregistrés vivent dans la mémoire de ce navigateur : un autre
-navigateur, une navigation privée ou un effacement des données ne les voit pas. Exportez ce qui compte.
+**My deployment has disappeared.** Saved deployments live in this browser's storage: another browser, a private window
+or cleared data does not see them. Export what matters.
 
-**« À déposer sur une unité déjà placée ».** Un moyen de communication ou un armement se lâche sur une unité, pas
-dans le vide ; et une unité ne reçoit pas deux fois le même moyen.
+**"Drop it on an already placed unit".** A means of communication or a weapon is dropped on a unit, not into empty
+space; and a unit does not receive the same means twice.
 
-**Une liaison est refusée.** Le moyen choisi ne porte pas assez loin : le message donne sa portée et la distance. Une
-radio en vue directe ne dépasse guère 30 km au sol ; prenez un moyen plus long, à côté du bouton Liaison.
+**A link is refused.** The chosen means does not reach far enough: the message gives its range and the distance. A
+line-of-sight radio hardly exceeds 30 km on the ground; pick a longer means, next to the Link button.
 
-**Une unité reste « hors réseau » après « Relier automatiquement ».** Aucun C2 ne partage avec elle un moyen à portée :
-une radio au sol ne porte qu'à l'horizon des mâts ; ajoutez le fil ou le satellite, ou rapprochez un C2.
+**A unit stays "off the network" after "Link automatically".** No C2 shares a means in range with it: a ground radio
+only reaches the masts' horizon; add wire or satellite, or bring a C2 closer.
 
-**« Choisissez une zone » dans Auto.** Les frontières des pays se téléchargent une fois avec
-`node outils/frontieres.js` ; sinon, dessinez une zone avec l'outil Zone de l'éditeur.
+**"Choose an area" in Auto.** Country borders are downloaded once with `node outils/frontieres.js`; otherwise, draw an
+area with the editor's Zone tool.
 
-**L'essaim réactif ne change pas de cible en début de raid.** C'est voulu : il ne se reporte que sur une cible déjà
-frappée, une brèche avérée. Tant qu'aucun drone n'est passé, il contourne vos sites mais garde ses cibles ; se reporter
-à l'aveugle vers des cibles aussi défendues que les autres lui faisait perdre des frappes (MODELE § 22.2).
+**The reactive swarm does not change target early in the raid.** That is intended: it only switches to a target
+already hit, a proven breach. Until a drone has got through, it bypasses your sites but keeps its targets; switching
+blindly to targets as well defended as the others made it lose hits (MODELE § 22.2).
 
-## 15 · Ce que montre le scénario de référence
+**The interface is in English, I want French (or the reverse).** Use the language selector in the top bar; the choice
+is remembered. `?lang=fr` or `?lang=en` in the address forces a language.
 
-1 000 drones à 800 km/h, 10 sites, 200 postes sol, 50 avions à 500 km/h ; 30 raids par tactique, moyenne et
-intervalle de confiance à 95 % :
+## 15 · What the reference scenario shows
 
-| Tactique de l'essaim | Frappes sans avions | Frappes avec 50 avions | Détruits par les avions |
+1,000 drones at 800 km/h, 10 sites, 200 ground posts, 50 aircraft at 500 km/h; 30 raids per tactic, mean and 95 %
+confidence interval:
+
+| Swarm tactic | Hits without aircraft | Hits with 50 aircraft | Destroyed by aircraft |
 |---|---|---|---|
-| Groupes directs | 650 ± 21 | 395 ± 27 | 257 |
-| Dispersés | 524 ± 8 | **187 ± 11** | 407 |
-| Fourmi (couloir compact puis éclatement) | 668 ± 19 | 401 ± 25 | 272 |
+| Direct groups | 650 ± 21 | 395 ± 27 | 257 |
+| Scattered | 524 ± 8 | **187 ± 11** | 407 |
+| Ant (tight corridor then burst) | 668 ± 19 | 401 ± 25 | 272 |
 
-- Les avions divisent les frappes par 1,6 à 2,8. La tactique fourmi est la plus efficace pour l'attaquant : le couloir
-  compact sature chaque avion sur un passage, et l'éclatement tardif oblige la flotte à se partager.
-- Face aux groupes compacts, la limite est la cadence de tir par passage, pas le stock de munitions.
-- Avec 50 avions, garantir 5 avions sur une route quelconque demande ~350 km/h ; 8 avions, ~465 km/h ; 10, ~525 km/h.
+- Aircraft divide the hits by 1.6 to 2.8. The ant tactic is the most effective for the attacker: the tight corridor
+  saturates each aircraft on one pass, and the late burst forces the fleet to split up.
+- Against compact groups, the limit is the rate of fire per pass, not the ammunition stock.
+- With 50 aircraft, guaranteeing 5 aircraft on any route needs ~350 km/h; 8 aircraft, ~465 km/h; 10, ~525 km/h.
 
-Le dossier de preuve (`node src/preuve.js dossier`) redonne 403 ± 26 frappes en tactique fourmi, et montre que le
-pas de temps de 0,5 s a convergé alors que celui de 1 s ne l'a pas.
+The proof dossier (`node src/preuve.js dossier`) gives 403 ± 26 hits again with the ant tactic, and shows that the
+0.5 s time step has converged whereas the 1 s one has not.
 
-## Rigueur
+## Rigour
 
-- Unités SI et géodésie WGS84 dans tout le calcul ; Vincenty vérifié sur les exemples de GeographicLib au millimètre.
-- Hasard à graine : une graine rejoue un raid à l'identique, ordres et pannes compris.
-- Chaque formule codée cite son paragraphe de [docs/MODELE.md](docs/MODELE.md), et un test vérifie que chaque renvoi existe.
-- Formules fermées et résolution des scénarios en Python et en JavaScript, vérifiées l'une contre l'autre ; simulation
-  confrontée aux formules.
-- Chaque refonte prouvée : le moteur géodésique retrouve les statistiques de la v0.1, le passage aux algorithmes en
-  fichiers redonne les bilans exacts, et le réseau complet sans relief ni déploiement manuel laisse ces bilans inchangés.
-- Limites connues : drones sans contre-mesures ni évitement, radar parfait dans sa portée, pas encore de débit ni de
-  brouillage sur les liaisons, drones défensifs et brouillage notionnels, auto-configuration par recherche locale,
-  batterie placée rattachée au nœud réseau du site le plus proche (MODELE § 7, § 15 à § 21).
+- SI units and WGS84 geodesy throughout the computation; Vincenty checked against GeographicLib examples to the
+  millimetre.
+- Seeded randomness: a seed replays a raid identically, orders and failures included.
+- Each coded formula cites its paragraph of [docs/MODELE.md](docs/MODELE.md), and a test checks that each reference
+  exists.
+- Closed-form formulas and scenario resolution in Python and in JavaScript, checked against each other; simulation
+  compared with the formulas.
+- Each overhaul proven: the geodesic engine recovers the v0.1 statistics, the move to algorithms in files gives back
+  the exact results, and the full network without terrain or manual deployment leaves those results unchanged.
+- Known limits: drones without countermeasures or avoidance, perfect radar within its range, no bandwidth or jamming
+  on links yet, notional defensive drones and jamming, auto-configuration by local search, a placed battery attached
+  to the network node of the nearest site (MODELE § 7, § 15 to § 21).
 
 ## Documentation
 
-- [docs/MODELE.md](docs/MODELE.md) : toutes les équations et hypothèses.
-- [docs/CATALOGUE.md](docs/CATALOGUE.md) : étendre Égide — unités, algorithmes, catalogue privé, preuve d'un changement.
-- [docs/FORMATS.md](docs/FORMATS.md) : formats d'échange pour les outils externes (unités, liaisons, terrains, algorithmes, scénarios).
-- [docs/PLAN_V2.md](docs/PLAN_V2.md) : feuille de route, jalons, idées et suggestions retenues.
-- [docs/PLAN_3D.md](docs/PLAN_3D.md) : déployer en 2D stricte, observer en 3D, sortie vers un moteur de jeu.
-- [docs/PLAN_JEU.md](docs/PLAN_JEU.md) : Égide comme jeu de stratégie en temps réel, décisions et étapes.
-- [clients/README.md](clients/README.md) : le client Godot, ses commandes, sa vérification, le portage vers un autre moteur.
+The project's design documents are in French for now; translating them is part of the multilingual plan
+([docs/PLAN_V3.md](docs/PLAN_V3.md), milestone 27).
+
+- [docs/MODELE.md](docs/MODELE.md): every equation and assumption.
+- [docs/CATALOGUE.md](docs/CATALOGUE.md): extending Égide — units, algorithms, private catalogue, proving a change.
+- [docs/FORMATS.md](docs/FORMATS.md): exchange formats for external tools (units, links, terrains, algorithms, scenarios).
+- [docs/PLAN_V2.md](docs/PLAN_V2.md): roadmap, milestones, ideas and retained suggestions.
+- [docs/PLAN_3D.md](docs/PLAN_3D.md): deploy in strict 2D, watch in 3D, output to a game engine.
+- [docs/PLAN_JEU.md](docs/PLAN_JEU.md): Égide as a real-time strategy game, decisions and steps.
+- [clients/README.md](clients/README.md): the Godot client, its controls, its checks, porting to another engine.
 
 ## Tests
 
 ```sh
-npm test                 # rapide (plus de 600 tests, dont la conformité de tout le catalogue)
-npm run test:complet     # ajoute l'équivalence avec la v0.1 (~2 min)
+npm test                 # fast (over 700 tests, including conformance of the whole catalogue and of the languages)
+npm run test:complet     # adds equivalence with v0.1 (~2 min)
 pytest -q tests
 ruff check analyse tests
-godot --headless --path clients/godot --script res://scripts/jeu/verifier_jeu.gd   # règles du jeu
+godot --headless --path clients/godot --script res://scripts/jeu/verifier_jeu.gd   # game rules
 ```
 
-<img src="docs/images/mobile.png" alt="L'interface sur un écran de téléphone" width="280">
+<img src="docs/images/mobile.png" alt="The interface on a phone screen" width="280">

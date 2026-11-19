@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Égide</title>
-<meta name="description" content="Simulation de défense du territoire face à un essaim de drones rapides : radars, avions en orbite, postes sol-air.">
+<title data-i18n="page.page.title">Égide</title>
+<meta name="description" content="Territorial air defence against a swarm of fast drones: radars, orbiting aircraft, ground air-defence posts." data-i18n-attr="content:page.page.description.content">
 <link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css">
 <link rel="stylesheet" href="src/vue/style.css">
 <script type="module" src="src/vue/app.js"></script>
@@ -23,308 +23,307 @@
   <symbol id="i-aide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17v.5"/></symbol>
 </svg>
 
-<main class="vue" id="vue" aria-label="Situation aérienne">
-  <ol class="annonces" aria-live="polite" aria-label="Incidents en cours"></ol>
-  <ol class="radio" aria-live="off" aria-label="Radio de la conduite"></ol>
-  <div id="carte" aria-label="Fond de carte"></div>
-  <div id="globe" aria-label="Vue 3D du raid sur le globe"></div>
-  <canvas id="scope" aria-label="Situation : zone défendue, radars, avions, drones, cibles"></canvas>
+<main class="vue" id="vue" aria-label="Air picture" data-i18n-attr="aria-label:page.page.vue.aria_label">
+  <ol class="annonces" aria-live="polite" aria-label="Current incidents" data-i18n-attr="aria-label:page.page.annonces.aria_label"></ol>
+  <ol class="radio" aria-live="off" aria-label="Control radio" data-i18n-attr="aria-label:page.page.radio.aria_label"></ol>
+  <div id="carte" aria-label="Base map" data-i18n-attr="aria-label:page.carte.div.aria_label"></div>
+  <div id="globe" aria-label="3D view of the raid on the globe" data-i18n-attr="aria-label:page.globe.div.aria_label"></div>
+  <canvas id="scope" aria-label="Picture: defended area, radars, aircraft, drones, targets" data-i18n-attr="aria-label:page.scope.canvas.aria_label"></canvas>
 
   <header class="barre-haut">
-    <h1>Égide</h1>
-    <fieldset class="tactiques" title="Tactique de l'essaim">
-      <legend>Essaim</legend>
-      <label title="Chaque groupe arrive d'un cap différent, en vague serrée."><input type="radio" name="tactique" value="direct">Directs</label>
-      <label title="Chaque drone vient seul, de n'importe où, avec des départs étalés."><input type="radio" name="tactique" value="disperse">Dispersés</label>
-      <label title="Tout l'essaim entre par un couloir compact puis éclate vers les cibles."><input type="radio" name="tactique" value="fourmi">Fourmi</label>
-      <label title="L'essaim suit le plan de vol dessiné dans l'éditeur, puis rejoint ses cibles."><input type="radio" name="tactique" value="plan_de_vol">Plan de vol</label>
-      <label class="bascule-reaction" title="L'essaim apprend de ses pertes : il quitte les cibles qui tuent pour celles déjà frappées, contourne les sites défendus et esquive les tirs air (MODELE § 22). (R)"><input type="checkbox" name="essaim_reactif">Réactif</label>
+    <h1 data-i18n="page.barre_haut.h1">Égide</h1>
+    <fieldset class="tactiques" title="Swarm tactic" data-i18n-attr="title:page.barre_haut.tactiques.title">
+      <legend data-i18n="page.barre_haut.legend">Swarm</legend>
+      <label title="Each group comes from a different heading, in a tight wave." data-i18n-attr="title:page.barre_haut.direct.title"><input type="radio" name="tactique" value="direct"><span data-i18n="page.barre_haut.direct.texte">Direct</span></label>
+      <label title="Each drone comes alone, from anywhere, with staggered departures." data-i18n-attr="title:page.barre_haut.disperse.title"><input type="radio" name="tactique" value="disperse"><span data-i18n="page.barre_haut.disperse.texte">Scattered</span></label>
+      <label title="The whole swarm enters through a tight corridor, then bursts towards its targets." data-i18n-attr="title:page.barre_haut.fourmi.title"><input type="radio" name="tactique" value="fourmi"><span data-i18n="page.barre_haut.fourmi.texte">Ant</span></label>
+      <label title="The swarm follows the flight plan drawn in the editor, then heads for its targets." data-i18n-attr="title:page.barre_haut.plan_de_vol.title"><input type="radio" name="tactique" value="plan_de_vol"><span data-i18n="page.barre_haut.plan_de_vol.texte">Flight plan</span></label>
+      <label class="bascule-reaction" title="The swarm learns from its losses: it leaves deadly targets for those already hit, bypasses defended sites and dodges air fire (MODELE § 22). (R)" data-i18n-attr="title:page.barre_haut.essaim_reactif.title"><input type="checkbox" name="essaim_reactif"><span data-i18n="page.barre_haut.essaim_reactif.texte">Reactive</span></label>
     </fieldset>
-    <button data-action="editer" aria-pressed="false" title="Au début du raid : placer cibles, radars, avions, plan de vol et zones. En pause pendant le raid : donner des ordres aux avions. (E)">Éditer</button>
-    <button data-action="vue_pc" aria-pressed="false" title="Basculer entre la vérité terrain et ce que sait le centre de conduite : drones connus et pistes (V)">Vue du CDC</button>
-    <button data-action="observer" aria-pressed="false" title="Observer le raid en 3D sur le globe, chaque unité à sa vraie altitude (O)">3D</button>
-    <a class="lien-catalogue" href="catalogue.html" title="Fiches des unités et des algorithmes : équations, hypothèses, sources, code">Catalogue</a>
+    <button data-action="editer" aria-pressed="false" title="At the start of the raid: place targets, radars, aircraft, flight plan and zones. Paused during the raid: give orders to aircraft. (E)" data-i18n="page.barre_haut.editer" data-i18n-attr="title:page.barre_haut.editer.title">Edit</button>
+    <button data-action="vue_pc" aria-pressed="false" title="Switch between ground truth and what the control centre knows: known drones and tracks (V)" data-i18n="page.barre_haut.vue_pc" data-i18n-attr="title:page.barre_haut.vue_pc.title">CRC view</button>
+    <button data-action="observer" aria-pressed="false" title="Watch the raid in 3D on the globe, each unit at its true altitude (O)" data-i18n="page.barre_haut.observer" data-i18n-attr="title:page.barre_haut.observer.title">3D</button>
+    <select name="langue" class="choix-langue" aria-label="Language" data-i18n-attr="aria-label:commun.langue;title:commun.langue" title="Language"></select>
+    <a class="lien-catalogue" href="catalogue.html" title="Unit and algorithm sheets: equations, assumptions, sources, code" data-i18n="page.barre_haut.lien_catalogue" data-i18n-attr="title:page.barre_haut.lien_catalogue.title">Catalogue</a>
   </header>
-  <div class="commandes-3d" role="group" aria-label="Réglages de la vue 3D">
-    <select name="camera_3d" aria-label="Caméra de la vue 3D" title="Où placer l'observateur ; cliquez une unité pour choisir laquelle suivre ou le radar d'où regarder"></select>
-    <select name="exageration_3d" aria-label="Exagération des altitudes en 3D" title="Étirer le relief et l'altitude des unités en vol pour les lire de loin : affichage seulement, le calcul n'en dépend pas">
-      <option value="1">Altitudes réelles</option>
-      <option value="5">Altitudes × 5</option>
-      <option value="10">Altitudes × 10</option>
-      <option value="25">Altitudes × 25</option>
+  <div class="commandes-3d" role="group" aria-label="3D view settings" data-i18n-attr="aria-label:page.page.commandes_3d.aria_label">
+    <select name="camera_3d" aria-label="3D view camera" title="Where to put the observer; click a unit to choose which one to follow or which radar to look from" data-i18n-attr="title:page.page.camera_3d.title;aria-label:page.page.camera_3d.aria_label"></select>
+    <select name="exageration_3d" aria-label="Altitude exaggeration in 3D" title="Stretch the terrain and the altitude of flying units to read them from afar: display only, the computation does not depend on it" data-i18n-attr="title:page.page.exageration_3d.title;aria-label:page.page.exageration_3d.aria_label">
+      <option value="1" data-i18n="page.page.1">True altitudes</option>
+      <option value="5" data-i18n="page.page.5">Altitudes × 5</option>
+      <option value="10" data-i18n="page.page.10">Altitudes × 10</option>
+      <option value="25" data-i18n="page.page.25">Altitudes × 25</option>
     </select>
   </div>
 
-  <nav class="rail" aria-label="Panneaux">
-    <button data-panneau="scenario" aria-expanded="false" title="Réglages du scénario (1)"><svg><use href="#i-scenario"/></svg><span>Scénario</span></button>
-    <button data-panneau="calques" aria-expanded="false" title="Calques et fond de carte (2)"><svg><use href="#i-calques"/></svg><span>Calques</span></button>
-    <button data-panneau="balayage" aria-expanded="false" title="Balayage d'un réglage sur plusieurs raids (3)"><svg><use href="#i-balayage"/></svg><span>Balayage</span></button>
-    <button data-panneau="profil" aria-expanded="false" title="Profil du plan de vol au-dessus du relief (4)"><svg><use href="#i-profil"/></svg><span>Profil</span></button>
-    <button data-panneau="journal" aria-expanded="false" title="Qui a vu quoi, qui a informé qui, quand (5)"><svg><use href="#i-journal"/></svg><span>Journal</span></button>
-    <button data-panneau="autoconfig" aria-expanded="false" title="Auto-configuration : menaces, moyens, zone, répartition optimisée (6)"><svg><use href="#i-auto"/></svg><span>Auto</span></button>
-    <button data-panneau="aide" aria-expanded="false" title="Commandes et symboles (7)"><svg><use href="#i-aide"/></svg><span>Aide</span></button>
-    <button data-panneau="debriefing" aria-expanded="false" title="Débriefing du raid : note, causes des frappes, points faibles (8)"><svg><use href="#i-debrief"/></svg><span>Débrief</span></button>
+  <nav class="rail" aria-label="Panels" data-i18n-attr="aria-label:page.rail.rail.aria_label">
+    <button data-panneau="scenario" aria-expanded="false" title="Scenario settings (1)" data-i18n-attr="title:page.rail.scenario.title"><svg><use href="#i-scenario"/></svg><span data-i18n="page.rail.span">Scenario</span></button>
+    <button data-panneau="calques" aria-expanded="false" title="Layers and base map (2)" data-i18n-attr="title:page.rail.calques.title"><svg><use href="#i-calques"/></svg><span data-i18n="page.rail.span_2">Layers</span></button>
+    <button data-panneau="balayage" aria-expanded="false" title="Sweep a setting over several raids (3)" data-i18n-attr="title:page.rail.balayage.title"><svg><use href="#i-balayage"/></svg><span data-i18n="page.rail.span_3">Sweep</span></button>
+    <button data-panneau="profil" aria-expanded="false" title="Flight plan profile above the terrain (4)" data-i18n-attr="title:page.rail.profil.title"><svg><use href="#i-profil"/></svg><span data-i18n="page.rail.span_4">Profile</span></button>
+    <button data-panneau="journal" aria-expanded="false" title="Who saw what, who told whom, when (5)" data-i18n-attr="title:page.rail.journal.title"><svg><use href="#i-journal"/></svg><span data-i18n="page.rail.span_5">Log</span></button>
+    <button data-panneau="autoconfig" aria-expanded="false" title="Auto-configuration: threats, assets, area, optimised layout (6)" data-i18n-attr="title:page.rail.autoconfig.title"><svg><use href="#i-auto"/></svg><span data-i18n="page.rail.span_6">Auto</span></button>
+    <button data-panneau="aide" aria-expanded="false" title="Controls and symbols (7)" data-i18n-attr="title:page.rail.aide.title"><svg><use href="#i-aide"/></svg><span data-i18n="page.rail.span_7">Help</span></button>
+    <button data-panneau="debriefing" aria-expanded="false" title="Raid debriefing: score, causes of hits, weak points (8)" data-i18n-attr="title:page.rail.debriefing.title"><svg><use href="#i-debrief"/></svg><span data-i18n="page.rail.span_8">Debrief</span></button>
   </nav>
 
-  <section class="tiroir" data-tiroir="scenario" aria-label="Réglages du scénario" hidden>
-    <header><h2>Scénario</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
+  <section class="tiroir" data-tiroir="scenario" aria-label="Scenario settings" hidden data-i18n-attr="aria-label:page.scenario.tiroir.aria_label">
+    <header><h2 data-i18n="page.scenario.h2">Scenario</h2><button data-action="fermer_tiroir" aria-label="Close the panel" data-i18n-attr="aria-label:commun.fermer_panneau">×</button></header>
     <div id="reglages"></div>
-    <label class="interrupteur" title="Relief du théâtre : il masque radars et liaisons radio (MODELE § 16). Fabriquer un terrain réel : node outils/terrain.js.">Terrain <select name="terrain"><option value="">Terre lisse</option></select></label>
-    <label class="interrupteur" title="Le centre de conduite devient une cible de l'essaim ; à la première frappe, il est détruit (MODELE § 15.4)."><input type="checkbox" name="conduite_ciblee">Le CDC est une cible de l'essaim</label>
-    <div class="ligne" title="Incidents tirés à la graine du raid : radars gênés par la météo ou en maintenance, liaisons coupées, batteries indisponibles (MODELE § 29)">
-      <button data-action="incidents_hasard">Incidents au hasard</button>
-      <button data-action="incidents_retirer">Retirer les incidents</button>
+    <label class="interrupteur" title="Theatre terrain: it masks radars and radio links (MODELE § 16). To build a real terrain: node outils/terrain.js." data-i18n-attr="title:page.scenario.terrain.title"><span data-i18n="page.scenario.terrain.texte">Terrain</span> <select name="terrain"><option value="" data-i18n="page.scenario.option">Smooth Earth</option></select></label>
+    <label class="interrupteur" title="The control centre becomes a target of the swarm; it is destroyed at the first hit (MODELE § 15.4)." data-i18n-attr="title:page.scenario.conduite_ciblee.title"><input type="checkbox" name="conduite_ciblee"><span data-i18n="page.scenario.conduite_ciblee.texte">The CRC is a swarm target</span></label>
+    <div class="ligne" title="Incidents drawn from the raid seed: radars hampered by weather or under maintenance, links cut, batteries unavailable (MODELE § 29)" data-i18n-attr="title:page.scenario.ligne.title">
+      <button data-action="incidents_hasard" data-i18n="page.scenario.incidents_hasard">Random incidents</button>
+      <button data-action="incidents_retirer" data-i18n="page.scenario.incidents_retirer">Remove incidents</button>
     </div>
     <div class="prereglages">
-      <select name="bibliotheque" aria-label="Charger un scénario de la bibliothèque"></select>
-      <select name="prereglage" aria-label="Charger un réglage enregistré"></select>
+      <select name="bibliotheque" aria-label="Load a scenario from the library" data-i18n-attr="aria-label:page.scenario.bibliotheque.aria_label"></select>
+      <select name="prereglage" aria-label="Load saved settings" data-i18n-attr="aria-label:page.scenario.prereglage.aria_label"></select>
       <div class="ligne">
-        <input name="nom_prereglage" placeholder="Nom du réglage" aria-label="Nom du réglage à enregistrer">
-        <button data-action="enregistrer">Enregistrer</button>
+        <input name="nom_prereglage" placeholder="Settings name" aria-label="Name of the settings to save" data-i18n-attr="aria-label:page.scenario.nom_prereglage.aria_label;placeholder:page.scenario.nom_prereglage.placeholder">
+        <button data-action="enregistrer" data-i18n="page.scenario.enregistrer">Save</button>
       </div>
       <div class="ligne">
-        <button data-action="exporter">Exporter le scénario</button>
-        <button data-action="exporter_rejeu" title="Simuler le raid et télécharger son rejeu (.egide-rejeu), à relire dans un moteur de jeu">Exporter le rejeu</button>
-        <label class="bouton-fichier" title="Recharger un scénario exporté (JSON)">Importer<input type="file" name="importer_scenario" accept=".json,application/json" hidden></label>
-        <button data-action="reinitialiser">Revenir à la référence</button>
+        <button data-action="exporter" data-i18n="page.scenario.exporter">Export scenario</button>
+        <button data-action="exporter_rejeu" title="Simulate the raid and download its replay (.egide-rejeu), to replay in a game engine" data-i18n="page.scenario.exporter_rejeu" data-i18n-attr="title:page.scenario.exporter_rejeu.title">Export replay</button>
+        <label class="bouton-fichier" title="Reload an exported scenario (JSON)" data-i18n-attr="title:page.scenario.importer_scenario.title"><span data-i18n="page.scenario.importer_scenario.texte">Import</span><input type="file" name="importer_scenario" accept=".json,application/json" hidden></label>
+        <button data-action="reinitialiser" data-i18n="page.scenario.reinitialiser">Back to reference</button>
       </div>
     </div>
   </section>
 
-  <section class="tiroir" data-tiroir="calques" aria-label="Calques et fond de carte" hidden>
-    <header><h2>Calques</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
+  <section class="tiroir" data-tiroir="calques" aria-label="Layers and base map" hidden data-i18n-attr="aria-label:page.calques.tiroir.aria_label">
+    <header><h2 data-i18n="page.calques.h2">Layers</h2><button data-action="fermer_tiroir" aria-label="Close the panel" data-i18n-attr="aria-label:commun.fermer_panneau">×</button></header>
     <div class="reglages-carte">
-      <h3>Fond de carte</h3>
-      <select name="fond_carte" aria-label="Fond de carte"></select>
-      <label><input type="checkbox" name="ombrage">Relief ombré</label>
-      <label><input type="checkbox" name="relief_3d">Relief 3D</label>
-      <label><input type="checkbox" name="batiments">Bâtiments 3D</label>
-      <label><input type="checkbox" name="globe">Globe</label>
-      <label><input type="checkbox" name="scope_seul">Scope seul (sans carte)</label>
+      <h3 data-i18n="page.calques.h3">Base map</h3>
+      <select name="fond_carte" aria-label="Base map" data-i18n-attr="aria-label:page.calques.fond_carte.aria_label"></select>
+      <label><input type="checkbox" name="ombrage"><span data-i18n="page.calques.ombrage.texte">Hillshade</span></label>
+      <label><input type="checkbox" name="relief_3d"><span data-i18n="page.calques.relief_3d.texte">3D terrain</span></label>
+      <label><input type="checkbox" name="batiments"><span data-i18n="page.calques.batiments.texte">3D buildings</span></label>
+      <label><input type="checkbox" name="globe"><span data-i18n="page.calques.globe.texte">Globe</span></label>
+      <label><input type="checkbox" name="scope_seul"><span data-i18n="page.calques.scope_seul.texte">Scope only (no map)</span></label>
     </div>
     <div data-zone="calques"></div>
-    <div class="ligne"><button data-action="calques_tous">Tout afficher</button><button data-action="calques_aucun">Tout masquer</button></div>
+    <div class="ligne"><button data-action="calques_tous" data-i18n="page.calques.calques_tous">Show all</button><button data-action="calques_aucun" data-i18n="page.calques.calques_aucun">Hide all</button></div>
   </section>
 
-  <section class="tiroir large" data-tiroir="balayage" id="balayage" aria-label="Balayage" hidden>
-    <header><h2>Balayage</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
-    <p class="note">Fait varier un réglage et rejoue le raid sur plusieurs graines pour chaque valeur. Chaque point est une moyenne ; le trait vertical, son intervalle de confiance à 95 %.</p>
+  <section class="tiroir large" data-tiroir="balayage" id="balayage" aria-label="Sweep" hidden data-i18n-attr="aria-label:page.balayage.tiroir.aria_label">
+    <header><h2 data-i18n="page.balayage.h2">Sweep</h2><button data-action="fermer_tiroir" aria-label="Close the panel" data-i18n-attr="aria-label:commun.fermer_panneau">×</button></header>
+    <p class="note" data-i18n="page.balayage.note">Varies a setting and replays the raid over several seeds for each value. Each point is a mean; the vertical bar, its 95 % confidence interval.</p>
     <div class="ligne">
-      <label>Réglage <select name="cle_balayee"></select></label>
-      <label class="large">Valeurs <input name="valeurs"></label>
-      <label>Raids par valeur <input type="number" name="tirages" value="20" min="5" max="500"></label>
-      <button data-action="balayer" class="principal">Lancer</button>
+      <label><span data-i18n="page.balayage.cle_balayee.texte">Setting</span> <select name="cle_balayee"></select></label>
+      <label class="large"><span data-i18n="page.balayage.valeurs.texte">Values</span> <input name="valeurs"></label>
+      <label><span data-i18n="page.balayage.tirages.texte">Raids per value</span> <input type="number" name="tirages" value="20" min="5" max="500"></label>
+      <button data-action="balayer" class="principal" data-i18n="page.balayage.balayer">Run</button>
     </div>
     <p data-champ="progression" role="status"></p>
     <div data-zone="courbes"></div>
-    <details><summary>Résultats en tableau</summary><div data-zone="table"></div></details>
+    <details><summary data-i18n="page.balayage.summary">Results as a table</summary><div data-zone="table"></div></details>
   </section>
 
-  <section class="tiroir large" data-tiroir="profil" id="profil" aria-label="Profil du plan de vol" hidden>
-    <header><h2>Profil du plan de vol</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
-    <div data-zone="profil"><p class="note-profil">Dessinez un plan de vol dans l'éditeur (outil Plan de vol) pour voir son profil.</p></div>
+  <section class="tiroir large" data-tiroir="profil" id="profil" aria-label="Flight plan profile" hidden data-i18n-attr="aria-label:page.profil.tiroir.aria_label">
+    <header><h2 data-i18n="page.profil.h2">Flight plan profile</h2><button data-action="fermer_tiroir" aria-label="Close the panel" data-i18n-attr="aria-label:commun.fermer_panneau">×</button></header>
+    <div data-zone="profil"><p class="note-profil" data-i18n="page.profil.note_profil">Draw a flight plan in the editor (Flight plan tool) to see its profile.</p></div>
   </section>
 
-  <section class="tiroir large" data-tiroir="journal" aria-label="Journal de l'information" hidden>
-    <header><h2>Journal de l'information</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
-    <p class="note">Ce que le moteur a fait jusqu'à cet instant, le plus récent en haut : un radar voit, l'information remonte au CDC, le CDC
-      envoie un avion, l'avion reçoit sa mission, accroche un drone avec son capteur, tire. Un clic sur une ligne inspecte l'unité.</p>
+  <section class="tiroir large" data-tiroir="journal" aria-label="Information log" hidden data-i18n-attr="aria-label:page.journal.tiroir.aria_label">
+    <header><h2 data-i18n="page.journal.h2">Information log</h2><button data-action="fermer_tiroir" aria-label="Close the panel" data-i18n-attr="aria-label:commun.fermer_panneau">×</button></header>
+    <p class="note" data-i18n="page.journal.note">What the engine has done up to now, most recent first: a radar sees, the information reaches the CRC, the CRC sends an aircraft, the aircraft receives its mission, locks a drone with its sensor, fires. Click a line to inspect the unit.</p>
     <div class="filtres-journal" data-zone="filtres_journal"></div>
     <ol class="journal" data-zone="journal"></ol>
   </section>
 
-  <section class="tiroir large" data-tiroir="autoconfig" id="autoconfig" aria-label="Auto-configuration" hidden>
-    <header><h2>Auto-configuration</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
-    <p class="note">Indiquez les menaces à considérer, les moyens disponibles et la zone à défendre : l'outil place radars, centres, cibles,
-      postes, avions et drones défensifs, essaie plusieurs répartitions en simulation et garde celle qui minimise les frappes (MODELE § 20).</p>
-    <h3>1 · Menaces</h3>
+  <section class="tiroir large" data-tiroir="autoconfig" id="autoconfig" aria-label="Auto-configuration" hidden data-i18n-attr="aria-label:page.autoconfig.tiroir.aria_label">
+    <header><h2 data-i18n="page.autoconfig.h2">Auto-configuration</h2><button data-action="fermer_tiroir" aria-label="Close the panel" data-i18n-attr="aria-label:commun.fermer_panneau">×</button></header>
+    <p class="note" data-i18n="page.autoconfig.note">Give the threats to consider, the available assets and the area to defend: the tool places radars, centres, targets, posts, aircraft and defensive drones, tries several layouts in simulation and keeps the one that minimises hits (MODELE § 20).</p>
+    <h3 data-i18n="page.autoconfig.h3">1 · Threats</h3>
     <div class="menaces" data-zone="menaces"></div>
-    <h3>2 · Moyens disponibles</h3>
+    <h3 data-i18n="page.autoconfig.h3_2">2 · Available assets</h3>
     <div class="grille-moyens" data-zone="moyens"></div>
-    <h3>3 · Zone à défendre</h3>
+    <h3 data-i18n="page.autoconfig.h3_3">3 · Area to defend</h3>
     <div class="zone-choix">
-      <label><input type="radio" name="source_zone" value="pays" checked>Pays <input name="pays" list="liste-pays" placeholder="France"></label>
+      <label><input type="radio" name="source_zone" value="pays" checked><span data-i18n="page.autoconfig.pays.texte">Country</span> <input name="pays" list="liste-pays" placeholder="France" data-i18n-attr="placeholder:page.autoconfig.pays.placeholder"></label>
       <datalist id="liste-pays"></datalist>
-      <label><input type="radio" name="source_zone" value="dessinee">Zone dessinée <select name="zone_dessinee"></select></label>
+      <label><input type="radio" name="source_zone" value="dessinee"><span data-i18n="page.autoconfig.dessinee.texte">Drawn area</span> <select name="zone_dessinee"></select></label>
     </div>
-    <h3>4 · Recherche</h3>
+    <h3 data-i18n="page.autoconfig.h3_4">4 · Search</h3>
     <div class="ligne">
-      <label>Raids par essai et par menace <input type="number" name="tirages_autoconfig" value="3" min="1" max="20"></label>
-      <button data-action="autoconfig" class="principal">Lancer</button>
+      <label><span data-i18n="page.autoconfig.tirages_autoconfig.texte">Raids per trial and per threat</span> <input type="number" name="tirages_autoconfig" value="3" min="1" max="20"></label>
+      <button data-action="autoconfig" class="principal" data-i18n="page.autoconfig.autoconfig">Run</button>
     </div>
     <p data-champ="autoconfig_etat" role="status"></p>
     <div class="progression-autoconfig" hidden>
-      <progress data-champ="autoconfig_barre" aria-label="Avancement de la recherche"></progress>
+      <progress data-champ="autoconfig_barre" aria-label="Search progress" data-i18n-attr="aria-label:page.autoconfig.autoconfig_barre.aria_label"></progress>
       <span data-champ="autoconfig_reste"></span>
-      <button data-action="autoconfig_arreter" title="Interrompre la recherche">Arrêter</button>
+      <button data-action="autoconfig_arreter" title="Stop the search" data-i18n="page.autoconfig.autoconfig_arreter" data-i18n-attr="title:page.autoconfig.autoconfig_arreter.title">Stop</button>
     </div>
     <ol class="essais" data-zone="essais"></ol>
     <div class="resultat-autoconfig" hidden>
       <div data-zone="resultat"></div>
       <div class="ligne">
-        <button data-action="autoconfig_appliquer" class="principal">Appliquer</button>
-        <button data-action="autoconfig_enregistrer">Ranger dans la bibliothèque</button>
-        <button data-action="autoconfig_exporter">Exporter le scénario</button>
+        <button data-action="autoconfig_appliquer" class="principal" data-i18n="page.autoconfig.autoconfig_appliquer">Apply</button>
+        <button data-action="autoconfig_enregistrer" data-i18n="page.autoconfig.autoconfig_enregistrer">Save to library</button>
+        <button data-action="autoconfig_exporter" data-i18n="page.autoconfig.autoconfig_exporter">Export scenario</button>
       </div>
     </div>
   </section>
 
-  <section class="tiroir" data-tiroir="aide" aria-label="Commandes et symboles" hidden>
-    <header><h2>Aide</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
-    <h3>Symboles</h3>
+  <section class="tiroir" data-tiroir="aide" aria-label="Controls and symbols" hidden data-i18n-attr="aria-label:page.aide.tiroir.aria_label">
+    <header><h2 data-i18n="page.aide.h2">Help</h2><button data-action="fermer_tiroir" aria-label="Close the panel" data-i18n-attr="aria-label:commun.fermer_panneau">×</button></header>
+    <h3 data-i18n="page.aide.h3">Symbols</h3>
     <ul class="legende">
-      <li><i class="ami-plein"></i>Avion à roquettes IR</li>
-      <li><i class="ami-creux"></i>Avion à roquettes laser</li>
-      <li><i class="radar"></i>Radar (R1, R2…)</li>
-      <li><i class="message"></i>Impulsion bleue : un radar signale des drones au CDC ; blanche : le CDC envoie un avion ; tirets jaunes : un avion accroche un drone avec son capteur</li>
-      <li><i class="reseau"></i>Centre de conduite (CDC) et liaisons ; croix rouge : liaison coupée ou avion injoignable</li>
-      <li><i class="hostile"></i>Drone détecté</li>
-      <li><i class="inconnu"></i>Drone non détecté</li>
-      <li><i class="cible"></i>Cible (C1, C2…)</li>
-      <li><i class="sol"></i>Bulle sol, plus pâle à court de munitions</li>
+      <li data-i18n-html="page.aide.li"><i class="ami-plein"></i>Aircraft with IR rockets</li>
+      <li data-i18n-html="page.aide.li_2"><i class="ami-creux"></i>Aircraft with laser rockets</li>
+      <li data-i18n-html="page.aide.li_3"><i class="radar"></i>Radar (R1, R2…)</li>
+      <li data-i18n-html="page.aide.li_4"><i class="message"></i>Blue pulse: a radar reports drones to the CRC; white: the CRC sends an aircraft; yellow dashes: an aircraft locks a drone with its sensor</li>
+      <li data-i18n-html="page.aide.li_5"><i class="reseau"></i>Control centre (CRC) and links; red cross: link cut or aircraft out of reach</li>
+      <li data-i18n-html="page.aide.li_6"><i class="hostile"></i>Detected drone</li>
+      <li data-i18n-html="page.aide.li_7"><i class="inconnu"></i>Undetected drone</li>
+      <li data-i18n-html="page.aide.li_8"><i class="cible"></i>Target (C1, C2…)</li>
+      <li data-i18n-html="page.aide.li_9"><i class="sol"></i>Ground bubble, paler when short of ammunition</li>
     </ul>
-    <h3>Commandes</h3>
+    <h3 data-i18n="page.aide.h3_2">Controls</h3>
     <dl class="touches">
-      <dt>Espace</dt><dd>Lire ou suspendre</dd>
-      <dt>← →</dt><dd>Reculer ou avancer de 30 s</dd>
-      <dt>E</dt><dd>Éditer le scénario</dd>
-      <dt>M</dt><dd>Activer ou couper les bruitages (coupés au départ)</dd>
-      <dt>V</dt><dd>Vue du CDC : ce que sait la conduite</dd>
-      <dt>L</dt><dd>Outil Liaison, dans l'éditeur</dd>
-      <dt>1 à 8</dt><dd>Ouvrir un panneau (hors édition)</dd>
-      <dt>Molette</dt><dd>Zoom</dd>
-      <dt>Clic droit glissé</dt><dd>Incliner et tourner la carte</dd>
-      <dt>Double-clic</dt><dd>Recadrer</dd>
-      <dt>Clic</dt><dd>Inspecter une entité</dd>
-      <dt>Échap</dt><dd>Fermer le panneau ou l'inspecteur</dd>
+      <dt data-i18n="page.aide.dt">Space</dt><dd data-i18n="page.aide.dd">Play or pause</dd>
+      <dt>← →</dt><dd data-i18n="page.aide.dd_2">Back or forward 30 s</dd>
+      <dt>E</dt><dd data-i18n="page.aide.dd_3">Edit the scenario</dd>
+      <dt>M</dt><dd data-i18n="page.aide.dd_4">Turn sound effects on or off (off at start)</dd>
+      <dt>V</dt><dd data-i18n="page.aide.dd_5">CRC view: what control knows</dd>
+      <dt>L</dt><dd data-i18n="page.aide.dd_6">Link tool, in the editor</dd>
+      <dt data-i18n="page.aide.dt_6">1 to 8</dt><dd data-i18n="page.aide.dd_7">Open a panel (outside the editor)</dd>
+      <dt data-i18n="page.aide.dt_7">Wheel</dt><dd data-i18n="page.aide.dd_8">Zoom</dd>
+      <dt data-i18n="page.aide.dt_8">Right-drag</dt><dd data-i18n="page.aide.dd_9">Tilt and rotate the map</dd>
+      <dt data-i18n="page.aide.dt_9">Double-click</dt><dd data-i18n="page.aide.dd_10">Reframe</dd>
+      <dt data-i18n="page.aide.dt_10">Click</dt><dd data-i18n="page.aide.dd_11">Inspect an entity</dd>
+      <dt data-i18n="page.aide.dt_11">Esc</dt><dd data-i18n="page.aide.dd_12">Close the panel or the inspector</dd>
     </dl>
   </section>
 
-  <section class="tiroir large" data-tiroir="debriefing" aria-label="Débriefing du raid" hidden>
-    <header><h2>Débriefing</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
-    <p class="note">Lu dans le journal du raid terminé : ce qui a passé, pourquoi, et où la défense a faibli (MODELE § 28).</p>
+  <section class="tiroir large" data-tiroir="debriefing" aria-label="Raid debriefing" hidden data-i18n-attr="aria-label:page.debriefing.tiroir.aria_label">
+    <header><h2 data-i18n="page.debriefing.h2">Debriefing</h2><button data-action="fermer_tiroir" aria-label="Close the panel" data-i18n-attr="aria-label:commun.fermer_panneau">×</button></header>
+    <p class="note" data-i18n="page.debriefing.note">Read from the log of the finished raid: what got through, why, and where the defence weakened (MODELE § 28).</p>
     <div data-zone="debriefing"></div>
   </section>
 
   <div class="colonne-droite">
-    <aside id="tableau" class="hud" aria-label="Bilan du raid" aria-live="off">
+    <aside id="tableau" class="hud" aria-label="Raid summary" aria-live="off" data-i18n-attr="aria-label:page.tableau.hud.aria_label">
       <dl class="chiffres">
-        <div class="hostile"><dt>En vol</dt><dd data-champ="en_vol">0</dd></div>
-        <div class="ami"><dt>Abattus air</dt><dd data-champ="detruits_air">0</dd></div>
-        <div class="sol"><dt>Abattus sol</dt><dd data-champ="detruits_sol">0</dd></div>
-        <div class="frappes"><dt>Frappes</dt><dd data-champ="frappes">0</dd></div>
+        <div class="hostile"><dt data-i18n="page.tableau.dt">Airborne</dt><dd data-champ="en_vol">0</dd></div>
+        <div class="ami"><dt data-i18n="page.tableau.dt_2">Air kills</dt><dd data-champ="detruits_air">0</dd></div>
+        <div class="sol"><dt data-i18n="page.tableau.dt_3">Ground kills</dt><dd data-champ="detruits_sol">0</dd></div>
+        <div class="frappes"><dt data-i18n="page.tableau.dt_4">Hits</dt><dd data-champ="frappes">0</dd></div>
       </dl>
       <details class="details-bilan">
-        <summary>Munitions, flotte, cibles</summary>
-        <p class="jauge ami"><span>Roquettes des avions</span><span class="piste"><i data-jauge="munitions_air"></i></span><b data-champ="munitions_air"></b></p>
-        <p class="jauge sol"><span>Munitions sol</span><span class="piste"><i data-jauge="munitions_sol"></i></span><b data-champ="munitions_sol"></b></p>
+        <summary data-i18n="page.tableau.summary">Ammunition, fleet, targets</summary>
+        <p class="jauge ami"><span data-i18n="page.tableau.span">Aircraft rockets</span><span class="piste"><i data-jauge="munitions_air"></i></span><b data-champ="munitions_air"></b></p>
+        <p class="jauge sol"><span data-i18n="page.tableau.span_2">Ground ammunition</span><span class="piste"><i data-jauge="munitions_sol"></i></span><b data-champ="munitions_sol"></b></p>
         <p class="ligne-defensifs" data-zone="defensifs" hidden></p>
         <p class="ligne-defensifs" data-zone="essaim" hidden></p>
-        <h3>Flotte armée</h3>
+        <h3 data-i18n="page.tableau.h3">Armed fleet</h3>
         <dl class="flotte">
-          <div><dt>Orbite</dt><dd data-champ="avions_orbite">0</dd></div>
-          <div><dt>En route</dt><dd data-champ="avions_ralliement">0</dd></div>
-          <div><dt>Contact</dt><dd data-champ="avions_engagement">0</dd></div>
-          <div><dt>À poste</dt><dd data-champ="avions_poste">0</dd></div>
-          <div><dt>À court</dt><dd data-champ="avions_vides">0</dd></div>
+          <div><dt data-i18n="page.tableau.dt_5">Orbit</dt><dd data-champ="avions_orbite">0</dd></div>
+          <div><dt data-i18n="page.tableau.dt_6">En route</dt><dd data-champ="avions_ralliement">0</dd></div>
+          <div><dt data-i18n="page.tableau.dt_7">Contact</dt><dd data-champ="avions_engagement">0</dd></div>
+          <div><dt data-i18n="page.tableau.dt_8">On station</dt><dd data-champ="avions_poste">0</dd></div>
+          <div><dt data-i18n="page.tableau.dt_9">Out of ammo</dt><dd data-champ="avions_vides">0</dd></div>
         </dl>
-        <h3>Frappes par cible</h3>
+        <h3 data-i18n="page.tableau.h3_2">Hits per target</h3>
         <ol class="cibles" data-liste="cibles"></ol>
       </details>
     </aside>
-    <aside class="inspecteur" aria-label="Inspecteur" hidden>
-      <button data-action="fermer_inspecteur" aria-label="Fermer l'inspecteur">×</button>
+    <aside class="inspecteur" aria-label="Inspector" hidden data-i18n-attr="aria-label:page.inspecteur.inspecteur.aria_label">
+      <button data-action="fermer_inspecteur" aria-label="Close the inspector" data-i18n-attr="aria-label:page.inspecteur.fermer_inspecteur.aria_label">×</button>
       <div data-zone="inspection"></div>
     </aside>
-    <aside class="inspecteur fiche" aria-label="Fiche de l'unité sélectionnée" hidden>
+    <aside class="inspecteur fiche" aria-label="Sheet of the selected unit" hidden data-i18n-attr="aria-label:page.inspecteur.inspecteur.aria_label_2">
       <div data-zone="fiche"></div>
     </aside>
   </div>
 
-  <aside class="palette" aria-label="Palette du catalogue : unités à déployer" hidden>
-    <h2>Déployer</h2>
-    <input type="search" name="recherche_palette" placeholder="Chercher une unité…" aria-label="Chercher une unité dans le catalogue">
-    <div class="onglets-palette" role="tablist" aria-label="Familles d'unités" data-zone="onglets_palette"></div>
+  <aside class="palette" aria-label="Catalogue palette: units to deploy" hidden data-i18n-attr="aria-label:page.palette.palette.aria_label">
+    <h2 data-i18n="page.palette.h2">Deploy</h2>
+    <input type="search" name="recherche_palette" placeholder="Search a unit…" aria-label="Search the catalogue for a unit" data-i18n-attr="aria-label:page.palette.recherche_palette.aria_label;placeholder:page.palette.recherche_palette.placeholder">
+    <div class="onglets-palette" role="tablist" aria-label="Unit families" data-zone="onglets_palette" data-i18n-attr="aria-label:page.palette.onglets_palette.aria_label"></div>
     <section data-zone="theatre" hidden>
-      <p class="famille-aide">Le théâtre est le disque que défendent vos unités ; l'essaim l'attaque depuis l'extérieur.</p>
-      <button data-action="placer_theatre" class="principal">Choisir le centre sur la carte</button>
-      <label class="quantite">Latitude (°)<input type="number" name="theatre_lat" step="0.01"></label>
-      <label class="quantite">Longitude (°)<input type="number" name="theatre_lon" step="0.01"></label>
-      <label class="quantite">Rayon (km)<input type="number" name="theatre_rayon" step="10" min="1"></label>
-      <label class="quantite">Cibles<input type="number" name="theatre_cibles" step="1" min="1"></label>
+      <p class="famille-aide" data-i18n="page.palette.famille_aide">The theatre is the disc your units defend; the swarm attacks it from outside.</p>
+      <button data-action="placer_theatre" class="principal" data-i18n="page.palette.placer_theatre">Pick the centre on the map</button>
+      <label class="quantite"><span data-i18n="page.palette.theatre_lat.texte">Latitude (°)</span><input type="number" name="theatre_lat" step="0.01"></label>
+      <label class="quantite"><span data-i18n="page.palette.theatre_lon.texte">Longitude (°)</span><input type="number" name="theatre_lon" step="0.01"></label>
+      <label class="quantite"><span data-i18n="page.palette.theatre_rayon.texte">Radius (km)</span><input type="number" name="theatre_rayon" step="10" min="1"></label>
+      <label class="quantite"><span data-i18n="page.palette.theatre_cibles.texte">Targets</span><input type="number" name="theatre_cibles" step="1" min="1"></label>
     </section>
     <div data-zone="filtres_palette">
-      <label class="quantite">Pays <select name="pays_palette" aria-label="Pays des unités proposées"></select></label>
-      <label class="quantite">Vecteurs par dépôt <input type="number" name="quantite_depot" value="1" min="1" max="200" step="1"></label>
+      <label class="quantite"><span data-i18n="page.palette.pays_palette.texte">Country</span> <select name="pays_palette" aria-label="Country of the units offered" data-i18n-attr="aria-label:page.palette.pays_palette.aria_label"></select></label>
+      <label class="quantite"><span data-i18n="page.palette.quantite_depot.texte">Vehicles per drop</span> <input type="number" name="quantite_depot" value="1" min="1" max="200" step="1"></label>
     </div>
     <div data-zone="palette"></div>
   </aside>
 
   <div class="bas">
     <p class="consigne-edition" data-champ="consigne" aria-live="polite" hidden></p>
-    <div class="barre-edition" role="toolbar" aria-label="Outils d'édition" hidden>
-      <span class="seulement-ordres">Ordres à <b data-champ="instant_ordres">0:00</b></span>
+    <div class="barre-edition" role="toolbar" aria-label="Editing tools" hidden data-i18n-attr="aria-label:page.page.barre_edition.aria_label">
+      <span class="seulement-ordres" data-i18n-html="page.page.seulement_ordres">Orders at <b data-champ="instant_ordres">0:00</b></span>
       <div class="groupe-edition">
-        <button data-outil="selection" aria-pressed="true" title="Sélectionner et déplacer (S)">Sélection</button>
-        <button data-outil="liaison" aria-pressed="false" class="seulement-edition" title="Relier deux unités (L)">Liaison</button>
-        <label class="choix-moyen" title="Moyen de la prochaine liaison ; il prime sur l'équipement déclaré des unités">Moyen<select name="moyen_liaison" aria-label="Moyen de la liaison"></select></label>
-        <button data-outil="plan" aria-pressed="false" class="seulement-edition" title="Tracer le plan de vol de l'essaim (P)">Plan de vol</button>
-        <button data-outil="zone" aria-pressed="false" class="seulement-edition" title="Dessiner une zone protégée (Z)">Zone</button>
-        <button data-outil="mesure" aria-pressed="false" title="Mesurer distance et cap (M)">Règle</button>
-        <button data-outil="gomme" aria-pressed="false" class="seulement-edition" title="Effacer l'unité cliquée (X)">Gomme</button>
-        <button data-action="mettre_hors_service" class="seulement-ordres" title="Mettre hors service, à cet instant, la sélection (Suppr)">Mettre hors service</button>
+        <button data-outil="selection" aria-pressed="true" title="Select and move (S)" data-i18n="page.page.selection" data-i18n-attr="title:page.page.selection.title">Select</button>
+        <button data-outil="liaison" aria-pressed="false" class="seulement-edition" title="Link two units (L)" data-i18n="page.page.liaison" data-i18n-attr="title:page.page.liaison.title">Link</button>
+        <label class="choix-moyen" title="Means of the next link; it overrides the units&#x27; declared equipment" data-i18n-attr="title:page.page.moyen_liaison.title"><span data-i18n="page.page.moyen_liaison.texte">Means</span><select name="moyen_liaison" aria-label="Link means" data-i18n-attr="aria-label:page.page.moyen_liaison.aria_label"></select></label>
+        <button data-outil="plan" aria-pressed="false" class="seulement-edition" title="Draw the swarm&#x27;s flight plan (P)" data-i18n="page.page.plan" data-i18n-attr="title:page.page.plan.title">Flight plan</button>
+        <button data-outil="zone" aria-pressed="false" class="seulement-edition" title="Draw a protected zone (Z)" data-i18n="page.page.zone" data-i18n-attr="title:page.page.zone.title">Zone</button>
+        <button data-outil="mesure" aria-pressed="false" title="Measure distance and heading (M)" data-i18n="page.page.mesure" data-i18n-attr="title:page.page.mesure.title">Ruler</button>
+        <button data-outil="gomme" aria-pressed="false" class="seulement-edition" title="Erase the clicked unit (X)" data-i18n="page.page.gomme" data-i18n-attr="title:page.page.gomme.title">Eraser</button>
+        <button data-action="mettre_hors_service" class="seulement-ordres" title="Take the selection out of service, at this instant (Del)" data-i18n="page.page.mettre_hors_service" data-i18n-attr="title:page.page.mettre_hors_service.title">Take out of service</button>
       </div>
       <div class="groupe-edition">
-        <button data-action="annuler_edition" title="Annuler le dernier geste (Ctrl+Z)">Annuler</button>
-        <button data-action="retablir_edition" title="Rétablir le geste annulé (Ctrl+Y)">Rétablir</button>
+        <button data-action="annuler_edition" title="Undo the last gesture (Ctrl+Z)" data-i18n="page.page.annuler_edition" data-i18n-attr="title:page.page.annuler_edition.title">Undo</button>
+        <button data-action="retablir_edition" title="Redo the undone gesture (Ctrl+Y)" data-i18n="page.page.retablir_edition" data-i18n-attr="title:page.page.retablir_edition.title">Redo</button>
       </div>
       <div class="groupe-edition seulement-edition">
-        <select name="aimantation" aria-label="Aimantation" title="Aimanter les poses à une grille ou aux unités proches">
-          <option value="aucune">Sans aimant</option>
-          <option value="unites">Aimant : unités</option>
-          <option value="1000">Grille 1 km</option>
-          <option value="5000">Grille 5 km</option>
-          <option value="10000">Grille 10 km</option>
-          <option value="25000">Grille 25 km</option>
+        <select name="aimantation" aria-label="Snapping" title="Snap placements to a grid or to nearby units" data-i18n-attr="title:page.page.aimantation.title;aria-label:page.page.aimantation.aria_label">
+          <option value="aucune" data-i18n="page.page.aucune">No snapping</option>
+          <option value="unites" data-i18n="page.page.unites">Snap: units</option>
+          <option value="1000" data-i18n="page.page.1000">1 km grid</option>
+          <option value="5000" data-i18n="page.page.5000">5 km grid</option>
+          <option value="10000" data-i18n="page.page.10000">10 km grid</option>
+          <option value="25000" data-i18n="page.page.25000">25 km grid</option>
         </select>
         <details class="menu-edition" name="menu_edition">
-          <summary>Réseau</summary>
+          <summary data-i18n="page.page.summary">Network</summary>
           <div>
-            <button data-action="reseau_auto" title="Relier chaque unité équipée aux centres C2 avec qui elle partage un moyen à portée">Relier automatiquement</button>
-            <button data-action="reseau_complet" title="Tout le monde parle avec tout le monde, sans délai">Réseau complet</button>
+            <button data-action="reseau_auto" title="Link each equipped unit to the C2 centres it shares a means in range with" data-i18n="page.page.reseau_auto" data-i18n-attr="title:page.page.reseau_auto.title">Link automatically</button>
+            <button data-action="reseau_complet" title="Everyone talks to everyone, with no delay" data-i18n="page.page.reseau_complet" data-i18n-attr="title:page.page.reseau_complet.title">Full network</button>
           </div>
         </details>
         <details class="menu-edition" name="menu_edition">
-          <summary>Fichier</summary>
+          <summary data-i18n="page.page.summary_2">File</summary>
           <div>
-            <input name="nom_deploiement" placeholder="Nom du déploiement" aria-label="Nom du déploiement à enregistrer">
-            <button data-action="ranger_deploiement" title="Ranger le scénario complet dans la bibliothèque de ce navigateur">Enregistrer</button>
-            <button data-action="exporter_deploiement" title="Télécharger le scénario complet (JSON)">Exporter</button>
-            <label class="bouton-fichier" title="Recharger un scénario exporté">Importer<input type="file" name="importer_deploiement" accept=".json,application/json" hidden></label>
-            <button data-action="tout_effacer" title="Vider la carte (Ctrl+Z pour revenir)">Tout effacer</button>
+            <input name="nom_deploiement" placeholder="Deployment name" aria-label="Name of the deployment to save" data-i18n-attr="aria-label:page.page.nom_deploiement.aria_label;placeholder:page.page.nom_deploiement.placeholder">
+            <button data-action="ranger_deploiement" title="Store the complete scenario in this browser&#x27;s library" data-i18n="page.page.ranger_deploiement" data-i18n-attr="title:page.page.ranger_deploiement.title">Save</button>
+            <button data-action="exporter_deploiement" title="Download the complete scenario (JSON)" data-i18n="page.page.exporter_deploiement" data-i18n-attr="title:page.page.exporter_deploiement.title">Export</button>
+            <label class="bouton-fichier" title="Reload an exported scenario" data-i18n-attr="title:page.page.importer_deploiement.title"><span data-i18n="page.page.importer_deploiement.texte">Import</span><input type="file" name="importer_deploiement" accept=".json,application/json" hidden></label>
+            <button data-action="tout_effacer" title="Clear the map (Ctrl+Z to go back)" data-i18n="page.page.tout_effacer" data-i18n-attr="title:page.page.tout_effacer.title">Clear all</button>
           </div>
         </details>
         <details class="menu-edition" name="menu_edition">
-          <summary aria-label="Aide de l'éditeur">?</summary>
+          <summary aria-label="Editor help" data-i18n-attr="aria-label:page.page.summary.aria_label">?</summary>
           <div class="aide-gestes">
-            <p><b>Déplacer la carte</b> : glisser le fond, ou flèches, ou Espace + glisser. <b>Zoomer</b> : molette.</p>
-            <p><b>Poser</b> : cliquer une unité du panneau, puis la carte ; clic droit pour finir.</p>
-            <p><b>Sélectionner</b> : clic ; Maj+glisser pour un cadre ; Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle.</p>
-            <p><b>Équiper</b> : déposer un moyen ou une arme sur une unité déjà placée. <b>Effacer</b> : Suppr, Gomme (X) ou Maj+clic pendant une pose.</p>
+            <p data-i18n-html="page.page.p"><b>Move the map</b>: drag the background, or arrow keys, or Space + drag. <b>Zoom</b>: wheel.</p>
+            <p data-i18n-html="page.page.p_2"><b>Place</b>: click a unit in the panel, then the map; right-click to finish.</p>
+            <p data-i18n-html="page.page.p_3"><b>Select</b>: click; Shift+drag for a box; Ctrl+1 to 9 makes a group, 1 to 9 recalls it.</p>
+            <p data-i18n-html="page.page.p_4"><b>Equip</b>: drop a means or a weapon on an already placed unit. <b>Erase</b>: Del, Eraser (X) or Shift+click while placing.</p>
           </div>
         </details>
       </div>
-      <button data-action="terminer_edition" class="principal">Terminer</button>
+      <button data-action="terminer_edition" class="principal" data-i18n="page.page.terminer_edition">Done</button>
     </div>
     <div class="transport">
-      <button data-action="lire" class="principal">Lire</button>
-      <button data-action="debut" aria-label="Revenir au début du raid" title="Revenir au début">⏮</button>
-      <input type="range" name="temps" min="0" max="100" step="1" value="0" aria-label="Instant du raid">
+      <button data-action="lire" class="principal" data-i18n="page.page.lire">Play</button>
+      <button data-action="debut" aria-label="Back to the start of the raid" title="Back to the start" data-i18n-attr="title:page.page.debut.title;aria-label:page.page.debut.aria_label">⏮</button>
+      <input type="range" name="temps" min="0" max="100" step="1" value="0" aria-label="Raid time" data-i18n-attr="aria-label:page.page.temps.aria_label">
       <output data-champ="horloge">0:00</output>
-      <fieldset class="vitesses"><legend>Vitesse</legend><div data-zone="vitesses"></div></fieldset>
-      <label class="graine" title="Graine du hasard : une même graine rejoue le même raid">Graine <input type="number" name="graine" min="0" step="1"></label>
-      <button data-action="autre_graine" title="Tirer une autre graine">Autre raid</button>
-      <button data-action="son" class="bouton-son" aria-pressed="false" title="Activer ou couper les bruitages du raid (M)"><svg aria-hidden="true"><use href="#i-muet"/></svg><span>Son</span></button>
+      <fieldset class="vitesses"><legend data-i18n="page.page.legend">Speed</legend><div data-zone="vitesses"></div></fieldset>
+      <label class="graine" title="Random seed: the same seed replays the same raid" data-i18n-attr="title:page.page.graine.title"><span data-i18n="page.page.graine.texte">Seed</span> <input type="number" name="graine" min="0" step="1"></label>
+      <button data-action="autre_graine" title="Draw another seed" data-i18n="page.page.autre_graine" data-i18n-attr="title:page.page.autre_graine.title">Another raid</button>
+      <button data-action="son" class="bouton-son" aria-pressed="false" title="Turn the raid&#x27;s sound effects on or off (M)" data-i18n-attr="title:page.page.son.title"><svg aria-hidden="true"><use href="#i-muet"/></svg><span data-i18n="page.page.span">Sound</span></button>
     </div>
   </div>
 

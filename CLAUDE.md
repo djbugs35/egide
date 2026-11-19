@@ -87,6 +87,11 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
 - Ne pas modifier README ni docs/PLAN.md sans demande : l'utilisateur les reprend avant chaque version.
   docs/MODELE.md, lui, se met à jour avec le code qui l'applique.
 - **README : mis à jour seulement lors de la pose d'un tag de version** (captures et GIF refaits à ce moment-là), jamais entre deux tags.
+  `README.md` est en anglais, `README.fr.md` en français : les deux se mettent à jour ensemble.
+- **Langues (docs/PLAN_V3.md, jalon 27)** : anglais par défaut, français. Tout texte affiché (pages, vue, journal,
+  radio, messages, lignes de commande) passe par `t("clé")` de `src/i18n.js` et vit dans `langues/en.json` ET
+  `langues/fr.json` ; dans les pages, attributs `data-i18n`, `data-i18n-html`, `data-i18n-attr`. Le code, les clés des
+  fichiers et les identifiants restent en français. `tests/langues.test.js` vérifie que tout est aligné.
 - Ne jamais tuer un processus qu'on n'a pas lancé soi-même.
 
 ## Vérifications avant commit

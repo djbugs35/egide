@@ -1,7 +1,16 @@
-// Mise en forme des grandeurs affichées : unités toujours écrites, nombres à la française. Pur, testé.
+// Mise en forme des grandeurs affichées : unités toujours écrites, nombres selon la langue installée (src/i18n.js).
+// Pur, testé.
+import {region} from "../i18n.js";
 
-const ENTIER = new Intl.NumberFormat("fr-FR", {maximumFractionDigits: 0});
-const DECIMAL = new Intl.NumberFormat("fr-FR", {maximumFractionDigits: 1});
+// Formats rangés par région : en changer de langue n'en recrée qu'un par région.
+const formats = new Map();
+function format_nombre(decimales) {
+  const cle = `${region()}|${decimales}`;
+  if (!formats.has(cle)) formats.set(cle, new Intl.NumberFormat(region(), {maximumFractionDigits: decimales}));
+  return formats.get(cle);
+}
+const ENTIER = {format: (valeur) => format_nombre(0).format(valeur)};
+const DECIMAL = {format: (valeur) => format_nombre(1).format(valeur)};
 
 /** Rendre une durée en s sous la forme « 12:05 » (minutes:secondes). */
 export function format_duree(secondes) {
@@ -9,10 +18,10 @@ export function format_duree(secondes) {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-/** Rendre un entier à la française (espace insécable fine entre milliers). */
+/** Rendre un entier selon la langue (en français, espace insécable fine entre milliers). */
 export const format_entier = (valeur) => ENTIER.format(valeur);
 
-/** Rendre un nombre avec au plus une décimale, à la française. */
+/** Rendre un nombre avec au plus une décimale, selon la langue. */
 export const format_decimal = (valeur) => DECIMAL.format(valeur);
 
 /** Rendre une distance en m sous forme lisible : « 800 m » ou « 12,5 km ». */

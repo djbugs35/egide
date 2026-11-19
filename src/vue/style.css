@@ -73,6 +73,7 @@ label:has(input:focus-visible) { outline: 2px solid var(--texte); outline-offset
 .bandeau-pc[hidden] { display: none; }
 .barre-haut :is([data-action="editer"], [data-action="observer"])[aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
 .lien-catalogue { color: var(--ami); font-size: 13px; padding-inline: 4px; }
+.choix-langue { font-size: 12px; padding: 3px 4px; }
 
 /* Rail d'icônes, à gauche : un panneau à la fois. */
 .rail { position: absolute; inset-block-start: calc(var(--marge) * 2 + var(--haut-barre)); inset-inline-start: var(--marge);

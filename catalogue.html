@@ -1,35 +1,35 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Égide — catalogue</title>
-<meta name="description" content="Fiches des unités et des algorithmes d'Égide : fidélité, équations, hypothèses, domaine de validité, sources et code.">
+<title data-i18n="catalogue.page.title">Égide — catalogue</title>
+<meta name="description" content="Égide unit and algorithm sheets: fidelity, equations, assumptions, validity domain, sources and code." data-i18n-attr="content:catalogue.page.description.content">
 <link rel="stylesheet" href="src/vue/style.css">
 <script type="module" src="src/vue/catalogue_page.js"></script>
 </head>
 <body class="page-catalogue">
 <header class="bandeau">
-  <h1>Égide</h1>
-  <p class="sous-titre">Catalogue des unités et des algorithmes</p>
-  <a class="retour" href="index.html">Retour à la simulation</a>
+  <h1 data-i18n="catalogue.bandeau.h1">Égide</h1>
+  <p class="sous-titre" data-i18n="catalogue.bandeau.sous_titre">Unit and algorithm catalogue</p>
+  <a class="retour" href="index.html" data-i18n="catalogue.bandeau.retour">Back to the simulation</a>
 </header>
 <main class="catalogue">
-  <nav class="index-catalogue" aria-label="Index du catalogue">
-    <input type="search" name="recherche" placeholder="Chercher une unité, un algorithme…" aria-label="Chercher">
-    <fieldset class="catalogue-prive" title="Importer prive/unites/ (hors git) : le choix vaut aussi pour la palette de la simulation">
-      <legend>Catalogue privé</legend>
-      <label><input type="radio" name="mode_prive" value="public"> Public seul</label>
-      <label><input type="radio" name="mode_prive" value="fusion"> Fusionner</label>
-      <label><input type="radio" name="mode_prive" value="remplacement"> Remplacer</label>
+  <nav class="index-catalogue" aria-label="Catalogue index" data-i18n-attr="aria-label:catalogue.index_catalogue.index_catalogue.aria_label">
+    <input type="search" name="recherche" placeholder="Search a unit, an algorithm…" aria-label="Search" data-i18n-attr="aria-label:catalogue.index_catalogue.recherche.aria_label;placeholder:catalogue.index_catalogue.recherche.placeholder">
+    <fieldset class="catalogue-prive" title="Import prive/unites/ (outside git): the choice also applies to the simulation palette" data-i18n-attr="title:catalogue.index_catalogue.catalogue_prive.title">
+      <legend data-i18n="catalogue.index_catalogue.legend">Private catalogue</legend>
+      <label><input type="radio" name="mode_prive" value="public"> <span data-i18n="catalogue.index_catalogue.public.texte">Public only</span></label>
+      <label><input type="radio" name="mode_prive" value="fusion"> <span data-i18n="catalogue.index_catalogue.fusion.texte">Merge</span></label>
+      <label><input type="radio" name="mode_prive" value="remplacement"> <span data-i18n="catalogue.index_catalogue.remplacement.texte">Replace</span></label>
       <p class="etat-prive" data-zone="etat_prive" aria-live="polite"></p>
     </fieldset>
-    <h2>Unités</h2>
+    <h2 data-i18n="catalogue.index_catalogue.h2">Units</h2>
     <ul data-liste="unites"></ul>
-    <h2>Algorithmes</h2>
+    <h2 data-i18n="catalogue.index_catalogue.h2_2">Algorithms</h2>
     <ul data-liste="algos"></ul>
   </nav>
-  <article id="fiche" aria-live="polite"><p class="vide">Choisissez une unité ou un algorithme.</p></article>
+  <article id="fiche" aria-live="polite"><p class="vide" data-i18n="catalogue.fiche.vide">Choose a unit or an algorithm.</p></article>
 </main>
 </body>
 </html>

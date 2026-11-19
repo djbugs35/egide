@@ -1,4 +1,5 @@
 // Point d'entrée de l'interface : charge le scénario, branche réglages, scope, lecture, tableau et balayage.
+import {brancher_choix_langue, charger_langue, traduire_page} from "./langue.js";
 import {AlgoInvalide, charger_algos, ids_algos} from "../moteur/algos.js";
 import {CatalogueInvalide, charger_unites} from "../moteur/catalogue.js";
 import {positions_radars} from "../moteur/radars.js";
@@ -838,6 +839,10 @@ async function remplir_moyens() {
 }
 
 async function demarrer() {
+  // La langue d'abord : chaque texte écrit ensuite par les modules l'est dans la bonne langue.
+  await charger_langue(lire_json);
+  traduire_page();
+  brancher_choix_langue(document.querySelector("[name='langue']"));
   publier_couleurs(document.documentElement);
   await charger_sources_carte();
   brancher_reglages_carte();

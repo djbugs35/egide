@@ -45,9 +45,60 @@ sont dans [BACKLOG.csv](BACKLOG.csv), epics « Atelier de scénario », « Exéc
 | 23 | **Comparer deux scénarios** côte à côte sur la même graine, depuis la bibliothèque | Écart chiffré avec son IC, les deux raids synchronisés | à faire |
 | 24 | **Santé du code** : `creer_editeur` découpé par outil, `creer_vue3d` en caméra / couches / modèles, `app.js` par panneau ; tests directs des modules moteur sans test ; capture de référence du canevas 2D comparée en CI | Aucune fonction neuve au-delà de 50 lignes ; chaque module moteur a son test ; la capture de référence est stable | en continu |
 | 26 | **Ergonomie de jeu de stratégie** : panneau de commandes en bas à droite (grille de boutons à touche fixe, raccourci et infobulle sur chaque bouton), panneau de sélection en bas au centre (icône, état, munitions, ordres en cours ; vignettes et Tab pour les sous-groupes en multi-sélection), mini-carte cliquable avec alertes, clic droit contextuel (rallier, suivre, engager la piste), Maj pour enfiler les ordres, Ctrl+clic et double-clic pour sélectionner par type, double appui sur un groupe pour y centrer la caméra, point de ralliement des sites, fantôme vert ou rouge avant la pose et pose en série avec Maj, alerte « sous attaque » avec Espace pour y sauter, didacticiel interactif de cinq minutes ; navigateur et Godot | Un testeur qui découvre Égide compose et lance un scénario en moins de cinq minutes sans aide ; chaque commande du panneau a sa touche, affichée dessus ; les mêmes gestes font la même chose dans Godot et au navigateur | à faire |
+| 27 | **Égide multilingue** — anglais par défaut, français : textes de l'interface, du journal, de la radio, des messages et des sorties en ligne de commande dans `langues/<code>.json` ; README en anglais (`README.md`) et en français (`README.fr.md`) ; détail des lots et idées ci-dessous | Aucune chaîne affichée hors dictionnaire (test sur les pages et le code) ; mêmes clés, paramètres et balises dans chaque langue ; bilans identiques quelle que soit la langue | lot 1 fait |
 | 25 | **Livraison** : `modeles/` et `sons/` générés à l'installation et en CI avec empreinte ; release GitHub au tag ; journal des changements tiré des commits ; contrôle anti-fuite des noms de systèmes réels ; test nocturne complet avec alerte sur dérive des bilans | Un clone neuf joue avec modèles et sons ; chaque tag a sa release ; la CI refuse un motif interdit | à faire |
 
 ## Ordre proposé
 1. Jalons 20 et 25 en parallèle : courts, sans risque fonctionnel, ils rendent la suite confortable.
 2. Jalon 26 (ergonomie de jeu de stratégie) avec le jalon 21 : l'atelier naît directement dans ces conventions, plutôt que d'être refait ensuite ; puis 22 et 23.
 3. Jalon 24 au fil de l'eau, chaque fois qu'un module est touché.
+
+## Jalon 27 · Égide multilingue
+
+Décidé le 19 novembre 2026. Langues : **anglais par défaut**, **français** (la langue actuelle). Le code, les clés des
+fichiers (scénarios, unités) et les identifiants restent en français : ils forment un format stable que lisent les
+outils externes ; seul ce qui s'affiche se traduit.
+
+### Principes
+- **Un dictionnaire plat par langue** : `langues/en.json`, `langues/fr.json`, clé → texte. Paramètres `{nom}` ;
+  pluriels en objet `{"one": …, "other": …}` (Intl.PluralRules) ; balises de mise en forme seulement (`<b>`, `<kbd>`…).
+- **Un seul module** `src/i18n.js`, pur : `t(clé, paramètres)`, langue installée, région pour les nombres. Il sert au
+  navigateur, à Node (lignes de commande, serveur du jeu) et aux tests.
+- **L'anglais sert de secours** : une clé absente d'une langue s'affiche en anglais ; absente partout, `⟦clé⟧`, que les
+  tests refusent.
+- **Le moteur ne parle pas** : il produit des événements structurés (journal, incidents, radio) ; seule la vue les
+  met en phrases. Les bilans ne dépendent jamais de la langue.
+- **Choix de la langue** : adresse (`?lang=fr`), puis choix mémorisé, puis anglais ; sélecteur dans la barre du haut ;
+  changer de langue recharge la page.
+- **Les tests gardent tout aligné** : mêmes clés, paramètres et balises dans chaque langue ; toute clé citée existe ;
+  aucune clé orpheline ; aucun texte visible ni attribut lisible hors dictionnaire dans les pages.
+
+### Lots
+| Lot | Contenu | État |
+|---|---|---|
+| 27.1 | Socle : `src/i18n.js`, `src/vue/langue.js`, dictionnaires ; `index.html` et `catalogue.html` entièrement extraits (≈ 270 textes, attributs compris) ; sélecteur de langue ; nombres selon la langue ; `README.md` en anglais, `README.fr.md` en français ; tests | **fait** |
+| 27.2 | Textes écrits par le code de la vue : barre de lecture, tableau de bord, calques, réglages et leurs aides, panneaux (balayage, auto-configuration, profil, débriefing), palette et fiches, consignes et messages de l'éditeur, infobulles | à faire |
+| 27.3 | Récits : journal de l'information, inspecteur (« pourquoi »), radio de la conduite (phrases et indicatifs), annonces d'incidents, débriefing ; dates et durées selon la langue | à faire |
+| 27.4 | Catalogue : noms et aides des unités, fiches `meta` des algorithmes, aides du scénario, pays — par fichiers de traduction à côté (`langues/catalogue.<code>.json`), sans toucher aux unités ; contrôle de couverture dans `outils/valider.js` | à faire |
+| 27.5 | Lignes de commande et serveur : `campagne`, `preuve`, `autoconfig`, `valider`, `indexer`, serveur du jeu ; option `--langue` et variable `EGIDE_LANGUE` ; dossier de preuve rédigé dans la langue choisie | à faire |
+| 27.6 | Client Godot : mêmes dictionnaires exportés au format de Godot (CSV de traduction généré par `node outils/langues.js --godot`), sélecteur dans le menu | à faire |
+| 27.7 | Documentation : `docs/FORMATS.md` en anglais d'abord (lu par les outils externes), puis `CATALOGUE`, `MODELE` ; captures du README refaites dans chaque langue | à faire |
+
+### Idées retenues
+- **Unités d'affichage au choix** : métriques (km, km/h, m) ou aéronautiques (NM, nœuds, pieds) — l'aviation parle en
+  nœuds et en pieds ; le moteur reste en SI, seule la vue convertit.
+- **Glossaire bilingue** `docs/GLOSSAIRE.md` : CDC → CRC (Control and Reporting Centre), conduite → control, poste
+  sol-air → ground air-defence post, essaim → swarm…, pour que chaque traduction emploie le même mot partout.
+- **Pseudo-langue de contrôle** (`?lang=xx`) : chaque texte encadré et allongé de 30 % (`⟪Ëdït···⟫`), pour repérer
+  d'un coup d'œil un texte oublié ou une mise en page qui casse sur une langue plus longue.
+- **Rapport de couverture** `node outils/langues.js` : pourcentage traduit par langue et par écran, clés en trop ou
+  manquantes ; à brancher en CI.
+- **Ajouter une langue = ajouter un fichier** : guide `docs/TRADUIRE.md` (copier `en.json`, traduire, lancer les
+  tests) ; un contributeur peut proposer l'allemand ou l'espagnol sans toucher au code.
+- **Détection de la langue du navigateur**, en option : proposer le français à un navigateur français tout en gardant
+  l'anglais par défaut, par un bandeau discret plutôt qu'un basculement imposé.
+- **Bruitages et radio** : indicatifs et phraséologie radio propres à chaque langue (phraséologie OTAN en anglais),
+  voix de synthèse plus tard.
+- **Exports dans la langue choisie** : journal en CSV, débriefing et dossier de preuve en Markdown, rejeu annoté.
+- **Mise en page prête pour les langues de droite à gauche** : la feuille de style emploie déjà les propriétés logiques
+  (`inset-inline`, `margin-block`) ; il resterait l'attribut `dir` et quelques icônes à retourner.
