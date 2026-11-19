@@ -5,7 +5,11 @@ cd "$(dirname "$0")" || exit 1
 GODOT="${EGIDE_GODOT:-godot}"
 command -v "$GODOT" >/dev/null 2>&1 || GODOT=/Applications/Godot.app/Contents/MacOS/Godot
 if ! command -v "$GODOT" >/dev/null 2>&1; then
-  echo "Godot introuvable : lancer ./installer.command, ou donner son chemin par EGIDE_GODOT."
+  if [ "${EGIDE_LANGUE:-en}" = fr ]; then
+    echo "Godot introuvable : lancer ./installer.command, ou donner son chemin par EGIDE_GODOT."
+  else
+    echo "Godot not found: run ./installer.command, or give its path with EGIDE_GODOT."
+  fi
   exit 1
 fi
 node src/direct.js "$@" &

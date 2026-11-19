@@ -1,11 +1,14 @@
 # Clients
 
-Égide reste l'autorité : un client relit un raid déjà simulé, ou commande une partie que le serveur fait tourner ; il ne simule rien.
-Les formats sont décrits dans [docs/FORMATS.md](../docs/FORMATS.md) (§ 6 pour le rejeu, § 7 pour le terrain, § 10 pour le direct).
+*English · [Français](README.fr.md)*
 
-## Client Godot
+Égide remains the authority: a client reads back a raid already simulated, or drives a game that the server runs; it
+simulates nothing. The formats are described in [docs/FORMATS.md](../docs/FORMATS.md) (§ 6 for the replay, § 7 for the
+terrain, § 10 for the live game).
 
-`clients/godot/` est un projet Godot 4 (licence MIT), en GDScript, sans extension. Essayé avec Godot 4.7.2.
+## Godot client
+
+`clients/godot/` is a Godot 4 project (MIT licence), in GDScript, with no extension. Tried with Godot 4.4.1 and 4.7.2.
 
 ```sh
 node src/rejeu.js
@@ -13,118 +16,124 @@ node outils/export_terrain.js --terrain terrains/centre_france --pas-km 2
 godot --path clients/godot
 ```
 
-Sans argument, il prend le rejeu et le terrain les plus récents de `resultats/`. On peut les désigner :
-`godot --path clients/godot -- --rejeu <fichier> --terrain <dossier> --debut 400 --camera 2 --couverture 3`. Le terrain est facultatif. Le chargement du
-scénario de référence prend plusieurs secondes.
+With no argument, it takes the most recent replay and terrain in `resultats/`. They can be named:
+`godot --path clients/godot -- --rejeu <file> --terrain <folder> --debut 400 --camera 2 --couverture 3`. The terrain is
+optional. Loading the reference scenario takes several seconds.
 
-| Commande | Effet |
+| Command | Effect |
 |---|---|
-| Espace | lecture, pause |
-| + et − | vitesse (×1 à ×60) |
-| ← et → | reculer ou avancer de 10 s |
-| 1, 2, 3 | caméra libre, suivi, vue de radar |
-| Tab | drone suivi suivant |
-| R | radar suivant |
-| C | couverture affichée : détection, conduite de tir, interception, résultante d'un C2 |
-| X | C2 suivant, pour sa résultante |
-| WASD (touches physiques), bouton droit, molette | déplacer la caméra libre, regarder, changer sa vitesse |
+| Space | play, pause |
+| + and − | speed (×1 to ×60) |
+| ← and → | go back or forward 10 s |
+| 1, 2, 3 | free camera, follow, radar view |
+| Tab | next followed drone |
+| R | next radar |
+| C | coverage shown: detection, fire control, interception, a C2's resultant |
+| X | next C2, for its resultant |
+| L | switch language (English, French) |
+| WASD (physical keys), right button, wheel | move the free camera, look around, change its speed |
 
-Les entités sont agrandies selon la distance : à leur taille réelle, elles feraient moins d'un pixel à l'échelle d'un
-théâtre. Les modèles sont des formes génériques construites dans le code.
+Entities are enlarged with distance: at their real size, they would be less than a pixel at the scale of a theatre.
+The models are generic shapes built in code.
 
-### Jouer en direct
+### Playing live
 
-`./jouer.command` (ou `jouer.bat`) lance le serveur de partie et le client. À la main :
+`./jouer.command` (or `jouer.bat`) starts the game server and the client. By hand:
 
 ```sh
 node src/direct.js
 godot --path clients/godot -- --direct 8767
 ```
 
-Le moteur tourne dans le serveur, Godot affiche et commande (docs/FORMATS.md § 10). La partie démarre en pause.
+The engine runs in the server, Godot displays and commands (docs/FORMATS.md § 10). The game starts paused.
 
-| Commande | Effet en direct |
+| Command | Live effect |
 |---|---|
-| Espace | lancer, pause ; un ordre peut se donner en pause |
-| + et − | vitesse (×1 à ×60) |
-| clic gauche, cadre | sélectionner des vecteurs ; sur un radar ou un poste, l'inspecter (Maj : ajouter) |
-| double-clic | tous les vecteurs du même type à l'écran |
-| Ctrl+A, Échap | tout sélectionner, désélectionner |
-| clic droit | envoyer la sélection au point visé, aussi sur la mini-carte |
-| Ctrl+1 à 9, 1 à 9 | mémoriser un groupe, le rappeler (deux fois : centrer la caméra) |
-| WASD (touches physiques), flèches, bord d'écran | défiler |
-| molette, bouton du milieu | zoomer, pivoter |
-| clic gauche sur la mini-carte | y centrer la caméra |
-| F1 à F4 | caméra de stratégie, libre, suivi, vue de radar |
-| C, X, Tab, R | couverture affichée, C2, drone suivi, radar suivi |
-| B | lever ou rétablir le brouillard |
-| M, H | couper le son, afficher l'aide |
-| N | nouvelle partie |
-| L | changer de langue (anglais, français) : retenue pour les lancements suivants |
-| F5 | éditer le scénario (la partie revient à l'instant initial) |
-| F6 | éditer le relief |
+| Space | start, pause; an order can be given while paused |
+| + and − | speed (×1 to ×60) |
+| left click, box | select vehicles; on a radar or a post, inspect it (Shift: add) |
+| double click | all vehicles of the same type on screen |
+| Ctrl+A, Esc | select all, deselect |
+| right click | send the selection to the point aimed at, also on the mini-map |
+| Ctrl+1 to 9, 1 to 9 | store a group, recall it (twice: centre the camera) |
+| WASD (physical keys), arrows, screen edge | scroll |
+| wheel, middle button | zoom, rotate |
+| left click on the mini-map | centre the camera there |
+| F1 to F4 | strategy, free, follow, radar-view camera |
+| C, X, Tab, R | coverage shown, C2, followed drone, followed radar |
+| B | lift or restore the fog |
+| M, H | mute the sound, show the help |
+| N | new game |
+| L | switch language (English, French): remembered for the next launches |
+| F5 | edit the scenario (the game goes back to the initial instant) |
+| F6 | edit the terrain |
 
-Langue : anglais par défaut ; `-- --langue fr` sur la ligne de Godot (ou `./jouer.command --langue fr`, qui la passe au
-serveur et au client), sinon la variable `EGIDE_LANGUE`, sinon le choix retenu par la touche L. Les textes du client sont
-les clés `godot.*` de `langues/<code>.json`, recopiées dans `clients/godot/langues/` par `node outils/langues.js --godot`.
+Language: English by default; `-- --langue fr` on Godot's command line (or `./jouer.command --langue fr`, which passes it
+to the server and the client), otherwise the `EGIDE_LANGUE` variable, otherwise the choice remembered by the L key. The
+client tells the server its language when it connects, so the palette, the lists and the refusals come back in it. The
+client's texts are the `godot.*` keys of `langues/<code>.json`, copied into `clients/godot/langues/` by
+`node outils/langues.js --godot`.
 
-Sélectionner un objet trace ses enveloppes de détection, de conduite de tir et d'interception, jusqu'à huit vecteurs à la fois.
-Le brouillard masque les drones qu'aucun radar n'a encore vus et assombrit le sol hors de la portée de détection, tracée en
-disques sans le masque du relief. Sons et effets sont synthétisés au lancement. Un terrain dont l'origine n'est pas celle du
-scénario est ignoré.
+Selecting an object draws its detection, fire-control and interception envelopes, up to eight vehicles at a time. The
+fog hides the drones that no radar has seen yet and darkens the ground outside detection range, drawn as discs without
+the terrain mask. Sounds and effects are synthesised at launch. A terrain whose origin is not the scenario's is ignored.
 
-### Éditer
+### Editing
 
-![Éditeur de scénario : palette du catalogue à droite, radars posés](../docs/images/godot_scenario.png)
+![Scenario editor: catalogue palette on the right, radars placed](../docs/images/godot_scenario.png)
 
-**Scénario (F5).** Choisir une unité dans la palette, à droite, puis cliquer sur le sol pour la poser : sa portée suit le curseur. Clic droit
-ou Échap pour arrêter. Touches 1 à 5 : sélection (glisser pour déplacer), liaison (deux clics), plan de vol, zone (Entrée pour fermer),
-gomme. Suppr efface la sélection. Ctrl+Z, Ctrl+Y annulent et rétablissent. La barre enregistre sous `prive/scenarios/` et charge un
-scénario. Chaque geste passe par les mêmes calculs que l'éditeur du navigateur.
+**Scenario (F5).** Pick a unit in the palette, on the right, then click on the ground to place it: its range follows the
+cursor. Right click or Esc to stop. Keys 1 to 5: select (drag to move), link (two clicks), flight plan, area (Enter to
+close), eraser. Delete erases the selection. Ctrl+Z, Ctrl+Y undo and redo. The bar saves under `prive/scenarios/` and
+loads a scenario. Each gesture goes through the same computations as the browser editor.
 
-**Relief (F6).** Touches 1 à 4 : élever, abaisser, aplanir, lisser ; maintenir le clic gauche pour peindre. `[` et `]` changent le rayon.
-Ctrl+Z annule un trait entier. La barre ouvre un relief du catalogue ou un relief plat. Enregistrer écrit sous `prive/unites/terrains/`
-et l'applique au scénario : le moteur calcule alors masques radar et vues directes sur ce relief. Revenir en jeu sans enregistrer
-abandonne les retouches.
+**Terrain (F6).** Keys 1 to 4: raise, lower, flatten, smooth; hold the left button to paint. `[` and `]` change the
+radius. Ctrl+Z undoes a whole stroke. The bar opens a catalogue terrain or a flat one. Save writes under
+`prive/unites/terrains/` and applies it to the scenario: the engine then computes radar masks and lines of sight on
+this terrain. Going back to the game without saving discards the retouches.
 
-![Éditeur de relief : une crête peinte au pinceau](../docs/images/godot_relief.png)
+![Terrain editor: a ridge painted with the brush](../docs/images/godot_relief.png)
 
-### Vérifier le client
+### Checking the client
 
-Sans écran, le client recalcule le bilan, puis `outils/verifier_client.js` compare ses positions à une nouvelle simulation.
-Le critère est de 1 m au plus, aux mêmes instants.
+Without a screen, the client recomputes the outcome, then `outils/verifier_client.js` compares its positions with a new
+simulation. The criterion is at most 1 m, at the same instants.
 
 ```sh
-godot --headless --path clients/godot --script res://scripts/verifier.gd -- --rejeu "$PWD/resultats/rejeux/<fichier>" --sortie "$PWD/resultats/dump.json"
+godot --headless --path clients/godot --script res://scripts/verifier.gd -- --rejeu "$PWD/resultats/rejeux/<file>" --sortie "$PWD/resultats/dump.json"
 node outils/verifier_client.js --client resultats/dump.json
 ```
 
-Les règles du jeu (sélection, groupes, mini-carte, brouillard) se vérifient sans serveur :
+The game rules (selection, groups, mini-map, fog) are checked without a server:
 `godot --headless --path clients/godot --script res://scripts/jeu/verifier_jeu.gd`.
 
-La partie en direct se vérifie de la même façon, serveur lancé, sur le scénario que la partie a enregistré :
+The live game is checked the same way, with the server running, on the scenario the game saved:
 
 ```sh
 godot --headless --path clients/godot --script res://scripts/verifier_direct.gd -- --port 8767 --sortie "$PWD/resultats/dump.json"
-node outils/verifier_client.js --client resultats/dump.json --scenario resultats/parties/<fichier>
+node outils/verifier_client.js --client resultats/dump.json --scenario resultats/parties/<file>
 ```
 
-## Porter vers un autre moteur
+These scripts also take `--langue fr`; their exit code, not their message, says whether the check passed.
 
-Le format, le repère et les correspondances ne changent pas. Seule la conversion d'axes dépend du moteur.
+## Porting to another engine
 
-| Moteur | Axes | Position depuis `(e, n, h)`, h : `u` ou `alt` | Rotation au cap `c` |
+The format, the frame and the correspondences do not change. Only the axis conversion depends on the engine.
+
+| Engine | Axes | Position from `(e, n, h)`, h: `u` or `alt` | Rotation at heading `c` |
 |---|---|---|---|
-| Godot | Y haut, droite directe, m | `(e, h, -n)` | `-c` autour de Y |
-| Unity | Y haut, main gauche, m | `(e, h, n)` | `+c` autour de Y |
-| Unreal | Z haut, main gauche, cm | `(100 n, 100 e, 100 h)` | `+c` autour de Z |
+| Godot | Y up, right-handed, m | `(e, h, -n)` | `-c` around Y |
+| Unity | Y up, left-handed, m | `(e, h, n)` | `+c` around Y |
+| Unreal | Z up, left-handed, cm | `(100 n, 100 e, 100 h)` | `+c` around Z |
 
-- **Lire le fichier** : décompresser le gzip, puis une ligne JSON à la fois. Ranger les images dans des tableaux
-  compacts : le raid de référence compte 1,8 million d'échantillons.
-- **Interpoler** entre deux images, position linéaire et cap par le plus court chemin. Une ligne d'image est triée par `id`.
-- **Hauteur** : sur un terrain, ajouter l'altitude du sol à celle de l'entité (`docs/FORMATS.md` § 6.3). `hauteurs.raw`
-  donne ce sol en entiers 16 bits petit-boutistes, le format de carte de hauteur qu'attend Unity.
-- **Terrain** : glTF se charge par glTFast (Unity) ou glTFRuntime (Unreal), à vérifier pour chaque version de moteur.
-  Les importeurs convertissent les axes eux-mêmes, en général de la même façon que le tableau ci-dessus.
-- **Modèles** : `clients/modeles.json` donne le nom générique de chaque unité. Fournir les vôtres ; Égide n'en livre aucun d'un système réel.
-- **Attribution** : afficher celle de l'imagerie, indiquée dans `terrain.json`.
+- **Reading the file**: decompress the gzip, then one JSON line at a time. Store the frames in compact arrays: the
+  reference raid has 1.8 million samples.
+- **Interpolate** between two frames, position linearly and heading by the shortest path. A frame line is sorted by `id`.
+- **Height**: on a terrain, add the ground altitude to the entity's (`docs/FORMATS.md` § 6.3). `hauteurs.raw` gives this
+  ground as 16-bit little-endian integers, the height-map format Unity expects.
+- **Terrain**: glTF is loaded by glTFast (Unity) or glTFRuntime (Unreal), to be checked for each engine version.
+  Importers convert the axes themselves, usually the same way as the table above.
+- **Models**: `clients/modeles.json` gives the generic name of each unit. Provide your own; Égide ships none of a real
+  system.
+- **Attribution**: display the imagery's, given in `terrain.json`.
+- **Texts**: `clients/godot/langues/<code>.json` holds the client's texts per language, ready to reuse.

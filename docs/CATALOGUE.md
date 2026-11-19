@@ -1,51 +1,54 @@
-# Étendre Égide : catalogue, unités, algorithmes
+# Extending Égide: catalogue, units, algorithms
 
-Égide est conçu pour être réglé et étendu **sans toucher au moteur**. Tout ce qui décrit le monde simulé est un
-fichier : une unité est un JSON, un algorithme est un module JavaScript, une carte ou un relief est un JSON, un
-scénario est un JSON. Le moteur ne fait qu'orchestrer (ordre des étapes, horloge, tirages, journal) ; chaque
-valeur vient d'une unité et chaque décision est confiée à un algorithme désigné par son identifiant.
+*English · [Français](CATALOGUE.fr.md)*
 
-Pour un outil externe qui génère ces fichiers, le format exact, les schémas JSON et le validateur sont décrits dans
-[FORMATS.md](FORMATS.md).
+Égide is designed to be tuned and extended **without touching the engine**. Everything that describes the simulated
+world is a file: a unit is a JSON file, an algorithm is a JavaScript module, a map or a terrain is a JSON file, a
+scenario is a JSON file. The engine only orchestrates (order of steps, clock, draws, log); every value comes from a
+unit and every decision is entrusted to an algorithm named by its identifier.
 
-Ce guide explique comment ces fichiers s'articulent, comment en ajouter, et comment prouver l'effet d'un ajout.
-Les équations et le contrat formel sont dans [MODELE.md](MODELE.md) (§ 9.1 scénario et catalogue, § 10 registre
-d'algorithmes).
+For an external tool that generates these files, the exact format, the JSON schemas and the validator are described
+in [FORMATS.md](FORMATS.md).
 
-## 1 · Vue d'ensemble
+This guide explains how these files fit together, how to add some, and how to prove the effect of an addition. The
+equations and the formal contract are in [MODELE.md](MODELE.md) (§ 9.1 scenario and catalogue, § 10 algorithm
+registry, in French). File keys and identifiers are French (`herite_de`, `portee_km`…) and are written as shown.
+
+## 1 · Overview
 
 ```
-icones/                              silhouettes SVG des icônes de jeu
-unites/                              catalogue public d'unités (notionnel)
-  _unite.json                        racine : nom, fidélité, sources, algos
-  vecteurs/drones/                   menace : drones d'attaque
-  vecteurs/avions/                   intercepteurs pilotés
-  vecteurs/drones_defensifs/         drones armés, intercepteurs kamikazes, brouilleurs
-  effecteurs/roquettes/              armes emportées par les avions
-  effecteurs/drones/                 charges des drones défensifs
-  effecteurs/brouillage/             effet de brouillage (probabilité notionnelle)
-  capteurs/radars/                   radars de surveillance
-  sites/postes/                      postes sol-air
-  liaisons/                          moyens de communication (filaire, radio, satellite, optique)
-  terrains/                          reliefs : grilles d'altitudes
-algos/global/<rôle>/<algo>.js        algorithmes publics, rangés par rôle
-cartes/fonds|relief|batiments/       sources de fond de carte (attribution obligatoire)
-cartes/frontieres/pays.json          frontières des pays (node outils/frontieres.js)
-scenarios/                           bibliothèque de scénarios
-prive/unites/…  prive/algos/…        votre catalogue privé, ignoré par git
+icones/                              SVG silhouettes of the game icons
+unites/                              public unit catalogue (notional)
+  _unite.json                        root: name, fidelity, sources, algos
+  vecteurs/drones/                   threat: attack drones
+  vecteurs/avions/                   piloted interceptors
+  vecteurs/drones_defensifs/         armed drones, kamikaze interceptors, jammers
+  effecteurs/roquettes/              weapons carried by aircraft
+  effecteurs/drones/                 payloads of defensive drones
+  effecteurs/brouillage/             jamming effect (notional probability)
+  capteurs/radars/                   surveillance radars
+  sites/postes/                      surface-to-air posts
+  liaisons/                          means of communication (wired, radio, satellite, optical)
+  terrains/                          terrains: altitude grids
+algos/global/<role>/<algo>.js        public algorithms, sorted by role
+cartes/fonds|relief|batiments/       base map sources (attribution required)
+cartes/frontieres/pays.json          country borders (node outils/frontieres.js)
+scenarios/                           scenario library
+langues/catalogue.<code>.json        translations of the public catalogue (§ 6.1)
+prive/unites/…  prive/algos/…        your private catalogue, ignored by git
 ```
 
-Pour parcourir ce qui existe : ouvrez **`catalogue.html`** (lien « Catalogue » de la barre du haut ; les fiches de l'inspecteur y
-renvoient aussi). Il affiche chaque unité publique avec ses valeurs résolues (héritage appliqué, unités converties), la phrase
-d'aide de chaque clé, ses sources et ses algorithmes ; et chaque algorithme avec sa fiche : description, équations,
-hypothèses, domaine de validité, références, paramètres lus.
+To browse what exists: open **`catalogue.html`** ("Catalogue" link in the top bar; the inspector's sheets also lead
+there). It shows each public unit with its resolved values (inheritance applied, units converted), the help sentence of
+each key, its sources and its algorithms; and each algorithm with its sheet: description, equations, assumptions,
+validity domain, references, parameters read.
 
-## 2 · Unités
+## 2 · Units
 
-### 2.1 Un fichier par unité
+### 2.1 One file per unit
 
-Une unité est identifiée par son chemin sous `unites/`, sans l'extension : `vecteurs/avions/turbopropulseur_ir_notionnel`.
-Un fichier minimal hérite de tout et ne dit que ce qui change :
+A unit is identified by its path under `unites/`, without the extension: `vecteurs/avions/turbopropulseur_ir_notionnel`.
+A minimal file inherits everything and only says what changes:
 
 ```json
 {
@@ -56,79 +59,77 @@ Un fichier minimal hérite de tout et ne dit que ce qui change :
 }
 ```
 
-Les fichiers dont le nom commence par `_` sont des **classes** : ils portent les valeurs par défaut et l'aide d'une
-famille (`_avion`, `_drone`, `_drone_defensif`, `_liaison`, `_terrain`…). On ne les place pas dans un scénario, on en
-hérite.
+Files whose name starts with `_` are **classes**: they carry a family's default values and help texts (`_avion`,
+`_drone`, `_drone_defensif`, `_liaison`, `_terrain`…). You do not place them in a scenario, you inherit from them.
 
-### 2.2 Héritage
+### 2.2 Inheritance
 
-- `herite_de` désigne le parent. Les clés du parent sont reprises, celles du fichier les remplacent. La chaîne
-  remonte jusqu'à `_unite`.
-- `algos` est **fusionné rôle par rôle** : une unité fille qui écrit `"algos": {"mouvement": "…"}` ne remplace que
-  son mouvement et garde les autres rôles hérités.
-- `_aide` est fusionné de la même manière : chaque clé doit avoir sa phrase d'aide, dans le fichier ou chez un
-  ancêtre. C'est elle qu'affichent l'interface, l'inspecteur et l'explorateur.
+- `herite_de` names the parent. The parent's keys are taken, the file's replace them. The chain goes up to `_unite`.
+- `algos` is **merged role by role**: a child unit that writes `"algos": {"mouvement": "…"}` only replaces its movement
+  and keeps the other inherited roles.
+- `_aide` is merged the same way: each key must have its help sentence, in the file or in an ancestor. That is what the
+  interface, the inspector and the explorer show.
 
-Exemple : `_drone_defensif` hérite de `_avion` (il en reprend la mise à poste, l'emport, la consommation) et ne
-change que `type_vecteur` et les vitesses ; `intercepteur_kamikaze_notionnel` hérite de `_drone_defensif` et ne
-change que son emport et `consomme_au_tir`.
+Example: `_drone_defensif` inherits from `_avion` (it takes its positioning, payload and consumption) and only changes
+`type_vecteur` and the speeds; `intercepteur_kamikaze_notionnel` inherits from `_drone_defensif` and only changes its
+payload and `consomme_au_tir`.
 
-### 2.3 Unités physiques : suffixes
+### 2.3 Physical units: suffixes
 
-Les fichiers sont écrits dans les unités du métier ; le moteur ne voit que le SI. Le suffixe de la clé fait la
-conversion à la lecture :
+Files are written in the trade's units; the engine only sees SI. The key's suffix does the conversion on reading:
 
-| Suffixe | Unité du fichier | Clé SI dans le moteur |
+| Suffix | Unit in the file | SI key in the engine |
 |---|---|---|
 | `_kmh` | km/h | m/s (`vitesse_kmh` → `vitesse`) |
 | `_km` | km | m |
 | `_ms` | m/s | m/s |
 | `_m` | m | m |
 | `_s` | s | s |
-| `_g` | g | g (facteur de charge) |
-| `_deg` | degré | radian |
+| `_g` | g | g (load factor) |
+| `_deg` | degree | radian |
 
-Une clé sans suffixe (`pk`, `engagements_par_passage`, `emport`…) est passée telle quelle.
+A key without a suffix (`pk`, `engagements_par_passage`, `emport`…) is passed as is.
 
-### 2.4 Fidélité et sources
+### 2.4 Fidelity and sources
 
-Chaque unité déclare `fidelite` — `notionnel` (ordres de grandeur), `cinematique`, `point_masse` (3 degrés de
-liberté) ou `6ddl` — et au moins une entrée dans `sources`. Le catalogue public est **entièrement notionnel** : des
-ordres de grandeur par classe, jamais les performances d'un système réel identifié.
+Each unit declares `fidelite` — `notionnel` (orders of magnitude), `cinematique`, `point_masse` (3 degrees of freedom)
+or `6ddl` — and at least one entry in `sources`. The public catalogue is **entirely notional**: orders of magnitude by
+class, never the performance of an identified real system.
 
-### 2.5 Pays d'inspiration et icônes de jeu
+### 2.5 Country of inspiration and game icons
 
-Deux clés d'affichage, héritées comme les autres :
+Two display keys, inherited like the others:
 
-- `pays` : code ISO 3166 à trois lettres (`"FRA"`, `"USA"`…) du pays dont la classe s'inspire. Il sert au classement
-  (filtre « Pays » de la palette) et à la couleur de la pastille. Le nom de l'unité est fictif et ses valeurs restent
-  celles de la classe, arrondies : aucune unité publique ne correspond à un système réel identifié, et aucune fiche
-  ne nomme le système qui l'aurait inspirée. Les pays connus de l'interface sont dans `src/vue/pays.js`.
-- `icone` : nom d'une silhouette de `icones/` (`radar_pylone`, `batterie_moyenne`, `chasseur`, `helicoptere`,
-  `drone_delta`…). Une icône est un SVG carré (viewBox 64 × 64), blanc sur fond transparent, vu de dessus ; la
-  carte la pose sur la pastille du pays, cerclée de la couleur du camp. `null` : symbole APP-6 seul. Le calque
-  « Icônes de jeu » bascule entre les deux.
+- `pays`: three-letter ISO 3166 code (`"FRA"`, `"USA"`…) of the country the class is inspired by. It is used for sorting
+  (the palette's "Country" filter) and for the badge colour. The unit's name is fictional and its values remain those
+  of the class, rounded: no public unit corresponds to an identified real system, and no sheet names the system that
+  would have inspired it. The countries known to the interface are in `src/vue/pays.js`.
+- `icone`: name of a silhouette in `icones/` (`radar_pylone`, `batterie_moyenne`, `chasseur`, `helicoptere`,
+  `drone_delta`…). An icon is a square SVG (viewBox 64 × 64), white on a transparent background, seen from above; the
+  map lays it on the country badge, ringed with the side's colour. `null`: APP-6 symbol only. The "Game icons" layer
+  switches between the two.
 
-Le catalogue public compte 35 unités rangées par pays (radars, batteries, avions et hélicoptères, drones
-défensifs, drones d'attaque), nommées d'après des plantes : `unites/capteurs/radars/fra_ajonc_300.json`,
-`unites/vecteurs/drones/irn_chardon_d.json`… La conformité vérifie que chaque icône existe et que chaque pays est connu.
+The public catalogue has 35 units sorted by country (radars, batteries, aircraft and helicopters, defensive drones,
+attack drones), named after plants: `unites/capteurs/radars/fra_ajonc_300.json` ("Gorse 300" in English),
+`unites/vecteurs/drones/irn_chardon_d.json` ("Thistle D")… The conformity suite checks that every icon exists and
+every country is known.
 
-### 2.6 Ce que chaque famille règle
+### 2.6 What each family sets
 
-| Famille | Clés principales | Rôles d'algorithme portés |
+| Family | Main keys | Algorithm roles carried |
 |---|---|---|
-| `vecteurs/drones` | vitesse, altitude de croisière | mouvement |
-| `vecteurs/avions` | vitesses de mise à poste et d'engagement, facteur de charge, `emport`, `emport_nombre`, `type_vecteur`, `consomme_au_tir` | mouvement |
-| `vecteurs/drones_defensifs` | idem avions, `type_vecteur` : drone armé, kamikaze, brouilleur | mouvement |
-| `effecteurs/…` | données de l'arme ou de la charge (notionnelles) | tir |
-| `capteurs/radars` | hauteur d'antenne, portée maximale | detection |
-| `sites/postes` | portée, Pk, engagements par passage, délai d'acquisition | tir_sol |
-| `liaisons` | latence, portée, besoin de vue directe | — |
-| `terrains` | emprise, pas, grille d'altitudes | — |
+| `vecteurs/drones` | speed, cruise altitude | mouvement |
+| `vecteurs/avions` | positioning and engagement speeds, load factor, `emport`, `emport_nombre`, `type_vecteur`, `consomme_au_tir` | mouvement |
+| `vecteurs/drones_defensifs` | as aircraft, `type_vecteur`: armed drone, kamikaze, jammer | mouvement |
+| `effecteurs/…` | weapon or payload data (notional) | tir |
+| `capteurs/radars` | antenna height, maximum range | detection |
+| `sites/postes` | range, Pk, engagements per pass, acquisition delay | tir_sol |
+| `liaisons` | latency, range, need for line of sight | — |
+| `terrains` | extent, spacing, altitude grid | — |
 
-## 3 · Scénarios : citer et surcharger
+## 3 · Scenarios: naming and overriding
 
-Un scénario cite les unités par identifiant et peut en surcharger les valeurs **sans créer de fichier** :
+A scenario names units by identifier and can override their values **without creating a file**:
 
 ```json
 "bleu": {
@@ -141,19 +142,19 @@ Un scénario cite les unités par identifiant et peut en surcharger les valeurs 
 }
 ```
 
-- `surcharges` modifie l'unité citée (même syntaxe, mêmes suffixes) ; `surcharges_emport` modifie son arme. Une
-  surcharge `algos` ne remplace que les rôles qu'elle cite : `"surcharges": {"algos": {"mouvement": "…"}}`.
-- Déploiement unité par unité (MODELE § 21), que l'éditeur écrit pour vous à la souris :
-  - `bleu.radar.sites[].unite` donne à un radar placé son propre modèle ;
-  - `bleu.sol.batteries[]` place des batteries une à une, chacune avec `unite`, `munitions` et `surcharges` ;
-  - `bleu.reseau.centres[].allocation` donne à un centre secondaire son propre algorithme d'allocation ;
-  - `bleu.reseau.equipements[]` (`{noeud, moyens}`) déclare les moyens de communication de chaque nœud.
-- Toute valeur du scénario a un **chemin pointé** : `bleu.avions.1.nombre`, `rouge.tactique`,
-  `rouge.surcharges.vitesse_kmh`, `bleu.conduite.allocation`, `bleu.reseau.mode`… Ce même chemin sert partout :
-  dans le panneau Scénario, dans le panneau Balayage, et en ligne de commande.
-- Chaque clé du scénario porte sa phrase dans `_aide`, comme les unités.
-- Un scénario v1 est migré à la lecture ; la résolution (unités + surcharges → valeurs SI) est faite à
-  l'identique en JavaScript et en Python, et un test croisé le vérifie (`tests/resolution_reference.json`).
+- `surcharges` changes the named unit (same syntax, same suffixes); `surcharges_emport` changes its weapon. An `algos`
+  override only replaces the roles it names: `"surcharges": {"algos": {"mouvement": "…"}}`.
+- Unit-by-unit deployment (MODELE § 21), which the editor writes for you with the mouse:
+  - `bleu.radar.sites[].unite` gives a placed radar its own model;
+  - `bleu.sol.batteries[]` places batteries one by one, each with `unite`, `munitions` and `surcharges`;
+  - `bleu.reseau.centres[].allocation` gives a secondary centre its own allocation algorithm;
+  - `bleu.reseau.equipements[]` (`{noeud, moyens}`) declares each node's means of communication.
+- Every value of the scenario has a **dotted path**: `bleu.avions.1.nombre`, `rouge.tactique`,
+  `rouge.surcharges.vitesse_kmh`, `bleu.conduite.allocation`, `bleu.reseau.mode`… The same path is used everywhere: in
+  the Scenario panel, in the Sweep panel, and on the command line.
+- Each scenario key carries its sentence in `_aide`, like the units.
+- A v1 scenario is migrated on reading; resolution (units + overrides → SI values) is done identically in JavaScript
+  and in Python, and a cross test checks it (`tests/resolution_reference.json`).
 
 ```sh
 node src/campagne.js --bleu.avions.1.unite vecteurs/avions/turbopropulseur_ir_notionnel
@@ -161,50 +162,48 @@ node src/campagne.js --rouge.surcharges.vitesse_kmh 600 --bleu.radar.surcharges.
 node src/campagne.js --balayer bleu.sol.nombre=0,1,2,4
 ```
 
-La bibliothèque `scenarios/` est remplie à la main, par « Enregistrer » dans l'interface, ou par l'auto-configuration
-(`node src/autoconfig.js --pays FRA`). `node outils/indexer.js` met à jour `scenarios/index.json`.
+The `scenarios/` library is filled by hand, with "Save" in the interface, or by auto-configuration
+(`node src/autoconfig.js --pays FRA`). `node outils/indexer.js` updates `scenarios/index.json`.
 
-## 4 · Algorithmes
+## 4 · Algorithms
 
-### 4.1 Rôles
+### 4.1 Roles
 
-Chaque décision du moteur est un **rôle**. Un algorithme tient un rôle ; on le choisit par une unité ou par le
-scénario.
+Each decision of the engine is a **role**. An algorithm holds a role; it is chosen by a unit or by the scenario.
 
-| Rôle | Choisi par | Fonctions à exporter | Ce qu'il décide |
+| Role | Chosen by | Functions to export | What it decides |
 |---|---|---|---|
-| comportement | `rouge.tactique` | `planifier_drone(contexte, cible, hasard, outils)` | la route de chaque drone adverse |
-| mouvement | unité (drone, avion) `algos.mouvement` | `avancer(mobile, route, distance, outils)` | comment un mobile parcourt sa route |
-| detection | unité radar `algos.detection` | `preparer(scenario, radar, outils)`, `detecte(etat, drone, outils)`, option `detecte_par` | qui voit quoi |
-| pistage | `bleu.conduite.pistage` | `pister(drones, outils)` | comment les détections forment des pistes |
-| allocation | `bleu.conduite.allocation` | `allouer(avions, pistes, outils)` → `[{avion, point, explication}]` | quel avion va sur quelle piste |
-| tir | unité arme `algos.tir` | `planifier_tir(arme, distance)` → `{vol, occupation}` | durée de vol et occupation d'un tir |
-| tir_sol | unité poste `algos.tir_sol` | `cadence(poste, vitesse_cible)` | engagements d'un poste sur une cible |
+| comportement | `rouge.tactique` | `planifier_drone(contexte, cible, hasard, outils)` | each enemy drone's route |
+| mouvement | unit (drone, aircraft) `algos.mouvement` | `avancer(mobile, route, distance, outils)` | how a vehicle travels its route |
+| detection | radar unit `algos.detection` | `preparer(scenario, radar, outils)`, `detecte(etat, drone, outils)`, optional `detecte_par` | who sees what |
+| pistage | `bleu.conduite.pistage` | `pister(drones, outils)` | how detections form tracks |
+| allocation | `bleu.conduite.allocation` | `allouer(avions, pistes, outils)` → `[{avion, point, explication}]` | which aircraft goes to which track |
+| tir | weapon unit `algos.tir` | `planifier_tir(arme, distance)` → `{vol, occupation}` | a shot's flight time and busy time |
+| tir_sol | post unit `algos.tir_sol` | `cadence(poste, vitesse_cible)` | a post's engagements on a target |
 
-Algorithmes publics disponibles : `algos/index.json` (ou l'explorateur `catalogue.html`). Pour `rouge.tactique`,
-les noms courts `direct`, `disperse`, `fourmi`, `plan_de_vol` désignent `global/comportement/essaim_…` ; tout
-identifiant complet est accepté.
+Public algorithms available: `algos/index.json` (or the `catalogue.html` explorer). For `rouge.tactique`, the short
+names `direct`, `disperse`, `fourmi`, `plan_de_vol` stand for `global/comportement/essaim_…`; any full identifier is
+accepted.
 
-### 4.2 Contrat
+### 4.2 Contract
 
-Un algorithme est un module ES, `algos/global/<rôle>/<nom>.js` (ou `prive/algos/<rôle>/<nom>.js`) :
+An algorithm is an ES module, `algos/global/<role>/<name>.js` (or `prive/algos/<role>/<name>.js`):
 
-1. Il exporte `meta` : `role`, `nom`, `fidelite`, `description`, `equations`, `hypotheses`, `domaine_validite`,
-   `references` (au moins une) et `parametres` (chaque clé SI lue dans l'unité, avec son unité et son aide).
-2. Il exporte les fonctions de son rôle, avec la signature du tableau.
-3. Il **n'importe rien** et n'appelle ni `Math.random`, ni l'horloge, ni le réseau. Ce dont il a besoin lui est
-   passé :
-   - `outils` : la géodésie du moteur (`distance_horizontale`, `inverse` pour distance et azimut, `direct_avec_azimut`, `pas_vers`…), `horizon_radar`
-     (horizon radar à k = 4/3) et `G` ;
-   - `hasard` : le générateur à graine du raid, seul hasard permis.
+1. It exports `meta`: `role`, `nom`, `fidelite`, `description`, `equations`, `hypotheses`, `domaine_validite`,
+   `references` (at least one) and `parametres` (each SI key read from the unit, with its unit and help text).
+2. It exports the functions of its role, with the signature in the table.
+3. It **imports nothing** and calls neither `Math.random`, nor the clock, nor the network. What it needs is passed to it:
+   - `outils`: the engine's geodesy (`distance_horizontale`, `inverse` for distance and azimuth, `direct_avec_azimut`,
+     `pas_vers`…), `horizon_radar` (radar horizon at k = 4/3) and `G`;
+   - `hasard`: the raid's seeded generator, the only randomness allowed.
 
-Il est donc pur et déterministe : même scénario, même graine, même résultat — ce qui rend les duels A/B et
-l'empreinte de reproductibilité possibles.
+It is therefore pure and deterministic: same scenario, same seed, same result — which makes A/B duels and the
+reproducibility fingerprint possible.
 
-### 4.3 Exemple complet
+### 4.3 Complete example
 
-`algos/global/allocation/plus_proche.js` est un exemple volontairement simple, à lire avant d'écrire le sien :
-chaque avion libre est envoyé sur la position actuelle de la piste la plus proche.
+`algos/global/allocation/plus_proche.js` is a deliberately simple example, to read before writing your own: each free
+aircraft is sent to the current position of the nearest track.
 
 ```js
 export const meta = {
@@ -221,125 +220,129 @@ export const meta = {
 
 export function allouer(avions, pistes, outils) {
   return avions.map((avion) => {
-    // … trier les pistes par outils.distance_horizontale(avion.geo, piste.drone.geo)
+    // … sort the tracks by outils.distance_horizontale(avion.geo, piste.drone.geo)
     return {avion, point: {...plus_proche.drone.geo, alt: avion.groupe.altitude}, explication};
   });
 }
 ```
 
-L'`explication` (pistes connues, piste retenue, alternatives avec délai et score) est ce qu'affiche l'inspecteur
-quand on clique un avion : un algorithme d'allocation bien écrit dit pourquoi il a choisi.
+The `explication` (known tracks, chosen track, alternatives with delay and score) is what the inspector shows when you
+click an aircraft: a well-written allocation algorithm says why it chose.
 
-Pour l'essayer :
+The `meta` texts are written in French, the catalogue's language; a public algorithm also gets its English sheet in
+`langues/catalogue.en.json` (§ 6.1).
+
+To try it:
 
 ```sh
 node src/preuve.js duel --variante bleu.conduite.allocation=global/allocation/plus_proche
 ```
 
-Sur le scénario de référence, il laisse passer nettement plus de drones que l'allocation par densité (de l'ordre
-de 490 frappes contre 400 sur 6 raids) : il ne regroupe pas les avions sur les pistes denses.
+On the reference scenario, it lets markedly more drones through than density allocation (around 490 hits against 400
+over 6 raids): it does not gather the aircraft on dense tracks.
 
-### 4.4 Brancher un algorithme
+### 4.4 Plugging in an algorithm
 
-- Rôle porté par une unité : dans le fichier de l'unité (ou d'une fille), `"algos": {"detection": "global/detection/sites_radar"}`.
-- Rôle porté par le scénario : la clé correspondante (`rouge.tactique`, `bleu.conduite.pistage`,
-  `bleu.conduite.allocation`), dans le panneau Scénario ou par `--chemin valeur`.
+- Role carried by a unit: in the unit's file (or a child's), `"algos": {"detection": "global/detection/sites_radar"}`.
+- Role carried by the scenario: the matching key (`rouge.tactique`, `bleu.conduite.pistage`,
+  `bleu.conduite.allocation`), in the Scenario panel or with `--path value`.
 
-Les rôles `guidage`, `filtrage` et `performance_radar` sont réservés à la bibliothèque privée : le moteur public ne
-les appelle pas.
+The roles `guidage`, `filtrage` and `performance_radar` are reserved for the private library: the public engine does
+not call them.
 
-## 5 · Catalogue privé
+## 5 · Private catalogue
 
-`prive/` est ignoré par git. On peut y mettre un clone d'un autre dépôt, privé, avec la même arborescence :
+`prive/` is ignored by git. You can put there a clone of another, private repository, with the same tree:
 
 ```
-prive/unites/vecteurs/avions/mon_avion.json     → identifiant « prive/vecteurs/avions/mon_avion »
-prive/algos/allocation/mon_allocation.js        → identifiant « prive/allocation/mon_allocation »
+prive/unites/vecteurs/avions/mon_avion.json     → identifier "prive/vecteurs/avions/mon_avion"
+prive/algos/allocation/mon_allocation.js        → identifier "prive/allocation/mon_allocation"
 ```
 
-- Une unité privée peut hériter d'une unité publique (`"herite_de": "vecteurs/avions/_avion"`) et être citée
-  dans n'importe quel scénario.
-- **Les modèles de systèmes réels, de guidage ou de performances d'armes vont uniquement là.** Le dépôt public
-  reste notionnel, par classe.
-- La conformité automatique s'applique aussi aux fichiers privés.
-- Pour être jouable, une unité privée se range dans une famille du moteur (§ 2.6) et hérite de sa base publique,
-  qui apporte ses algorithmes ; ailleurs (par exemple `prive/menace/hypersonique/`), elle reste une fiche consultable
-  dans le catalogue mais absente de la palette.
-- Une unité privée peut avoir son icône : `"icone": "prive/<nom>"` lit `prive/icones/<nom>.svg`.
-- Le jeu Godot range sous `prive/` ce que le joueur enregistre : scénarios dans `prive/scenarios/`, reliefs dans
+- A private unit can inherit from a public unit (`"herite_de": "vecteurs/avions/_avion"`) and be named in any scenario.
+- **Models of real systems, guidance or weapon performance go there only.** The public repository stays notional, by
+  class.
+- The automatic conformity checks also apply to private files.
+- To be playable, a private unit goes into one of the engine's families (§ 2.6) and inherits from its public base,
+  which brings its algorithms; elsewhere (for example `prive/menace/hypersonique/`), it remains a sheet you can browse
+  in the catalogue but is absent from the palette.
+- A private unit can have its own icon: `"icone": "prive/<name>"` reads `prive/icones/<name>.svg`.
+- Private units have no translation: they show their own texts in every language.
+- The Godot game stores under `prive/` what the player saves: scenarios in `prive/scenarios/`, terrains in
   `prive/unites/terrains/`.
 
-### 5.1 Importer le catalogue privé dans l'interface
+### 5.1 Importing the private catalogue into the interface
 
-Un navigateur ne peut pas lister `prive/unites/` : `node outils/indexer.js` y écrit `prive/unites/index.json`
-(hors git, comme le reste de `prive/`). La page **Catalogue** propose alors trois choix, retenus dans le navigateur
-et appliqués aussi à la palette de la simulation :
+A browser cannot list `prive/unites/`: `node outils/indexer.js` writes `prive/unites/index.json` there (outside git,
+like the rest of `prive/`). The **Catalogue** page then offers three choices, remembered in the browser and also
+applied to the simulation's palette:
 
-- **Public seul** : le privé est ignoré ;
-- **Fusionner** : les unités privées s'ajoutent aux publiques ;
-- **Remplacer** : dans chaque dossier où le privé a au moins une unité (`vecteurs/avions`, `sites/postes`…), les
-  unités publiques disparaissent de la palette ; les dossiers qu'il ne couvre pas (terrains, roquettes…) et les
-  classes de base `_` publiques restent.
+- **Public only**: the private catalogue is ignored;
+- **Merge**: private units are added to the public ones;
+- **Replace**: in each folder where the private catalogue has at least one unit (`vecteurs/avions`, `sites/postes`…),
+  the public units disappear from the palette; the folders it does not cover (terrains, rockets…) and the public `_`
+  base classes remain.
 
-Quand le privé est importé, la bibliothèque de scénarios propose aussi ceux que liste `prive/scenarios/index.json`
-(`[{"id": "nom", "nom": "Nom affiché"}]`, un fichier `prive/scenarios/<id>.json` par entrée).
+When the private catalogue is imported, the scenario library also offers those listed in `prive/scenarios/index.json`
+(`[{"id": "nom", "nom": "Displayed name"}]`, one file `prive/scenarios/<id>.json` per entry).
 
-Sans index privé, l'interface reste sur le catalogue public et la page Catalogue dit quoi lancer. Les scénarios
-citent toujours les unités par identifiant : un scénario qui cite une unité privée ne s'ouvre que là où `prive/`
-la contient.
+Without a private index, the interface stays on the public catalogue and the Catalogue page says what to run.
+Scenarios always name units by identifier: a scenario that names a private unit only opens where `prive/` contains it.
 
-## 6 · Conformité et index
+## 6 · Conformity and indexes
 
-Après tout ajout ou modification :
-
-```sh
-node outils/indexer.js     # régénère unites/, algos/, cartes/ et scenarios/index.json
-npm test                   # la conformité vérifie d'elle-même chaque fichier déposé
-```
-
-L'interface lit les index (un navigateur ne peut pas lister un dossier) ; un index périmé fait échouer les tests.
-La suite `tests/conformite.test.js` vérifie, sans test à écrire : fiche `meta` complète, rangement sous le bon rôle,
-aucune dépendance cachée, algorithmes cités existants et du bon rôle, paramètres lus présents dans l'unité, aide
-présente pour chaque clé, déterminisme, et invariants du rôle (un mouvement ne va jamais plus loin que demandé ; un
-pistage compte chaque drone une seule fois ; un comportement mène chaque drone sur sa cible…).
-
-### 6.1 Traductions
-
-Les fichiers du catalogue restent en français ; leurs traductions vivent à côté, dans
-`langues/catalogue.<code>.json` (aujourd'hui `catalogue.en.json`) : par unité son `nom`, ses `sources` et les phrases
-de son bloc `_aide` ; par algorithme les textes de sa fiche `meta` (`nom`, `description`, `equations`, `hypotheses`,
-`domaine_validite`, `references`, et l'`aide` de chaque paramètre) ; par scénario du dépôt son `nom` ; par source de carte son `nom`, son `attribution` et ses `conditions`. Les fichiers ne
-changent pas : l'empreinte de reproductibilité ne dépend pas de la langue. Une entrée absente montre le texte
-français, si bien qu'une unité privée s'affiche telle quelle.
+After any addition or change:
 
 ```sh
-node outils/valider.js --langues   # entrées manquantes et fautives de chaque dictionnaire du catalogue
+node outils/indexer.js     # regenerates unites/, algos/, cartes/ and scenarios/index.json
+npm test                   # the conformity suite checks every file dropped in by itself
 ```
 
-Pour le catalogue public, `npm test` exige une traduction complète et conforme (mêmes clés d'aide, même nombre de
-sources, d'équations, d'hypothèses et de références) : ajouter une unité ou un algorithme, c'est aussi ajouter son
-entrée anglaise.
+The interface reads the indexes (a browser cannot list a folder); a stale index makes the tests fail. The
+`tests/conformite.test.js` suite checks, with no test to write: complete `meta` sheet, placement under the right role,
+no hidden dependency, named algorithms existing and of the right role, parameters read present in the unit, help text
+present for each key, determinism, and the role's invariants (a movement never goes further than asked; a tracking
+counts each drone only once; a behaviour leads each drone to its target…).
 
-## 7 · Autres données
+### 6.1 Translations
 
-| Donnée | Où | Comment l'ajouter |
+The catalogue files stay in French; their translations live beside them, in `langues/catalogue.<code>.json` (today
+`catalogue.en.json`): for each unit its `nom`, its `sources` and the sentences of its `_aide` block; for each algorithm
+the texts of its `meta` sheet (`nom`, `description`, `equations`, `hypotheses`, `domaine_validite`, `references`, and
+each parameter's `aide`); for each repository scenario its `nom`; for each map source its `nom`, `attribution` and
+`conditions`. The files do not change: the reproducibility fingerprint does not depend on the language. A missing entry
+shows the French text, so a private unit is displayed as it is.
+
+```sh
+node outils/valider.js --langues   # missing and faulty entries of each catalogue dictionary
+```
+
+For the public catalogue, `npm test` requires a complete and consistent translation (same help keys, same number of
+sources, equations, assumptions and references): adding a unit or an algorithm also means adding its English entry.
+
+## 7 · Other data
+
+| Data | Where | How to add it |
 |---|---|---|
-| Moyens de communication | `unites/liaisons/` | hériter de `_liaison` : `type`, `latence_s`, `portee_km`, `visibilite_directe`, `hauteur_antenne_m` ; citer l'unité dans `bleu.reseau.liaisons[]` |
-| Relief | `unites/terrains/` | `node outils/terrain.js --nom … --lat … --lon … --rayon_km … --pas_km …` (tuiles de relief, ou `--synthetique`) ; citer dans `theatre.terrain` |
-| Fond de carte | `cartes/fonds|relief|batiments/` | une source par fichier, attribution obligatoire |
-| Frontières | `cartes/frontieres/pays.json` | `node outils/frontieres.js` (Natural Earth), pour l'auto-configuration par pays |
+| Means of communication | `unites/liaisons/` | inherit from `_liaison`: `type`, `latence_s`, `portee_km`, `visibilite_directe`, `hauteur_antenne_m`; name the unit in `bleu.reseau.liaisons[]` |
+| Terrain | `unites/terrains/` | `node outils/terrain.js --nom … --lat … --lon … --rayon_km … --pas_km …` (elevation tiles, or `--synthetique`); name it in `theatre.terrain` |
+| Base map | `cartes/fonds|relief|batiments/` | one source per file, attribution required, plus its English `nom` and `conditions` in `langues/catalogue.en.json` |
+| Borders | `cartes/frontieres/pays.json` | `node outils/frontieres.js` (Natural Earth), for auto-configuration by country |
 
-## 8 · Prouver l'effet d'un changement
+## 8 · Proving the effect of a change
 
-Un ajout au catalogue n'a de valeur que si son effet est mesuré honnêtement :
+An addition to the catalogue is only worth something if its effect is measured honestly:
 
 ```sh
-node src/preuve.js empreinte                                     # empreinte de reproductibilité du scénario
+node src/preuve.js empreinte                                     # reproducibility fingerprint of the scenario
 node src/preuve.js duel --variante bleu.avions.1.unite=prive/vecteurs/avions/mon_avion
 node src/preuve.js morris --facteur bleu.radar.surcharges.portee_max_km=100:300 --facteur bleu.sol.nombre=0:4
-node src/preuve.js dossier                                       # dossier.md : résultats, convergence, modèles
+node src/preuve.js dossier                                       # dossier.md: results, convergence, models
 ```
 
-Le duel compare A et B sur les **mêmes tirages** (mêmes graines) et donne l'écart avec son intervalle de confiance :
-c'est ce qui permet de dire qu'un algorithme ou une unité fait mieux, et pas seulement que le hasard a été favorable.
-Les méthodes sont décrites dans [MODELE.md § 14](MODELE.md).
+Every tool writes in English by default; add `--langue fr` (or set `EGIDE_LANGUE=fr`) for French, the evidence file
+included.
+
+The duel compares A and B on the **same draws** (same seeds) and gives the difference with its confidence interval:
+that is what lets you say an algorithm or a unit does better, and not merely that chance was kind. The methods are
+described in [MODELE.md § 14](MODELE.md) (in French).
