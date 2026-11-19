@@ -1,15 +1,16 @@
 // Panneau de déploiement de l'éditeur (MODELE § 12) : recherche, onglets par famille et réglages du théâtre. Il ne calcule
 // rien : la palette vient de deploiement.js et les réglages deviennent des modifications par chemin dans edition.js.
+import {t} from "../i18n.js";
 import {chemin_icone} from "../moteur/catalogue.js";
 import {filtrer_palette, palette} from "./deploiement.js";
 import {modifications_reglage_theatre} from "./edition.js";
 import {echapper_html} from "./format.js";
-import {couleur_pays, PAYS} from "./pays.js";
+import {couleur_pays, nom_pays} from "./pays.js";
 
 // Pastille de chaque famille de la palette, aux couleurs des entités sur la carte.
 const PASTILLES = {infrastructures: "var(--texte)", capteurs: "var(--ami)", sol: "var(--sol)", avions: "var(--ami)", drones_defensifs: "var(--ami)",
   liaisons: "var(--texte-secondaire)", effecteurs: "var(--sol)", menace: "var(--hostile)", terrains: "var(--inconnu)"};
-const ONGLETS = {infrastructures: "Sites", capteurs: "Radars", sol: "Sol-air", avions: "Aviation", drones_defensifs: "Drones", liaisons: "Réseau", effecteurs: "Armes", menace: "Menace", terrains: "Relief"};
+const ONGLETS = {infrastructures: "vue.onglet.sites", capteurs: "vue.onglet.radars", sol: "vue.onglet.sol", avions: "vue.onglet.aviation", drones_defensifs: "vue.onglet.drones", liaisons: "vue.onglet.reseau", effecteurs: "vue.onglet.armes", menace: "vue.onglet.menace", terrains: "vue.onglet.relief"};
 const ONGLET_THEATRE = "theatre";
 // Seuls ces vecteurs se déposent à plusieurs d'un coup.
 const FAMILLES_QUANTITE = new Set(["avions", "drones_defensifs"]);
@@ -22,7 +23,7 @@ const nom_court = (nom) => nom.replace(/ \((?:[A-Z]{3}, )?notionnel(le)?\)$/, ""
 function bouton_unite(e, famille) {
   const fond = couleur_pays(e.pays, PASTILLES[famille]);
   const vignette = e.icone ? `<i class="vignette" style="background: ${fond}"><img src="${echapper_html(chemin_icone(e.icone).replace(/\.svg$/, ""))}.svg" alt=""></i>` : `<i style="background: ${fond}"></i>`;
-  const pays = e.pays ? `<small title="${echapper_html(PAYS[e.pays]?.nom ?? e.pays)}">${e.pays}</small>` : "";
+  const pays = e.pays ? `<small title="${echapper_html(nom_pays(e.pays))}">${e.pays}</small>` : "";
   return `<button class="unite-palette" draggable="true" data-unite="${echapper_html(e.id)}" aria-pressed="false" title="${echapper_html(e.nom)}">${vignette}<span>${echapper_html(nom_court(e.nom))}</span>${pays}</button>`;
 }
 
@@ -34,8 +35,8 @@ export function brancher_panneau_deploiement({racine, index, armer, brut, appliq
   const $ = (selecteur) => racine.querySelector(selecteur);
   const [zone, onglets, recherche, choixPays] = [$("[data-zone='palette']"), $("[data-zone='onglets_palette']"), $("[name='recherche_palette']"), $("[name='pays_palette']")];
   const toutes = palette(index);
-  const presents = [...new Set(index.map((u) => u.pays).filter(Boolean))].sort((a, b) => (PAYS[a]?.nom ?? a).localeCompare(PAYS[b]?.nom ?? b));
-  choixPays.innerHTML = `<option value="">Tous les pays</option>${presents.map((p) => `<option value="${p}">${PAYS[p]?.nom ?? p}</option>`).join("")}`;
+  const presents = [...new Set(index.map((u) => u.pays).filter(Boolean))].sort((a, b) => nom_pays(a).localeCompare(nom_pays(b)));
+  choixPays.innerHTML = `<option value="">${t("vue.palette.tous_pays")}</option>${presents.map((p) => `<option value="${p}">${nom_pays(p)}</option>`).join("")}`;
   let onglet = "capteurs";
 
   function dessiner() {
@@ -46,7 +47,7 @@ export function brancher_panneau_deploiement({racine, index, armer, brut, appliq
     $("[data-zone='filtres_palette']").hidden = theatre;
     $("[name='quantite_depot']").closest("label").hidden = !(texte.trim() || FAMILLES_QUANTITE.has(onglet));
     onglets.querySelectorAll("[role='tab']").forEach((b) => b.setAttribute("aria-selected", String(!texte.trim() && b.dataset.onglet === onglet)));
-    zone.innerHTML = theatre ? "" : familles.map((f) => `${texte.trim() ? `<h3 class="famille-titre">${f.libelle}</h3>` : ""}<p class="famille-aide">${f.aide}</p>${f.elements.map((e) => bouton_unite(e, f.id)).join("")}`).join("") || `<p class="famille-aide">Aucune unité ne correspond.</p>`;
+    zone.innerHTML = theatre ? "" : familles.map((f) => `${texte.trim() ? `<h3 class="famille-titre">${f.libelle}</h3>` : ""}<p class="famille-aide">${f.aide}</p>${f.elements.map((e) => bouton_unite(e, f.id)).join("")}`).join("") || `<p class="famille-aide">${t("vue.palette.aucune")}</p>`;
   }
 
   /** Remettre dans les champs ce que dit le scénario : après une annulation ou un clic sur la carte, ils ne doivent pas mentir. */
@@ -58,7 +59,7 @@ export function brancher_panneau_deploiement({racine, index, armer, brut, appliq
     }
   }
 
-  onglets.innerHTML = [[ONGLET_THEATRE, "Théâtre"], ...toutes.map((f) => [f.id, ONGLETS[f.id] ?? f.libelle])].map(([id, libelle]) => `<button role="tab" data-onglet="${id}" aria-selected="false">${libelle}</button>`).join("");
+  onglets.innerHTML = [[ONGLET_THEATRE, t("vue.onglet.theatre")], ...toutes.map((f) => [f.id, ONGLETS[f.id] ? t(ONGLETS[f.id]) : f.libelle])].map(([id, libelle]) => `<button role="tab" data-onglet="${id}" aria-selected="false">${libelle}</button>`).join("");
   onglets.addEventListener("click", (e) => {
     const bouton = e.target.closest("[data-onglet]");
     if (!bouton) return;

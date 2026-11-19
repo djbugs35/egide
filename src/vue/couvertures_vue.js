@@ -1,5 +1,6 @@
 // Affichage des couvertures (MODELE § 25) : ce qu'il faut montrer selon les calques et l'objet inspecté, partagé entre la
 // 2D et la 3D. Chaque enveloppe vient du moteur (couvertures.js) ; ici, on ne calcule aucune portée.
+import {t} from "../i18n.js";
 import {couvertures, rayon_dans} from "../moteur/couvertures.js";
 import {direct} from "../moteur/geodesie.js";
 import {COULEURS} from "./couleurs.js";
@@ -8,7 +9,7 @@ import {ecran} from "./ecran.js";
 const SEGMENTS = 72;
 const GENRES = ["detection", "conduite", "interception"];
 const COULEUR_GENRE = {detection: COULEURS.ami, conduite: COULEURS.conduite, interception: COULEURS.interception};
-const NOM_GENRE = {detection: "détection", conduite: "conduite", interception: "interception"};
+const NOM_GENRE = {detection: "vue.couverture.detection", conduite: "vue.couverture.conduite", interception: "vue.couverture.interception"};
 // Un objet fixe garde son contour : le redessiner à chaque image coûterait 72 calculs géodésiques par objet et par enveloppe.
 const contours = new Map();
 const CONTOURS_MAX = 3000;
@@ -85,7 +86,7 @@ function ecrire_portee(ctx, camera, objet, genre, couleur) {
   const p = ecran(camera, direct(objet.geo, 0, objet[genre]));
   ctx.fillStyle = couleur;
   ctx.textAlign = "center";
-  ctx.fillText(`${NOM_GENRE[genre] ?? objet.noms[genre]} ${Math.round(objet[genre] / 100) / 10} km`, p.x, p.y - 4);
+  ctx.fillText(`${NOM_GENRE[genre] ? t(NOM_GENRE[genre]) : objet.noms[genre]} ${Math.round(objet[genre] / 100) / 10} km`, p.x, p.y - 4);
   ctx.textAlign = "start";
 }
 

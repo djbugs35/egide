@@ -5,8 +5,8 @@ import {entite_depuis_id} from "./scene3d.js";
 
 /** Modes de caméra, dans l'ordre du menu. */
 export const MODES_CAMERA = [
-  {id: "libre", libelle: "Caméra libre"}, {id: "suivi", libelle: "Suivre la sélection"}, {id: "radar", libelle: "Depuis un radar"},
-  {id: "site", libelle: "Depuis le site attaqué"}, {id: "commandant", libelle: "Vue commandant"}, {id: "dessus", libelle: "Vue de dessus"},
+  {id: "libre", libelle: "vue.camera.libre"}, {id: "suivi", libelle: "vue.camera.suivi"}, {id: "radar", libelle: "vue.camera.radar"},
+  {id: "site", libelle: "vue.camera.site"}, {id: "commandant", libelle: "vue.camera.commandant"}, {id: "dessus", libelle: "vue.camera.dessus"},
 ];
 
 // Hauteur de l'observateur posé sur un site attaqué (m au-dessus du sol).

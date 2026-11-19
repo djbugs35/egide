@@ -1,5 +1,6 @@
 // Fond de carte MapLibre (jalon 2) : le style vient de carte_style.js, construit à partir des sources de cartes/ ;
 // le scope se dessine par-dessus, sur un canevas transparent calé sur la carte (ecran.js).
+import {t} from "../i18n.js";
 import * as maplibregl from "../../vendor/maplibre-gl/maplibre-gl.mjs";
 import {bornes_disque, style_carte} from "./carte_style.js";
 
@@ -15,7 +16,7 @@ export function creer_carte(conteneur, sources, reglages) {
     carte.addControl(new maplibregl.NavigationControl({visualizePitch: true}), "top-right");
     return carte;
   } catch (erreur) {
-    console.warn(`Carte indisponible, retour au scope : ${erreur.message}`);
+    console.warn(t("vue.journal_console.carte", {erreur: erreur.message}));
     return null;
   }
 }

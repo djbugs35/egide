@@ -11,6 +11,7 @@ import {join} from "node:path";
 import {performance} from "node:perf_hooks";
 import {pathToFileURL} from "node:url";
 import {lire_arguments} from "./arguments.js";
+import {installer_langue_node} from "./langue_node.js";
 import {index_unites, index_unites_prive} from "../outils/indexer.js";
 import {charger_unites, chemin_unite} from "./moteur/catalogue.js";
 import {charger_tous_algos, charger_unites_scenario, ids_unites_disque, lire_fichier, RACINE} from "./moteur/catalogue_node.js";
@@ -145,7 +146,9 @@ function accepter(requete, socket, salle, clients) {
 }
 
 async function principal() {
-  const {options, modifications} = lire_arguments(process.argv.slice(2), {scenario: "scenarios/reference.json", port: PORT_DEFAUT});
+  const {options, modifications} = lire_arguments(process.argv.slice(2), {scenario: "scenarios/reference.json", port: PORT_DEFAUT, langue: process.env.EGIDE_LANGUE ?? "en"});
+  // Langue des textes envoyés au client (palette, messages) : --langue fr, ou EGIDE_LANGUE (jalon 27).
+  installer_langue_node(options.langue);
   const brut = modifier_scenario(en_v2(JSON.parse(readFileSync(options.scenario, "utf-8"))), modifications);
   const registre = await charger_tous_algos();
   const catalogue = await charger_unites(ids_unites_disque(), lire_fichier);

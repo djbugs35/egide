@@ -11,6 +11,7 @@ import {couverture_reelle} from "../moteur/terrain.js";
 import {connexions_html, libelle_noeud} from "./reseau_vue.js";
 import {chaine_drone} from "./journal.js";
 import {NOMS_VECTEURS} from "./infobulles.js";
+import {t} from "../i18n.js";
 
 const ETATS = {orbite: "en orbite", ralliement: "en route vers son point", engagement: "au contact d'un drone",
   poste: "à poste, en attente", retour: "retour vers son orbite"};
@@ -43,7 +44,7 @@ function pourquoi_avion(avion) {
 function inspection_avion(avion, monde) {
   const {groupe} = avion;
   const vitesse = avion.etat === "engagement" ? groupe.vitesse_engagement : ["ralliement", "retour"].includes(avion.etat) ? groupe.vitesse_mise_a_poste : 0;
-  return `<h3>${NOMS_VECTEURS[avion.type ?? "avion"]} ${avion.id + 1}${avion.perdu ? " (perdu en interceptant)" : ""}</h3>
+  return `<h3>${t(NOMS_VECTEURS[avion.type ?? "avion"])} ${avion.id + 1}${avion.perdu ? " (perdu en interceptant)" : ""}</h3>
     <p>${lien_fiche("unite", groupe.id, groupe.nom)} ${fidelite(groupe.fidelite)}</p>
     <table>${[
       ligne("État", avion.munitions === 0 ? "à court de munitions" : ETATS[avion.etat]),

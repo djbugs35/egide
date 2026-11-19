@@ -1,4 +1,5 @@
 // Catalogue privé (prive/unites/, hors git) dans l'interface : l'index prive/unites/index.json, régénéré par
+import {t} from "../i18n.js";
 // `node outils/indexer.js`, s'ajoute au catalogue public ou le remplace, selon le mode choisi dans la page Catalogue.
 // Le choix vit dans le navigateur (localStorage) ; sans index privé, l'interface reste sur le catalogue public.
 
@@ -55,6 +56,6 @@ export async function charger_index(lire_json, mode = lire_mode()) {
     const privee = await lire_json("prive/unites/index.json");
     return {index: index_selon_mode(publique, privee, mode), privees: privee.filter((u) => !u.base).length, erreur: null};
   } catch (erreur) {
-    return {index: publique, privees: 0, erreur: `index privé illisible (${erreur.message}) : lancer node outils/indexer.js`};
+    return {index: publique, privees: 0, erreur: t("vue.catalogue.index_prive_illisible", {erreur: erreur.message})};
   }
 }

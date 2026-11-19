@@ -410,7 +410,7 @@ function basculer_vue_pc() {
 function brancher_transport() {
   $("[data-action='vue_pc']").addEventListener("click", basculer_vue_pc);
   $("[data-action='observer']").addEventListener("click", () => basculer_3d());
-  $("[name='camera_3d']").innerHTML = MODES_CAMERA.map((m) => `<option value="${m.id}">${m.libelle}</option>`).join("");
+  $("[name='camera_3d']").innerHTML = MODES_CAMERA.map((m) => `<option value="${m.id}">${t(m.libelle)}</option>`).join("");
   $("[name='terrain']").addEventListener("change", (e) => modifier({"theatre.terrain": e.target.value || null}));
   $("[name='conduite_ciblee']").addEventListener("change", (e) => modifier({"bleu.reseau.conduite_ciblee": e.target.checked}));
   $("[data-action='lire']").addEventListener("click", basculer_lecture);

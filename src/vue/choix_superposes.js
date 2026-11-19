@@ -1,4 +1,5 @@
 // Petite liste ouverte au curseur quand un clic tombe sur des unités superposées (MODELE § 12). DOM seul : quelles unités
+import {t} from "../i18n.js";
 // proposer se décide dans edition.js, ce qu'on fait du choix dans editeur.js.
 
 /** Rendre la liste de choix rattachée au conteneur `vue` : {ouvrir, fermer, est_ouvert}. */
@@ -25,7 +26,7 @@ export function creer_choix_superposes(vue) {
     racine = document.createElement("div");
     racine.className = "choix-superposes";
     racine.setAttribute("role", "group");
-    racine.setAttribute("aria-label", "Unités superposées à cet endroit");
+    racine.setAttribute("aria-label", t("vue.superposes"));
     // Sans cela, l'écouteur global de la barre d'espace annulerait l'activation du bouton au clavier.
     racine.addEventListener("keydown", (e) => (e.key === " " || e.key === "Enter") && e.stopPropagation());
     for (const {libelle, valeur} of options) {

@@ -1,6 +1,7 @@
 // Éditeur de déploiement (MODELE § 21) : palette du catalogue et dépôt d'une unité sur la carte, à la manière d'un jeu
 // de stratégie. Chaque dépôt devient des modifications par chemin du scénario : annulation, export et rejeu d'office.
 // Pur, sans DOM, testé.
+import {t} from "../i18n.js";
 import {unite_si} from "../moteur/catalogue.js";
 import {direct, inverse} from "../moteur/geodesie.js";
 import {positions_radars} from "../moteur/radars.js";
@@ -19,18 +20,18 @@ const ECART_DEPOT = 1500;
  * sur quoi l'on dépose (la carte, ou une unité déjà placée), `aide` la phrase affichée.
  */
 export const FAMILLES_PALETTE = [
-  {id: "infrastructures", libelle: "Infrastructures", cible: "carte", aide: "Sites sensibles à défendre et centres C2 (CDC)."},
-  {id: "capteurs", libelle: "Capteurs", prefixe: "capteurs/", cible: "carte", aide: "Radars : chacun garde son modèle, sa portée et sa hauteur d'antenne."},
-  {id: "sol", libelle: "Défense sol", prefixe: "sites/", cible: "carte", aide: "Batteries sol-air, posées une à une, rattachées au site le plus proche."},
-  {id: "avions", libelle: "Aviation", prefixe: "vecteurs/avions/", cible: "carte", aide: "Intercepteurs : un avion par dépôt (ou la quantité choisie), en orbite au point déposé."},
-  {id: "drones_defensifs", libelle: "Drones défensifs", prefixe: "vecteurs/drones_defensifs/", cible: "carte", aide: "Essaims défensifs : armés, intercepteurs kamikazes, brouilleurs."},
-  {id: "liaisons", libelle: "Communications", prefixe: "liaisons/", cible: "unite", aide: "Cliquez un moyen, puis les deux unités à relier. Glisser un moyen sur une unité l'en équipe, pour « Relier automatiquement »."},
-  {id: "effecteurs", libelle: "Armements", prefixe: "effecteurs/", cible: "unite", aide: "À déposer sur un avion ou un drone défensif : son groupe change d'emport."},
-  {id: "menace", libelle: "Menace", prefixe: "vecteurs/drones/", cible: "carte", aide: "Modèle de drone de l'essaim adverse (où qu'on le dépose)."},
-  {id: "terrains", libelle: "Terrain", prefixe: "terrains/", cible: "carte", aide: "Relief du théâtre (où qu'on le dépose)."},
+  {id: "infrastructures", libelle: "vue.palette.infrastructures", cible: "carte", aide: "vue.palette.infrastructures_aide"},
+  {id: "capteurs", libelle: "vue.palette.capteurs", prefixe: "capteurs/", cible: "carte", aide: "vue.palette.capteurs_aide"},
+  {id: "sol", libelle: "vue.palette.sol", prefixe: "sites/", cible: "carte", aide: "vue.palette.sol_aide"},
+  {id: "avions", libelle: "vue.palette.avions", prefixe: "vecteurs/avions/", cible: "carte", aide: "vue.palette.avions_aide"},
+  {id: "drones_defensifs", libelle: "vue.palette.drones_defensifs", prefixe: "vecteurs/drones_defensifs/", cible: "carte", aide: "vue.palette.drones_defensifs_aide"},
+  {id: "liaisons", libelle: "vue.palette.liaisons", prefixe: "liaisons/", cible: "unite", aide: "vue.palette.liaisons_aide"},
+  {id: "effecteurs", libelle: "vue.palette.effecteurs", prefixe: "effecteurs/", cible: "unite", aide: "vue.palette.effecteurs_aide"},
+  {id: "menace", libelle: "vue.palette.menace", prefixe: "vecteurs/drones/", cible: "carte", aide: "vue.palette.menace_aide"},
+  {id: "terrains", libelle: "vue.palette.terrains", prefixe: "terrains/", cible: "carte", aide: "vue.palette.terrains_aide"},
 ];
 
-const SPECIAUX = [{id: "special/cible", nom: "Site sensible à défendre", icone: "site"}, {id: "special/centre", nom: "Centre C2 (CDC)", icone: "c2"}];
+const SPECIAUX = [{id: "special/cible", nom: "vue.palette.site_sensible", icone: "site"}, {id: "special/centre", nom: "vue.palette.centre_c2", icone: "c2"}];
 
 /**
  * Rendre la palette : pour chaque famille, ses éléments déposables {id, nom, pays, icone}, lus dans l'index du
@@ -40,9 +41,10 @@ const SPECIAUX = [{id: "special/cible", nom: "Site sensible à défendre", icone
 export function palette(index, pays = "") {
   const garde = (u) => !pays || !u.pays || u.pays === pays;
   const ordre = (a, b) => (a.pays ?? "").localeCompare(b.pays ?? "") || a.nom.localeCompare(b.nom);
+  // Libellés, aides et noms des infrastructures sont des clés : traduits ici, dans la langue installée.
   return FAMILLES_PALETTE.map((famille) => ({
-    ...famille,
-    elements: famille.id === "infrastructures" ? SPECIAUX
+    ...famille, libelle: t(famille.libelle), aide: t(famille.aide),
+    elements: famille.id === "infrastructures" ? SPECIAUX.map((e) => ({...e, nom: t(e.nom)}))
       : index.filter((u) => !u.base && sans_prive(u.id).startsWith(famille.prefixe) && garde(u)).sort(ordre).map(({id, nom, pays: p = null, icone = null}) => ({id, nom, pays: p, icone})),
   })).filter((famille) => famille.elements.length);
 }
@@ -140,7 +142,7 @@ function refus_portee(monde, de, vers, unite) {
   const distance = inverse(a, b).distance;
   const portee = portee_liaison(unite, unite.hauteur_antenne, unite.hauteur_antenne);
   if (distance <= portee) return null;
-  return `${unite.nom} porte ${Math.round(portee / 1000)} km ; ${libelle_noeud(monde, de)} et ${libelle_noeud(monde, vers)} sont à ${Math.round(distance / 1000)} km. Choisissez un moyen de plus longue portée, ou passez par un relais.`;
+  return t("vue.palette.hors_portee", {moyen: unite.nom, portee: Math.round(portee / 1000), de: libelle_noeud(monde, de), vers: libelle_noeud(monde, vers), distance: Math.round(distance / 1000)});
 }
 
 /**
@@ -149,7 +151,7 @@ function refus_portee(monde, de, vers, unite) {
  * sont complétés. Le relief n'est pas regardé ici : la simulation marque la liaison masquée.
  */
 export function preparer_liaison(monde, brut, fichiers, de, vers, moyen) {
-  if (de === vers) return {refus: "C'est la même unité : cliquez l'autre extrémité de la liaison."};
+  if (de === vers) return {refus: t("vue.palette.meme_unite")};
   // Fichier du moyen encore en chargement : la portée reste vérifiée par la simulation, qui marquera « hors portée ».
   const unite = moyen in fichiers ? unite_si(moyen, fichiers) : null;
   const refus = unite && refus_portee(monde, de, vers, unite);

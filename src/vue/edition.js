@@ -1,5 +1,6 @@
 // Logique de l'éditeur, sans DOM : chaque geste devient des modifications par chemin du scénario, comme un curseur.
 // L'annulation, l'export, les préréglages et le rejeu marchent donc d'office (MODELE § 12). Pur, testé.
+import {t} from "../i18n.js";
 import {depuis_ecef, direct, geo_deg, inverse, vers_degres, vers_ecef} from "../moteur/geodesie.js";
 import {positions_radars} from "../moteur/radars.js";
 import {liaisons_par_defaut, position_noeud} from "./reseau_vue.js";
@@ -331,11 +332,11 @@ export function elements_superposes(elements, versEcran, point, rayonPx = 10) {
 /** Rendre le nom affiché de `element`, celui de sa fiche. */
 export function libelle_element(monde, element) {
   const rang = element.indice + 1;
-  if (element.type === "conduite") return "CDC principal";
-  if (element.type === "centre") return monde.scenario.reseau.centres[element.indice]?.nom ?? `Centre ${rang}`;
-  if (element.type === "avion") return `Avion ${element.indice} (${monde.avions[element.indice]?.groupe?.nom ?? "groupe inconnu"})`;
-  const prefixes = {radar: "Radar R", batterie: "Batterie B", cible: "Site C", passage: "Point de passage ", zone: "Zone "};
-  return prefixes[element.type] ? `${prefixes[element.type]}${rang}` : "Liaison";
+  if (element.type === "conduite") return t("vue.fiche.cdc_principal");
+  if (element.type === "centre") return monde.scenario.reseau.centres[element.indice]?.nom ?? t("vue.element.centre", {n: rang});
+  if (element.type === "avion") return t("vue.element.avion", {n: element.indice, groupe: monde.avions[element.indice]?.groupe?.nom ?? t("vue.element.groupe_inconnu")});
+  const noms = {radar: "vue.fiche.radar", batterie: "vue.fiche.batterie", cible: "vue.fiche.site", passage: "vue.element.passage", zone: "vue.element.zone"};
+  return noms[element.type] ? t(noms[element.type], {n: rang}) : t("vue.fiche.liaison");
 }
 
 /**

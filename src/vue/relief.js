@@ -1,6 +1,7 @@
 // Altitudes du relief lues dans les tuiles « terrarium » déclarées sous cartes/relief/ (MODELE § 12.6).
 // Le calcul (tuile, pixel, décodage, échantillonnage d'un chemin) est pur et testé ; seul le chargement des images
 // dépend du navigateur.
+import {t} from "../i18n.js";
 import {direct, inverse, vers_degres} from "../moteur/geodesie.js";
 import {decoder_png} from "./png.js";
 
@@ -73,7 +74,7 @@ export async function altitudes_relief(echantillons, source) {
       return altitude_terrarium(donnees[i], donnees[i + 1], donnees[i + 2]);
     }));
   } catch (erreur) {
-    console.warn(`Relief indisponible pour le profil : ${erreur.message}`);
+    console.warn(t("vue.journal_console.relief", {erreur: erreur.message}));
     return null;
   }
 }

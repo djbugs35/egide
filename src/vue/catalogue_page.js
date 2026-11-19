@@ -1,5 +1,6 @@
 // Page catalogue.html : index cherchable des unités et des algorithmes publics, et leurs fiches (fiches.js) ; import
 // du catalogue privé (catalogue_prive.js), fusionné au public ou à sa place.
+import {t} from "../i18n.js";
 import {charger_langue, traduire_page} from "./langue.js";
 import {charger_algos} from "../moteur/algos.js";
 import {charger_unites, unite_brute} from "../moteur/catalogue.js";
@@ -29,9 +30,9 @@ function filtrer(texte) {
 }
 
 const ETATS_PRIVE = {
-  public: () => "Catalogue public seul.",
-  fusion: (n) => `${n} unités privées ajoutées au catalogue public.`,
-  remplacement: (n) => `${n} unités privées, à la place des unités publiques de leurs dossiers.`,
+  public: () => t("vue.catalogue.public"),
+  fusion: (n) => t("vue.catalogue.fusion", {n}),
+  remplacement: (n) => t("vue.catalogue.remplacement", {n}),
 };
 
 /** Brancher le choix du catalogue privé : retenu dans le navigateur, il recharge la page (et vaut pour la simulation). */
@@ -43,7 +44,7 @@ function brancher_mode_prive(mode, privees, erreur) {
   etat.classList.toggle("erreur", Boolean(erreur));
   document.querySelectorAll("[name='mode_prive']").forEach((radio) => radio.addEventListener("change", () => {
     if (ecrire_mode(radio.value)) location.reload();
-    else etat.textContent = "Ce navigateur refuse de retenir le choix (stockage local indisponible).";
+    else etat.textContent = t("vue.catalogue.refus_stockage");
   }));
 }
 

@@ -7,6 +7,7 @@ import {horizon_radar} from "../moteur/geometrie.js";
 import {portee_liaison} from "../moteur/reseau.js";
 import {famille_de, hauteur_noeud} from "./deploiement.js";
 import {element_sous} from "./edition.js";
+import {t} from "../i18n.js";
 
 // Au-delà, un moyen est sans limite pratique (satellite, 40 000 km) : un cercle de portée n'apprendrait rien.
 const PORTEE_SANS_LIMITE = 10_000_000;
@@ -62,8 +63,8 @@ export function apercu_depot(id, fichiers, altitudeEssaim) {
   if (!(id in fichiers)) return null;
   const famille = famille_de(id)?.id;
   const unite = unite_si(id, fichiers);
-  if (famille === "capteurs") return {rayon: Math.min(horizon_radar(unite.hauteur_antenne, altitudeEssaim), unite.portee_max), libelle: "portée"};
-  if (famille === "sol") return {rayon: enveloppe_poste(unite, altitudeEssaim), libelle: "bulle"};
+  if (famille === "capteurs") return {rayon: Math.min(horizon_radar(unite.hauteur_antenne, altitudeEssaim), unite.portee_max), libelle: "vue.aide.portee"};
+  if (famille === "sol") return {rayon: enveloppe_poste(unite, altitudeEssaim), libelle: "vue.aide.bulle"};
   return null;
 }
 
@@ -92,27 +93,22 @@ export function regrouper(points, seuilPx = 14) {
   return groupes.filter((g) => g.nombre >= 2).map((g) => ({x: g.sx / g.nombre, y: g.sy / g.nombre, nombre: g.nombre}));
 }
 
+// Consignes par outil : clés de langues/*.json, traduites à l'affichage.
 const CONSIGNES = {
-  selection: "Clic : choisir une unité · glisser une unité : la déplacer · glisser le fond : déplacer la carte · Maj+glisser : cadre de sélection",
-  plan: "Clic : ajouter un point au plan de vol · clic droit : terminer",
-  zone: "Clic : ajouter un sommet · double-clic ou Entrée : fermer la zone · Échap : abandonner",
-  mesure: "Glisser : mesurer distance et cap",
-  gomme: "Clic sur une unité : l'effacer · clic droit : terminer",
-  theatre: "Cliquez le futur centre du théâtre · clic droit : abandonner",
-  cible: "Clic : ajouter un site à défendre · clic droit : terminer",
-  radar: "Clic : ajouter un radar · clic droit : terminer",
-  centre: "Clic : ajouter un centre C2 · clic droit : terminer",
+  selection: "vue.consigne.selection", plan: "vue.consigne.plan", zone: "vue.consigne.zone", mesure: "vue.consigne.mesure",
+  gomme: "vue.consigne.gomme", theatre: "vue.consigne.theatre", cible: "vue.consigne.cible", radar: "vue.consigne.radar",
+  centre: "vue.consigne.centre",
 };
 
 /** Rendre la consigne de l'outil en cours, en une ligne ; `etat` : {outil, mode, nom_depot, efface, liaison, nom_moyen, origine, sommets, choisis}. */
-export function consigne_outil({outil, mode, nom_depot, efface, liaison, nom_moyen = "Liaison", origine = "", sommets = 0, choisis = 0}) {
-  if (mode === "ordres") return choisis ? `${choisis} unité${choisis > 1 ? "s" : ""} : clic droit pour envoyer · Suppr pour mettre hors service` : "Cliquez ou encadrez des avions, puis clic droit pour les envoyer";
-  if (outil === "depot") return efface ? "Clic sur une unité : l'effacer" : `${nom_depot} : clic pour poser · glisser une unité : la déplacer · glisser le fond : déplacer la carte · clic droit pour terminer`;
+export function consigne_outil({outil, mode, nom_depot, efface, liaison, nom_moyen = t("vue.fiche.liaison"), origine = "", sommets = 0, choisis = 0}) {
+  if (mode === "ordres") return choisis ? t("vue.consigne.ordres_choisis", {n: choisis}) : t("vue.consigne.ordres");
+  if (outil === "depot") return efface ? t("vue.consigne.effacer") : t("vue.consigne.depot", {nom: nom_depot});
   if (outil === "liaison") {
     const moyen = nom_moyen.replace(/ \(notionnelle?\)$/, "");
-    return liaison ? `${moyen} depuis ${origine} : cliquez la seconde unité · Échap : abandonner` : `${moyen} : cliquez la première unité à relier · le moyen se change à côté du bouton Liaison`;
+    return liaison ? t("vue.consigne.liaison_seconde", {moyen, origine}) : t("vue.consigne.liaison_premiere", {moyen});
   }
-  if (outil === "zone" && sommets) return `${sommets} sommet${sommets > 1 ? "s" : ""} · ${CONSIGNES.zone}`;
-  if (outil === "selection" && choisis) return `${choisis} unité${choisis > 1 ? "s" : ""} sélectionnée${choisis > 1 ? "s" : ""} · Suppr : effacer · ${CONSIGNES.selection}`;
-  return CONSIGNES[outil] ?? "";
+  if (outil === "zone" && sommets) return `${t("vue.consigne.sommets", {n: sommets})} · ${t(CONSIGNES.zone)}`;
+  if (outil === "selection" && choisis) return `${t("vue.consigne.choisis", {n: choisis})} · ${t(CONSIGNES.selection)}`;
+  return CONSIGNES[outil] ? t(CONSIGNES[outil]) : "";
 }

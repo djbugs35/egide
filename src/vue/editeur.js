@@ -13,6 +13,7 @@ import {element_visible} from "./calques.js";
 import {famille_de, modifications_depot, preparer_liaison} from "./deploiement.js";
 import {format_duree} from "./format.js";
 import {libelle_noeud} from "./reseau_vue.js";
+import {t} from "../i18n.js";
 
 // Pas d'une flèche du clavier, en pixels d'écran.
 const PAS_FLECHE = 90;
@@ -105,7 +106,7 @@ export function creer_editeur(env) {
   function deposer(id, p) {
     const sous = element_sous(elements(), vers_ecran, p, RAYON_TOUCHE);
     const modifications = modifications_depot(env.monde(), env.brut(), id, pose(p), {quantite: env.quantite(), sous});
-    if (!Object.keys(modifications).length) return env.signaler(`${env.nom(id)} : à déposer sur une unité déjà placée (et pas deux fois le même moyen).`);
+    if (!Object.keys(modifications).length) return env.signaler(t("vue.editeur.deposer_sur_unite", {nom: env.nom(id)}));
     env.signaler("");
     env.appliquer(modifications);
   }
@@ -121,10 +122,10 @@ export function creer_editeur(env) {
 
   /** Effacer `touche`, ou dire pourquoi c'est impossible. */
   function effacer_element(touche) {
-    if (!touche) return env.signaler("Rien à effacer ici : visez une unité.");
-    if (touche.type === "conduite") return env.signaler("Le CDC principal ne s'efface pas : déplacez-le.");
+    if (!touche) return env.signaler(t("vue.editeur.rien_a_effacer"));
+    if (touche.type === "conduite") return env.signaler(t("vue.editeur.cdc_ineffacable"));
     const modifications = modifications_suppression(env.monde(), env.brut(), [touche.cle]);
-    if (!Object.keys(modifications).length) return env.signaler("Cette unité ne peut pas être effacée (il faut au moins un site à défendre).");
+    if (!Object.keys(modifications).length) return env.signaler(t("vue.editeur.dernier_site"));
     env.signaler("");
     etat.selection = etat.selection.filter((cle) => cle !== touche.cle);
     env.appliquer(modifications);
@@ -141,7 +142,7 @@ export function creer_editeur(env) {
   function relier_element(touche) {
     const noeud = touche && noeud_element(env.monde(), touche);
     // Un clic à côté ne perd pas la première extrémité : on le dit, et l'utilisateur vise de nouveau.
-    if (!noeud) return env.signaler("Aucune unité à cet endroit : visez un radar, un centre, un site, une batterie ou un avion.");
+    if (!noeud) return env.signaler(t("vue.editeur.aucune_unite"));
     env.signaler("");
     if (!etat.liaison) {
       env.preparer_unite(env.moyen());
@@ -364,7 +365,7 @@ export function creer_editeur(env) {
       etat.selection = [];
       // Le message suit le rechargement, qui efface l'ancien.
       Promise.resolve(env.appliquer(modifications_tout_effacer(env.brut())))
-        .then(() => env.signaler("Carte vidée : il reste le CDC principal et un site à défendre. Ctrl+Z (Annuler) revient en arrière."));
+        .then(() => env.signaler(t("vue.editeur.carte_videe")));
     }
     if (bouton?.dataset.action === "mettre_hors_service") {
       env.appliquer(modifications_panne(env.brut(), env.monde(), etat.selection));
@@ -482,7 +483,7 @@ export function creer_editeur(env) {
     const apercu = id && !en_effacement() ? apercu_depot(id, env.fichiers(), monde.scenario.rouge.altitude) : null;
     if (apercu) {
       dessiner_disque(ctx, camera, pose(etat.curseur), apercu.rayon, AJOUT);
-      etiquette(ctx, `${apercu.libelle} ${texte_distance(apercu.rayon)}`, etat.curseur.x + 12, etat.curseur.y + 12, AJOUT);
+      etiquette(ctx, `${t(apercu.libelle)} ${texte_distance(apercu.rayon)}`, etat.curseur.x + 12, etat.curseur.y + 12, AJOUT);
     }
     if (!etat.liaison) return;
     const portee = apercu_liaison(monde, etat.liaison.noeud, env.moyen(), env.fichiers());
@@ -490,7 +491,7 @@ export function creer_editeur(env) {
     const distance = mesure(etat.liaison.geo, geo_depuis_ecran(camera, etat.curseur)).distance;
     const couleur = distance > portee ? EFFACEMENT : AJOUT;
     dessiner_disque(ctx, camera, etat.liaison.geo, portee, couleur);
-    etiquette(ctx, `${texte_distance(distance)} / portée ${texte_distance(portee)}`, etat.curseur.x + 12, etat.curseur.y + 12, couleur);
+    etiquette(ctx, t("vue.editeur.distance_portee", {distance: texte_distance(distance), portee: texte_distance(portee)}), etat.curseur.x + 12, etat.curseur.y + 12, couleur);
   }
 
   function dessiner_disque(ctx, camera, centre, rayon, couleur) {

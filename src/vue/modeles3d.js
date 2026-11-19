@@ -1,5 +1,6 @@
 // Modèles 3D détaillés de la vue Observer (MODELE § 23) : pour une unité dont l'icône a un .glb (modeles/ ou prive/modeles/), le
 // modèle remplace le pictogramme tant que la caméra est proche. Sans fichier, rien ne change : les .glb ne sont pas versionnés.
+import {t} from "../i18n.js";
 import {chemin_modele} from "../moteur/catalogue.js";
 
 // Une vue depuis un poste montre des unités jusqu'à l'horizon du théâtre ; plus loin, en vue d'ensemble, le pictogramme se lit mieux.
@@ -66,7 +67,7 @@ export function creer_modeles3d(Cesium, viewer, disponibles) {
         pool.set(id, primitives.add(modele));
         viewer.scene.requestRender();
       })
-      .catch((erreur) => console.warn(`Modèle ${icone} illisible : ${erreur.message}`));
+      .catch((erreur) => console.warn(t("vue.journal_console.modele", {icone, erreur: erreur.message})));
   }
 
   return {

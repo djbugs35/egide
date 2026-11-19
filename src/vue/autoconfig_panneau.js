@@ -1,19 +1,20 @@
 // Panneau d'auto-configuration (MODELE § 20) : menaces, moyens, zone (pays ou zone dessinée), puis recherche de la
 // répartition dans un Worker, résultat comparé à la répartition uniforme, à appliquer ou ranger en bibliothèque.
 import {format_decimal, format_entier} from "./format.js";
+import {t} from "../i18n.js";
 
-const TACTIQUES = [["fourmi", "Fourmi"], ["direct", "Groupes directs"], ["disperse", "Dispersés"]];
+const TACTIQUES = [["fourmi", "vue.autoconfig.fourmi"], ["direct", "vue.autoconfig.direct"], ["disperse", "vue.autoconfig.disperse"]];
 const MOYENS = [
-  ["radars", "Radars", 0], ["centres", "Centres (CDC)", 1], ["cibles", "Cibles à défendre", 1], ["postes", "Postes sol", 0],
-  ["munitions_sol", "Munitions sol", 0], ["avions_0", "Avions IR", 0], ["avions_1", "Avions laser", 0], ["avions_2", "Drones armés", 0],
-  ["avions_3", "Intercepteurs", 0], ["avions_4", "Brouilleurs", 0],
+  ["radars", "vue.autoconfig.radars", 0], ["centres", "vue.autoconfig.centres", 1], ["cibles", "vue.autoconfig.cibles", 1], ["postes", "vue.autoconfig.postes", 0],
+  ["munitions_sol", "vue.autoconfig.munitions_sol", 0], ["avions_0", "vue.autoconfig.avions_ir", 0], ["avions_1", "vue.autoconfig.avions_laser", 0], ["avions_2", "vue.autoconfig.drones_armes", 0],
+  ["avions_3", "vue.autoconfig.intercepteurs", 0], ["avions_4", "vue.autoconfig.brouilleurs", 0],
 ];
 
 /** Rendre la description lisible d'une stratégie de répartition. */
 export function decrire_strategie(s) {
-  if (s.uniforme) return "uniforme : orbites tirées au hasard sur le disque du théâtre";
+  if (s.uniforme) return t("vue.autoconfig.uniforme");
   const pc = (x) => `${Math.round(100 * x)} %`;
-  return `avions à ${pc(s.avions)} du chemin du centre vers la frontière, drones défensifs à ${pc(s.drones * 0.5)} du rayon autour des cibles, radars ${s.radars ? `poussés de ${pc(s.radars)} de leur portée au-delà de la frontière` : "sur la frontière"}`;
+  return t("vue.autoconfig.strategie", {avions: pc(s.avions), drones: pc(s.drones * 0.5), radars: s.radars ? t("vue.autoconfig.radars_pousses", {pc: pc(s.radars)}) : t("vue.autoconfig.radars_frontiere")});
 }
 
 /** Rendre les valeurs par défaut des moyens, lues dans le scénario affiché. */
@@ -34,13 +35,13 @@ export function brancher_autoconfig(racine, ctx) {
   let resultat = null;
   let travailleur = null;
   $("[data-zone='menaces']").innerHTML = TACTIQUES.map(([id, nom], i) =>
-    `<label class="ligne-menace"><input type="checkbox" name="menace" value="${id}" ${i < 2 ? "checked" : ""}>${nom}<input type="number" name="nombre_${id}" min="10" step="10" value="1000" aria-label="Drones (${nom})"></label>`).join("");
-  $("[data-zone='moyens']").innerHTML = MOYENS.map(([id, nom, min]) => `<label>${nom}<input type="number" name="moyen_${id}" min="${min}" step="1"></label>`).join("");
+    `<label class="ligne-menace"><input type="checkbox" name="menace" value="${id}" ${i < 2 ? "checked" : ""}>${t(nom)}<input type="number" name="nombre_${id}" min="10" step="10" value="1000" aria-label="${t("vue.autoconfig.drones_de", {tactique: t(nom)})}"></label>`).join("");
+  $("[data-zone='moyens']").innerHTML = MOYENS.map(([id, nom, min]) => `<label>${t(nom)}<input type="number" name="moyen_${id}" min="${min}" step="1"></label>`).join("");
   const remplir = () => {
     const brut = ctx.brut();
     for (const [id, valeur] of Object.entries(moyens_courants(brut))) $(`[name='moyen_${id}']`).value = valeur;
     const zones = brut.theatre.zones ?? [];
-    $("[name='zone_dessinee']").innerHTML = zones.length ? zones.map((z, i) => `<option value="${i}">${z.nom}</option>`).join("") : `<option value="">Aucune : outil Zone de l'éditeur</option>`;
+    $("[name='zone_dessinee']").innerHTML = zones.length ? zones.map((z, i) => `<option value="${i}">${z.nom}</option>`).join("") : `<option value="">${t("vue.autoconfig.aucune_zone")}</option>`;
     if (racine.querySelector("[name='source_zone']:checked").value === "pays") charger_pays();
   };
   const charger_pays = async () => {
@@ -49,7 +50,7 @@ export function brancher_autoconfig(racine, ctx) {
       pays = (await ctx.lire_json("cartes/frontieres/pays.json")).pays;
       $("#liste-pays").innerHTML = pays.map((p) => `<option value="${p.nom}">${p.iso}</option>`).join("");
     } catch {
-      $("[data-champ='autoconfig_etat']").textContent = "Frontières absentes : lancer node outils/frontieres.js, ou utiliser une zone dessinée.";
+      $("[data-champ='autoconfig_etat']").textContent = t("vue.autoconfig.sans_frontieres");
     }
   };
   racine.querySelectorAll("[name='source_zone']").forEach((r) => r.addEventListener("change", () => r.value === "pays" && charger_pays()));
@@ -57,7 +58,7 @@ export function brancher_autoconfig(racine, ctx) {
   $("[data-action='autoconfig_appliquer']").addEventListener("click", () => resultat && ctx.appliquer(resultat.brut));
   $("[data-action='autoconfig_enregistrer']").addEventListener("click", () => resultat && ctx.enregistrer(resultat.brut.nom, resultat.brut));
   $("[data-action='autoconfig_exporter']").addEventListener("click", () => resultat && ctx.exporter(resultat.brut));
-  $("[data-action='autoconfig_arreter']").addEventListener("click", () => arreter("Recherche interrompue."));
+  $("[data-action='autoconfig_arreter']").addEventListener("click", () => arreter(t("vue.autoconfig.interrompue")));
   const bouton_rail = document.querySelector(".rail [data-panneau='autoconfig']");
   let debut = 0;
 
@@ -66,14 +67,14 @@ export function brancher_autoconfig(racine, ctx) {
     const barre = $("[data-champ='autoconfig_barre']");
     racine.querySelector(".progression-autoconfig").hidden = false;
     bouton_rail?.classList.add("en-cours");
-    if (!total) return void (barre.removeAttribute("value"), ($("[data-champ='autoconfig_reste']").textContent = "préparation…"));
+    if (!total) return void (barre.removeAttribute("value"), ($("[data-champ='autoconfig_reste']").textContent = t("vue.autoconfig.preparation")));
     barre.max = total;
     barre.value = fait;
     bouton_rail?.style.setProperty("--avancement", String(fait / total));
     const ecoule = (performance.now() - debut) / 1000;
     const reste = fait > 0 ? (ecoule * (total - fait)) / fait : null;
-    $("[data-champ='autoconfig_reste']").textContent = `${Math.floor((100 * fait) / total)} %${reste === null ? "" : ` · reste ${duree_lisible(reste)}`}`;
-    bouton_rail?.setAttribute("title", `Auto-configuration : ${Math.floor((100 * fait) / total)} %`);
+    $("[data-champ='autoconfig_reste']").textContent = `${Math.floor((100 * fait) / total)} %${reste === null ? "" : ` · ${t("vue.autoconfig.reste", {duree: duree_lisible(reste)})}`}`;
+    bouton_rail?.setAttribute("title", t("vue.autoconfig.titre_avancement", {pc: Math.floor((100 * fait) / total)}));
   }
 
   /** Arrêter le Worker et ranger la barre ; `message` remplace l'état affiché s'il est donné. */
@@ -82,18 +83,18 @@ export function brancher_autoconfig(racine, ctx) {
     travailleur = null;
     racine.querySelector(".progression-autoconfig").hidden = true;
     bouton_rail?.classList.remove("en-cours");
-    bouton_rail?.setAttribute("title", "Auto-configuration : menaces, moyens, zone, répartition optimisée (6)");
+    bouton_rail?.setAttribute("title", t("page.rail.autoconfig.title"));
     if (message) $("[data-champ='autoconfig_etat']").textContent = message;
   }
 
   /** Traiter un message du Worker. */
   function recevoir(data) {
     const etat = $("[data-champ='autoconfig_etat']");
-    if (data.type === "erreur") arreter(`Échec : ${data.message}`);
+    if (data.type === "erreur") arreter(t("vue.autoconfig.echec", {erreur: data.message}));
     if (data.type === "avancement") avancer(data.fait, data.total);
     if (data.type === "essai") {
-      etat.textContent = `Essai ${data.fait} sur ${data.total}…`;
-      $("[data-zone='essais']").insertAdjacentHTML("beforeend", `<li><b>${format_decimal(data.essai.frappes)}</b> frappes — ${decrire_strategie(data.essai.strategie)}</li>`);
+      etat.textContent = t("vue.autoconfig.essai", {n: data.fait, total: data.total});
+      $("[data-zone='essais']").insertAdjacentHTML("beforeend", `<li>${t("vue.autoconfig.ligne_essai", {frappes: format_decimal(data.essai.frappes), strategie: decrire_strategie(data.essai.strategie)})}</li>`);
     }
     if (data.type === "fin") {
       arreter();
@@ -117,9 +118,9 @@ export function brancher_autoconfig(racine, ctx) {
     if (racine.querySelector("[name='source_zone']:checked").value === "pays") await charger_pays();
     const zone = zone_demandee();
     const etat = $("[data-champ='autoconfig_etat']");
-    if (!zone) return void (etat.textContent = "Choisissez une zone : un pays, ou une zone dessinée dans l'éditeur.");
+    if (!zone) return void (etat.textContent = t("vue.autoconfig.choisir_zone"));
     const menaces = [...racine.querySelectorAll("[name='menace']:checked")].map((c) => ({tactique: c.value, nombre: Number($(`[name='nombre_${c.value}']`).value)}));
-    if (!menaces.length) return void (etat.textContent = "Cochez au moins une menace.");
+    if (!menaces.length) return void (etat.textContent = t("vue.autoconfig.choisir_menace"));
     const v = (id) => Number($(`[name='moyen_${id}']`).value);
     const demande = {zone, menaces, moyens: {radars: v("radars"), centres: v("centres"), cibles: v("cibles"), postes: v("postes"),
       munitions_sol: v("munitions_sol"), avions: [0, 1, 2, 3, 4].map((i) => v(`avions_${i}`))}};
@@ -128,7 +129,7 @@ export function brancher_autoconfig(racine, ctx) {
     racine.querySelector(".resultat-autoconfig").hidden = true;
     const liste = $("[data-zone='essais']");
     liste.innerHTML = "";
-    etat.textContent = "Recherche en cours…";
+    etat.textContent = t("vue.autoconfig.en_cours");
     debut = performance.now();
     avancer(0, 0);
     travailleur = new Worker(new URL("./autoconfig_travailleur.js", import.meta.url), {type: "module"});
@@ -140,11 +141,10 @@ export function brancher_autoconfig(racine, ctx) {
   function montrer_resultat(r) {
     resultat = r;
     const d = r.comparaison.difference;
-    $("[data-champ='autoconfig_etat']").textContent = "Terminé.";
-    $("[data-zone='resultat']").innerHTML = `<p><b>${format_decimal(r.meilleur)}</b> frappes en moyenne avec la répartition retenue, contre
-      <b>${format_decimal(r.uniforme)}</b> en répartition uniforme : écart ${format_decimal(d.moyenne)} ± ${format_decimal(d.ic95)} (IC 95 %, ${format_entier(d.effectif)} raids appariés),
-      ${r.comparaison.verdict === "indiscernable" ? "pas encore significatif : augmentez les raids par essai" : "significatif"}.</p>
-      <p>Retenue : ${decrire_strategie(r.strategie)}.</p>`;
+    $("[data-champ='autoconfig_etat']").textContent = t("vue.autoconfig.termine");
+    $("[data-zone='resultat']").innerHTML = `<p>${t("vue.autoconfig.resultat", {meilleur: format_decimal(r.meilleur), uniforme: format_decimal(r.uniforme), ecart: format_decimal(d.moyenne), ic: format_decimal(d.ic95), n: format_entier(d.effectif),
+      verdict: r.comparaison.verdict === "indiscernable" ? t("vue.autoconfig.indiscernable") : t("vue.autoconfig.significatif")})}</p>
+      <p>${t("vue.autoconfig.retenue", {strategie: decrire_strategie(r.strategie)})}</p>`;
     racine.querySelector(".resultat-autoconfig").hidden = false;
   }  return {remplir};
 
