@@ -1,6 +1,6 @@
 // Mise en scène des dégâts (MODELE § 30) : niveau de dégâts d'une cible et panache de fumée animé. Pur, testé.
 
-export const LIBELLES_DEGATS = ["intacte", "touchée", "endommagée", "en flammes"];
+export const LIBELLES_DEGATS = ["vue.degats.intacte", "vue.degats.touchee", "vue.degats.endommagee", "vue.degats.en_flammes"];
 const SEUILS = [0.2, 0.6];
 // Une bouffée met 3 s à monter et se dissiper ; décalées entre elles, elles font une colonne continue.
 const PERIODE_MS = 3000;

@@ -1,11 +1,13 @@
 // Débriefing de fin de raid (MODELE § 28) : note, causes des frappes, tireurs, capteurs, chronologie et points faibles,
 // lus dans l'état final du monde et son journal. Pur : ni DOM ni horloge, testé sous Node.
 
+import {t} from "../i18n.js";
+
 export const CAUSES = {
-  non_detectee: "non détectée",
-  inconnue: "détectée, inconnue de la conduite",
-  jamais_engagee: "connue, jamais engagée",
-  manquee: "engagée, manquée",
+  non_detectee: "vue.debrief.non_detectee",
+  inconnue: "vue.debrief.inconnue",
+  jamais_engagee: "vue.debrief.jamais_engagee",
+  manquee: "vue.debrief.manquee",
 };
 const BAREME = [["A", 0.95], ["B", 0.85], ["C", 0.7], ["D", 0.5]];
 const TRANCHE_CHRONOLOGIE = 300;
@@ -97,26 +99,26 @@ function analyser_temps(monde) {
   return {radars, chronologie: tranches.map((frappes, i) => ({debut: i * TRANCHE_CHRONOLOGIE, frappes}))};
 }
 
-const pourcent = (x) => `${Math.round(100 * x)} %`;
-const minutes = (s) => `${Math.floor(s / 60)} min`;
+const pourcent = (x) => t("vue.commun.pourcent", {p: Math.round(100 * x)});
+const minutes = (s) => t("vue.commun.minutes", {n: Math.floor(s / 60)});
 
 /** Rendre les constats chiffrés du § 28.4, au plus cinq. */
 function points_faibles(resume) {
   const {causes, cibles, tireurs, radars, frappes, munitions_air} = resume;
   const constats = [];
   const principale = dominante(causes);
-  if (frappes && principale) constats.push(`${pourcent(causes[principale] / frappes)} des frappes : ${CAUSES[principale]}.`);
+  if (frappes && principale) constats.push(t("vue.debrief.c_principale", {p: pourcent(causes[principale] / frappes), cause: t(CAUSES[principale])}));
   const pire = [...cibles].sort((a, b) => b.frappes - a.frappes)[0];
-  if (pire?.frappes) constats.push(`${pire.nom} est la cible la plus frappée (${pire.frappes}), surtout : ${CAUSES[pire.cause]}.`);
+  if (pire?.frappes) constats.push(t("vue.debrief.c_pire", {nom: pire.nom, n: pire.frappes, cause: t(CAUSES[pire.cause])}));
   const epuises = tireurs.filter((t) => t.epuises > 0);
   if (epuises.length) {
     const premier = Math.min(...epuises.map((t) => t.premier_epuisement));
-    constats.push(`${epuises.reduce((s, t) => s + t.epuises, 0)} postes épuisés, le premier à ${minutes(premier)}.`);
+    constats.push(t("vue.debrief.c_epuises", {n: epuises.reduce((s, x) => s + x.epuises, 0), t: minutes(premier)}));
   }
   const muets = radars.filter((r) => r.detections === 0);
-  if (muets.length) constats.push(`${muets.length} radar${muets.length > 1 ? "s" : ""} sans aucune détection : ${muets.map((r) => `R${r.radar + 1}`).join(", ")}.`);
+  if (muets.length) constats.push(t("vue.debrief.c_muets", {n: muets.length, liste: muets.map((r) => `R${r.radar + 1}`).join(", ")}));
   if (frappes && munitions_air.initiales && munitions_air.restantes / munitions_air.initiales > 0.5) {
-    constats.push(`Aviation sous-employée : ${pourcent(munitions_air.restantes / munitions_air.initiales)} des munitions air restent.`);
+    constats.push(t("vue.debrief.c_aviation", {p: pourcent(munitions_air.restantes / munitions_air.initiales)}));
   }
   return constats.slice(0, POINTS_FAIBLES_MAX);
 }

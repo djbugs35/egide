@@ -286,7 +286,7 @@ function rafraichir_journal(maintenant, forcer = false) {
 
 function brancher_journal() {
   const filtres = $("[data-zone='filtres_journal']");
-  filtres.innerHTML = Object.entries(FAMILLES).map(([id, libelle]) => `<label><input type="checkbox" value="${id}" checked>${libelle}</label>`).join("");
+  filtres.innerHTML = Object.entries(FAMILLES).map(([id, libelle]) => `<label><input type="checkbox" value="${id}" checked>${t(libelle)}</label>`).join("");
   filtres.addEventListener("change", (e) => {
     if (e.target.checked) etat.familles.add(e.target.value);
     else etat.familles.delete(e.target.value);

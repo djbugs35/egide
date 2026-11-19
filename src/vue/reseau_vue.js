@@ -6,6 +6,7 @@ import {echapper_html, format_decimal} from "./format.js";
 import {inverse} from "../moteur/geodesie.js";
 import {portee_liaison} from "../moteur/reseau.js";
 import {positions_radars} from "../moteur/radars.js";
+import {region, t} from "../i18n.js";
 
 /** Tracer une croix rouge sur chaque élément hors service : radars en panne, CDC en panne ou détruit. */
 export function dessiner_pannes(ctx, camera, monde) {
@@ -93,13 +94,13 @@ export function position_noeud(monde, noeud) {
 
 /** Rendre le nom lisible d'un nœud : « CDC », « CDC Sud », « R3 », « postes de C4 », « avions IR »… */
 export function libelle_noeud(monde, noeud) {
-  if (noeud === "conduite") return "CDC";
+  if (noeud === "conduite") return t("vue.commun.cdc");
   const [famille, n] = noeud.split(":");
   if (famille === "centre") return monde.scenario.reseau.centres[Number(n)]?.nom ?? noeud;
   if (famille === "radar") return `R${Number(n) + 1}`;
-  if (famille === "sol") return monde.cibles[Number(n)]?.conduite ? "postes du CDC" : `postes de C${Number(n) + 1}`;
+  if (famille === "sol") return monde.cibles[Number(n)]?.conduite ? t("vue.reseau.postes_cdc") : t("vue.reseau.postes_cible", {n: Number(n) + 1});
   const groupe = monde.scenario.avions[Number(n)];
-  return groupe ? `avions ${groupe.nom}` : noeud;
+  return groupe ? t("vue.reseau.avions", {nom: groupe.nom}) : noeud;
 }
 
 /**
@@ -118,7 +119,9 @@ export function liaisons_par_defaut(monde) {
 }
 
 /** Ordre et titre des familles de moyens dans la liste des connexions. */
-const FAMILLES_LIENS = [["filaire", "Filaire"], ["radio", "Radio"], ["satellite", "Satellite"], ["optique", "Optique"]];
+const FAMILLES_LIENS = [["filaire", "vue.reseau.filaire"], ["radio", "vue.reseau.radio"], ["satellite", "vue.reseau.satellite"], ["optique", "vue.reseau.optique"]];
+/** Clé du mot qui dit l'état d'une liaison. */
+const ETATS_LIEN = {active: "vue.reseau.active", panne: "vue.reseau.en_panne", masquee: "vue.reseau.masquee", hors_portee: "vue.insp.hors_portee"};
 /** Au-delà (m), un moyen n'a pas de limite pratique à l'échelle d'un théâtre : on n'affiche ni disque ni chiffre. */
 const PORTEE_SANS_LIMITE = 2_000_000;
 
@@ -135,8 +138,8 @@ function lien_vecteurs(monde, l) {
 /** Rendre le mot qui dit pourquoi la liaison `l` porte ou non. */
 function etat_lien(l) {
   if (l.active) return "active";
-  if (l.en_panne) return "en panne";
-  return l.masquee ? "masquée par le relief" : "hors portée";
+  if (l.en_panne) return "panne";
+  return l.masquee ? "masquee" : "hors_portee";
 }
 
 /**
@@ -150,23 +153,23 @@ export function connexions_noeud(monde, noeud) {
   const liens = [...monde.reseau.fixes, ...vecteurs].filter((l) => l && l.distance !== null && (l.de === noeud || l.vers === noeud)).map((l) => {
     const autre = l.de === noeud ? l.vers : l.de;
     return {famille: l.moyen.type, noeud: autre, nom: libelle_noeud(monde, autre), moyen: l.moyen.nom, distance: l.distance, portee: l.portee, latence: l.moyen.latence, etat: etat_lien(l), active: l.active};
-  }).sort((x, y) => x.nom.localeCompare(y.nom, "fr", {numeric: true}));
-  return FAMILLES_LIENS.map(([famille, titre]) => ({famille, titre, liens: liens.filter((l) => l.famille === famille)})).filter((f) => f.liens.length);
+  }).sort((x, y) => x.nom.localeCompare(y.nom, region(), {numeric: true}));
+  return FAMILLES_LIENS.map(([famille, titre]) => ({famille, titre: t(titre), liens: liens.filter((l) => l.famille === famille)})).filter((f) => f.liens.length);
 }
 
 /** Rendre le texte chiffré d'une connexion : moyen, distance sur portée, latence, état. */
 function detail_lien(l) {
   const km = (m) => `${Math.round(m / 1000)} km`;
-  const portee = l.portee >= PORTEE_SANS_LIMITE || l.etat === "en panne" ? "" : ` / ${km(l.portee)}`;
-  return `${l.moyen.replace(/ \(notionnelle?\)$/, "")} · ${km(l.distance)}${portee} · ${format_decimal(l.latence)} s · ${l.etat}`;
+  const portee = l.portee >= PORTEE_SANS_LIMITE || l.etat === "panne" ? "" : ` / ${km(l.portee)}`;
+  return `${l.moyen.replace(/ \(notionnelle?\)$/, "")} · ${km(l.distance)}${portee} · ${format_decimal(l.latence)} s · ${t(ETATS_LIEN[l.etat])}`;
 }
 
 /** Rendre le HTML de la liste des connexions du nœud `noeud`, par famille de moyen. */
 export function connexions_html(monde, noeud) {
   const familles = connexions_noeud(monde, noeud);
-  const titre = "<h4>Connexions</h4>";
-  if (!familles) return `${titre}<p class="note">Réseau complet : chacun parle à tous, sans liaison déclarée. Tirer une première liaison (outil Liaison) détaille tout le réseau.</p>`;
-  if (!familles.length) return `${titre}<p class="note"><b>Aucune liaison</b> : cette unité est hors réseau.</p>`;
+  const titre = `<h4>${t("vue.reseau.connexions")}</h4>`;
+  if (!familles) return `${titre}<p class="note">${t("vue.reseau.complet")}</p>`;
+  if (!familles.length) return `${titre}<p class="note">${t("vue.reseau.aucune")}</p>`;
   return titre + familles.map((f) => `<p class="connexions-famille" style="--trait-lien: ${TRAITS[f.famille].couleur}"><i></i>${f.titre} (${f.liens.length})</p>
     <ul class="connexions">${f.liens.map((l) => `<li class="${l.active ? "" : "coupee"}"><b>${echapper_html(l.nom)}</b> <small>${echapper_html(detail_lien(l))}</small></li>`).join("")}</ul>`).join("");
 }
@@ -203,7 +206,7 @@ function dessiner_centres(ctx, camera, monde) {
     ctx.fillStyle = COULEURS.ami;
     ctx.font = "bold 10px system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(c === 0 ? "CDC" : `CDC${c + 1}`, p.x, p.y + 4);
+    ctx.fillText(c === 0 ? t("vue.commun.cdc") : t("vue.reseau.cdc_n", {n: c + 1}), p.x, p.y + 4);
     if (c > 0) {
       ctx.font = "11px system-ui, sans-serif";
       ctx.fillText(centre.nom, p.x, p.y + 7 + 13 * k);
@@ -253,7 +256,7 @@ export function dessiner_reseau(ctx, camera, monde) {
   } else {
     for (const l of reseau.fixes) {
       const [a, b] = [position_noeud(monde, l.de), position_noeud(monde, l.vers)];
-      if (a && b) dessiner_liaison(ctx, camera, a, b, l.moyen.type, l.active, l.active ? `${format_decimal(l.moyen.latence)} s` : "hors portée");
+      if (a && b) dessiner_liaison(ctx, camera, a, b, l.moyen.type, l.active, l.active ? `${format_decimal(l.moyen.latence)} s` : t("vue.insp.hors_portee"));
     }
     dessiner_acces(ctx, camera, monde);
   }

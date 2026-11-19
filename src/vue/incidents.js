@@ -1,34 +1,35 @@
 // Incidents de scénario (MODELE § 29) : leur récit à l'écran et leur tirage au hasard, à graine. Pur, testé sous Node.
 import {creer_hasard} from "../moteur/hasard.js";
+import {t} from "../i18n.js";
 
-export const LIBELLES_CAUSES = {panne: "panne technique", maintenance: "maintenance programmée", meteo: "météo", coupure: "coupure de transmission"};
+export const LIBELLES_CAUSES = {panne: "vue.incident.panne", maintenance: "vue.incident.maintenance", meteo: "vue.incident.meteo", coupure: "vue.incident.coupure"};
 // Décalage de graine : le tirage des incidents ne doit pas rejouer celui du raid, qui part de la même graine.
 const SEL_INCIDENTS = 0x51ced;
 const PAS_ARRONDI = 10;
 
-const minutes = (s) => `${Math.floor(s / 60)} min`;
+const minutes = (s) => t("vue.commun.minutes", {n: Math.floor(s / 60)});
 
 /** Rendre le nom affiché d'un élément du réseau ou d'une batterie. */
 export function nom_element(monde, element) {
   const [genre, rang] = element.split(":");
   const k = Number(rang);
-  if (element === "conduite") return "le CDC";
+  if (element === "conduite") return t("vue.journal.le_cdc");
   if (genre === "radar") return `R${k + 1}`;
-  if (genre === "liaison") return `la liaison ${k + 1}`;
-  if (genre === "centre") return monde.scenario.reseau.centres[k]?.nom ?? `le centre ${k + 1}`;
-  if (genre === "batterie") return monde.scenario.sol.batteries?.[k]?.unite?.nom ? `la batterie ${k + 1} (${monde.scenario.sol.batteries[k].unite.nom})` : `la batterie ${k + 1}`;
+  if (genre === "liaison") return t("vue.incident.liaison", {n: k + 1});
+  if (genre === "centre") return monde.scenario.reseau.centres[k]?.nom ?? t("vue.incident.centre", {n: k + 1});
+  if (genre === "batterie") return monde.scenario.sol.batteries?.[k]?.unite?.nom ? t("vue.incident.batterie_nom", {n: k + 1, nom: monde.scenario.sol.batteries[k].unite.nom}) : t("vue.incident.batterie", {n: k + 1});
   return element;
 }
 
 /** Rendre la phrase d'un évènement `incident` du journal : début ou fin, cause, effet et durée. */
 export function recit_incident(monde, e) {
   const qui = nom_element(monde, e.element);
-  const cause = LIBELLES_CAUSES[e.cause] ?? e.cause;
+  const cause = LIBELLES_CAUSES[e.cause] ? t(LIBELLES_CAUSES[e.cause]) : e.cause;
   const Qui = `${qui[0].toUpperCase()}${qui.slice(1)}`;
-  if (!e.debut) return `${Qui} : fin de ${cause}, de nouveau ${e.portee === null ? "en service" : "à pleine portée"}.`;
-  const effet = e.portee === null ? "hors service" : `portée réduite à ${Math.round(100 * e.portee)} %`;
-  const duree = e.fin === null ? "jusqu'à nouvel ordre" : `jusqu'à ${minutes(e.fin)}`;
-  return `${Qui} : ${cause}, ${effet} ${duree}.`;
+  if (!e.debut) return t(e.portee === null ? "vue.incident.fin_service" : "vue.incident.fin_portee", {qui: Qui, cause});
+  const effet = e.portee === null ? t("vue.infobulle.hors_service") : t("vue.incident.portee_reduite", {p: Math.round(100 * e.portee)});
+  const duree = e.fin === null ? t("vue.incident.nouvel_ordre") : t("vue.incident.jusqu_a", {t: minutes(e.fin)});
+  return t("vue.incident.debut", {qui: Qui, cause, effet, duree});
 }
 
 const arrondi = (s) => Math.round(s / PAS_ARRONDI) * PAS_ARRONDI;

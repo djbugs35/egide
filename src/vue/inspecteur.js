@@ -13,52 +13,48 @@ import {chaine_drone} from "./journal.js";
 import {NOMS_VECTEURS} from "./infobulles.js";
 import {t} from "../i18n.js";
 
-const ETATS = {orbite: "en orbite", ralliement: "en route vers son point", engagement: "au contact d'un drone",
-  poste: "à poste, en attente", retour: "retour vers son orbite"};
+const ETATS = {orbite: "vue.insp.orbite", ralliement: "vue.insp.ralliement", engagement: "vue.insp.engagement",
+  poste: "vue.infobulle.poste", retour: "vue.infobulle.retour"};
 
 const lien_fiche = (genre, id, texte) => `<a href="catalogue.html#${genre}/${encodeURIComponent(id)}" target="_blank" rel="noopener">${echapper(texte)}</a>`;
 const fidelite = (niveau) => `<span class="badge fidelite-${niveau}" title="${echapper(LIBELLES_FIDELITE[niveau] ?? "")}">${echapper(niveau)}</span>`;
-const ligne = (cle, valeur) => `<tr><th scope="row">${cle}</th><td>${valeur}</td></tr>`;
-const position = (geo) => `${vers_degres(geo.lat).toFixed(3).replace(".", ",")}° N, ${vers_degres(geo.lon).toFixed(3).replace(".", ",")}° E`;
+const ligne = (cle, valeur) => `<tr><th scope="row">${t(cle)}</th><td>${valeur}</td></tr>`;
+const position = (geo) => t("vue.insp.position", {lat: vers_degres(geo.lat).toFixed(3).replace(".", format_decimal(0.5).charAt(1)), lon: vers_degres(geo.lon).toFixed(3).replace(".", format_decimal(0.5).charAt(1))});
 const pourcent = (p) => `${format_decimal(100 * p)} %`;
 
 function pourquoi_avion(avion) {
   const decision = avion.decision;
   if (avion.acces === null && !avion.ordre) {
-    return "<p><b>Hors liaison</b> : la conduite ne peut pas le joindre (docs/MODELE.md § 15.2). Il finit sa dernière mission, puis reste où il est ; il n'engage que les drones qui passent à sa portée.</p>";
+    return `<p>${t("vue.insp.hors_liaison")}</p>`;
   }
-  if (avion.ordre) return `<p>Il exécute un <b>ordre</b> donné dans l'éditeur : il rallie son point, et la conduite ne le réaffecte pas avant son arrivée.</p>`;
-  if (!decision?.explication) return "<p>La conduite ne l'a pas encore affecté : aucune piste n'était connue.</p>";
-  const {explication: x, t} = decision;
-  if (!decision.point) {
-    return `<p>À ${format_duree(t)}, ${x.pistes_connues} pistes étaient connues, aucune atteignable en moins de 15 min à sa vitesse : il est revenu vers son orbite.</p>`;
-  }
+  if (avion.ordre) return `<p>${t("vue.insp.ordre")}</p>`;
+  if (!decision?.explication) return `<p>${t("vue.insp.pas_affecte")}</p>`;
+  const {explication: x, t: instant} = decision;
+  if (!decision.point) return `<p>${t("vue.insp.revenu", {t: format_duree(instant), n: x.pistes_connues})}</p>`;
   const r = x.retenue;
-  const alternatives = x.alternatives.map((a) => `<li>piste de ${a.effectif} drones, score ${format_decimal(a.score)}, atteinte en ${format_duree(a.delai)}</li>`).join("");
-  return `<p>À ${format_duree(t)}, la conduite l'a envoyé intercepter une piste de <b>${r.effectif} drones</b>, atteinte en
-    <b>${format_duree(r.delai)}</b>. Score = effectif / (1 + avions déjà envoyés là) = ${r.effectif} / (1 + ${r.deja_affectes}) =
-    <b>${format_decimal(r.score)}</b>, le meilleur parmi ${x.pistes_atteignables} pistes atteignables sur ${x.pistes_connues} connues.</p>
-    ${alternatives ? `<p>Meilleures alternatives écartées :</p><ul>${alternatives}</ul>` : ""}`;
+  const alternatives = x.alternatives.map((a) => `<li>${t("vue.insp.alternative", {n: a.effectif, score: format_decimal(a.score), delai: format_duree(a.delai)})}</li>`).join("");
+  return `<p>${t("vue.insp.envoye", {t: format_duree(instant), n: r.effectif, delai: format_duree(r.delai), deja: r.deja_affectes, score: format_decimal(r.score), atteignables: x.pistes_atteignables, connues: x.pistes_connues})}</p>
+    ${alternatives ? `<p>${t("vue.insp.alternatives")}</p><ul>${alternatives}</ul>` : ""}`;
 }
 
 function inspection_avion(avion, monde) {
   const {groupe} = avion;
   const vitesse = avion.etat === "engagement" ? groupe.vitesse_engagement : ["ralliement", "retour"].includes(avion.etat) ? groupe.vitesse_mise_a_poste : 0;
-  return `<h3>${t(NOMS_VECTEURS[avion.type ?? "avion"])} ${avion.id + 1}${avion.perdu ? " (perdu en interceptant)" : ""}</h3>
+  return `<h3>${t(NOMS_VECTEURS[avion.type ?? "avion"])} ${avion.id + 1}${avion.perdu ? ` ${t("vue.insp.perdu")}` : ""}</h3>
     <p>${lien_fiche("unite", groupe.id, groupe.nom)} ${fidelite(groupe.fidelite)}</p>
     <table>${[
-      ligne("État", avion.munitions === 0 ? "à court de munitions" : ETATS[avion.etat]),
-      ligne("Position", position(avion.geo)),
-      ligne("Altitude", `${format_entier(avion.geo.alt)} m`),
-      ligne("Vitesse", vitesse ? `${format_entier(ms_vers_kmh(vitesse))} km/h` : "en orbite"),
-      ligne("Arme", `${lien_fiche("unite", groupe.arme.id, groupe.arme.nom)}, ${avion.munitions} sur ${groupe.emport_nombre}`),
-      ligne("Liaison", acces_texte(monde, avion)),
+      ligne("vue.insp.etat", avion.munitions === 0 ? t("vue.infobulle.sans_munitions") : t(ETATS[avion.etat])),
+      ligne("vue.insp.l_position", position(avion.geo)),
+      ligne("vue.insp.altitude", `${format_entier(avion.geo.alt)} m`),
+      ligne("vue.insp.vitesse", vitesse ? `${format_entier(ms_vers_kmh(vitesse))} km/h` : t("vue.insp.orbite")),
+      ligne("vue.insp.arme", t("vue.insp.arme_valeur", {arme: lien_fiche("unite", groupe.arme.id, groupe.arme.nom), n: avion.munitions, emport: groupe.emport_nombre})),
+      ligne("vue.insp.liaison", acces_texte(monde, avion)),
     ].join("")}</table>
-    <h4>Pourquoi va-t-il là ?</h4>${pourquoi_avion(avion, monde)}
-    <h4>Modèles</h4><ul>
-      <li>Mouvement : ${lien_fiche("algo", groupe.algos.mouvement, groupe.algos.mouvement)}</li>
-      <li>Tir : ${lien_fiche("algo", groupe.arme.algos.tir, groupe.arme.algos.tir)}</li>
-      <li>Allocation : ${lien_fiche("algo", monde.scenario.conduite.allocation, monde.scenario.conduite.allocation)}</li></ul>`;
+    <h4>${t("vue.insp.pourquoi_la")}</h4>${pourquoi_avion(avion, monde)}
+    <h4>${t("vue.insp.modeles")}</h4><ul>
+      <li>${t("vue.insp.m_mouvement")} ${lien_fiche("algo", groupe.algos.mouvement, groupe.algos.mouvement)}</li>
+      <li>${t("vue.insp.m_tir")} ${lien_fiche("algo", groupe.arme.algos.tir, groupe.arme.algos.tir)}</li>
+      <li>${t("vue.insp.m_allocation")} ${lien_fiche("algo", monde.scenario.conduite.allocation, monde.scenario.conduite.allocation)}</li></ul>`;
 }
 
 /** Rendre la synthèse des tirs subis par un drone : nombre, Pk, probabilité de survie à ces tirs et issue. */
@@ -71,38 +67,38 @@ export function tirs_subis(monde, idDrone) {
 /** Rendre la section « Pourquoi a-t-il changé de route ? » d'un drone de l'essaim réactif (MODELE § 22). */
 function reactions_drone(drone, monde) {
   const reactions = (monde.evenements ?? []).filter((e) => e.type === "reaction" && e.drone === drone.id);
-  const cible = (k) => (monde.cibles[k]?.conduite ? "le CDC" : `C${k + 1}`);
+  const cible = (k) => (monde.cibles[k]?.conduite ? t("vue.journal.le_cdc") : `C${k + 1}`);
   const lignes = reactions.map((e) => (e.nature === "reaffectation"
-    ? `<li>${format_duree(e.t)} : quitte ${cible(e.de)} pour ${cible(e.vers)} — l'essaim y perd moins de drones et y a déjà frappé (survie estimée (F + 1) / (F + P + 2)).</li>`
-    : `<li>${format_duree(e.t)} : contourne un site défendu où l'essaim a perdu ${e.foyer.pertes} drones (détour à ${position(e.point)}).</li>`));
-  return `<h4>Pourquoi a-t-il changé de route ?</h4>${lignes.length ? `<ul>${lignes.join("")}</ul>` : "<p>Il garde sa route : rien de ce que sait l'essaim ne vaut un détour ou une autre cible.</p>"}`;
+    ? `<li>${t("vue.insp.quitte", {t: format_duree(e.t), de: cible(e.de), vers: cible(e.vers)})}</li>`
+    : `<li>${t("vue.insp.contourne", {t: format_duree(e.t), n: e.foyer.pertes, position: position(e.point)})}</li>`));
+  return `<h4>${t("vue.insp.pourquoi_route")}</h4>${lignes.length ? `<ul>${lignes.join("")}</ul>` : `<p>${t("vue.insp.garde_route")}</p>`}`;
 }
 
 function inspection_drone(drone, monde) {
   const {rouge} = monde.scenario;
   const {tirs, survie, detruit_par: fatal} = tirs_subis(monde, drone.id);
-  const etat = !drone.vivant ? `détruit à ${format_duree(fatal?.t ?? monde.t)} (${fatal?.couche === "air" ? "par un avion" : "au sol"})`
-    : drone.arrive ? "a frappé sa cible" : monde.t < drone.depart ? `part à ${format_duree(drone.depart)}` : "en vol";
+  const etat = !drone.vivant ? t(fatal?.couche === "air" ? "vue.insp.detruit_air" : "vue.insp.detruit_sol", {t: format_duree(fatal?.t ?? monde.t)})
+    : drone.arrive ? t("vue.insp.a_frappe") : monde.t < drone.depart ? t("vue.insp.part_a", {t: format_duree(drone.depart)}) : t("vue.insp.en_vol");
   const restant = drone.vivant && !drone.arrive
     ? drone.route.reduce((somme, point, i) => somme + inverse(i ? drone.route[i - 1].geo : drone.geo, point.geo).distance, 0) : 0;
-  const detail = tirs.map((tir) => `<li>${format_duree(tir.t)} : tir ${tir.couche === "air" ? "air" : "sol"}, Pk ${format_decimal(tir.pk)}${tir.esquive ? ` (esquive : Pk de l'arme × ${format_decimal(1 - tir.esquive)})` : ""} — ${tir.detruit ? "<b>détruit</b>" : "manqué"}</li>`).join("");
-  return `<h3>Drone ${drone.id + 1}, vise C${drone.cible + 1}</h3>
+  const detail = tirs.map((tir) => `<li>${t(tir.couche === "air" ? "vue.insp.tir_air" : "vue.insp.tir_sol", {t: format_duree(tir.t), pk: format_decimal(tir.pk)})}${tir.esquive ? ` ${t("vue.insp.esquive", {f: format_decimal(1 - tir.esquive)})}` : ""} — ${tir.detruit ? `<b>${t("vue.journal.detruit")}</b>` : t("vue.journal.manque")}</li>`).join("");
+  return `<h3>${t("vue.infobulle.drone", {n: drone.id + 1, cible: drone.cible + 1})}</h3>
     <p>${lien_fiche("unite", rouge.id, rouge.nom)} ${fidelite(rouge.fidelite)}</p>
     <table>${[
-      ligne("État", etat),
-      ligne("Détecté", drone.detection === null ? "pas encore" : `à ${format_duree(drone.detection)}`),
-      ligne("Reste à parcourir", restant ? `${format_decimal(restant / 1000)} km, ${format_duree(restant / rouge.vitesse)}` : "—"),
-      ligne("Altitude", `${format_entier(drone.geo.alt)} m`),
+      ligne("vue.insp.etat", etat),
+      ligne("vue.insp.detecte", drone.detection === null ? t("vue.insp.pas_encore") : t("vue.insp.a", {t: format_duree(drone.detection)})),
+      ligne("vue.insp.reste", restant ? `${format_decimal(restant / 1000)} km, ${format_duree(restant / rouge.vitesse)}` : "—"),
+      ligne("vue.insp.altitude", `${format_entier(drone.geo.alt)} m`),
     ].join("")}</table>
-    <h4>Chaîne de l'information</h4><ol class="chaine">${chaine_drone(monde, drone.id).map((e) => `<li>${e.instant ? `<b>${e.instant}</b> ` : ""}${e.texte}</li>`).join("")}</ol>
-    <h4>Tirs subis</h4>${tirs.length ? `<ul>${detail}</ul>
-      <p>Probabilité de survivre à ces ${tirs.length} tirs : Π(1 − Pk) = <b>${pourcent(survie)}</b>.</p>` : "<p>Aucun pour l'instant.</p>"}
+    <h4>${t("vue.insp.chaine")}</h4><ol class="chaine">${chaine_drone(monde, drone.id).map((e) => `<li>${e.instant ? `<b>${e.instant}</b> ` : ""}${e.texte}</li>`).join("")}</ol>
+    <h4>${t("vue.insp.tirs_subis")}</h4>${tirs.length ? `<ul>${detail}</ul>
+      <p>${t("vue.insp.survie", {n: tirs.length, p: pourcent(survie)})}</p>` : `<p>${t("vue.insp.aucun_tir")}</p>`}
     ${rouge.reaction ? reactions_drone(drone, monde) : ""}
-    <h4>Modèles</h4><ul>
-      <li>Comportement : ${lien_fiche("algo", rouge.comportement, rouge.comportement)}</li>
-      ${rouge.reaction ? `<li>Réaction : ${lien_fiche("algo", rouge.reaction, rouge.reaction)}</li>` : ""}
-      <li>Mouvement : ${lien_fiche("algo", rouge.algos.mouvement, rouge.algos.mouvement)}</li>
-      <li>Détection : ${lien_fiche("algo", monde.scenario.radar.algos.detection, monde.scenario.radar.algos.detection)}</li></ul>`;
+    <h4>${t("vue.insp.modeles")}</h4><ul>
+      <li>${t("vue.insp.m_comportement")} ${lien_fiche("algo", rouge.comportement, rouge.comportement)}</li>
+      ${rouge.reaction ? `<li>${t("vue.insp.m_reaction")} ${lien_fiche("algo", rouge.reaction, rouge.reaction)}</li>` : ""}
+      <li>${t("vue.insp.m_mouvement")} ${lien_fiche("algo", rouge.algos.mouvement, rouge.algos.mouvement)}</li>
+      <li>${t("vue.insp.m_detection")} ${lien_fiche("algo", monde.scenario.radar.algos.detection, monde.scenario.radar.algos.detection)}</li></ul>`;
 }
 
 function inspection_cible(indice, monde) {
@@ -110,42 +106,40 @@ function inspection_cible(indice, monde) {
   const postes = monde.postes.filter((poste) => poste.cible === indice);
   const munitions = postes.reduce((somme, poste) => somme + poste.munitions, 0);
   const cadence = sol.portee / rouge.vitesse / sol.engagements_par_passage;
-  return `<h3>Cible C${indice + 1}</h3>
+  return `<h3>${t("vue.infobulle.cible", {n: indice + 1})}</h3>
     <table>${[
-      ligne("Position", position(monde.cibles[indice].geo)),
-      ligne("Postes sol", `${postes.length} × ${lien_fiche("unite", sol.id, sol.nom)}`),
-      ligne("Munitions", `${format_entier(munitions)} restantes`),
-      ligne("Frappes reçues", format_entier(monde.fuites[indice])),
+      ligne("vue.insp.l_position", position(monde.cibles[indice].geo)),
+      ligne("vue.insp.postes_sol", `${postes.length} × ${lien_fiche("unite", sol.id, sol.nom)}`),
+      ligne("vue.fiche.munitions", t("vue.insp.restantes", {n: format_entier(munitions)})),
+      ligne("vue.insp.frappes_recues", format_entier(monde.fuites[indice])),
     ].join("")}</table>
-    <h4>Comment est-elle défendue ?</h4>
-    <p>Chaque poste tire sur le drone le plus proche dans sa bulle de ${format_decimal(sol.portee / 1000)} km, un tir toutes les
-    ${format_decimal(cadence)} s : un drone met ${format_decimal(sol.portee / rouge.vitesse)} s à traverser la bulle, où le poste
-    doit loger ses ${sol.engagements_par_passage} engagements. Pk ${format_decimal(sol.pk)} par tir.</p>
-    <h4>Modèles</h4><ul><li>Tir sol : ${lien_fiche("algo", sol.algos.tir_sol, sol.algos.tir_sol)}</li></ul>`;
+    <h4>${t("vue.insp.defendue")}</h4>
+    <p>${t("vue.insp.defense_cible", {km: format_decimal(sol.portee / 1000), cadence: format_decimal(cadence), traversee: format_decimal(sol.portee / rouge.vitesse), n: sol.engagements_par_passage, pk: format_decimal(sol.pk)})}</p>
+    <h4>${t("vue.insp.modeles")}</h4><ul><li>${t("vue.insp.m_tir_sol")} ${lien_fiche("algo", sol.algos.tir_sol, sol.algos.tir_sol)}</li></ul>`;
 }
 
 /** Rendre le HTML de l'inspection de `cible` ({type: avion|drone|cible, id}) dans le monde. */
 function portees_relief(monde, indice) {
   const portees = couverture_reelle(monde.reseau.masques[indice], monde.reseau.grille, monde.reseau.hauteur_drones).map((c) => c.portee / 1000);
   const masques = portees.filter((p) => p < 0.99 * Math.max(...portees)).length;
-  return `vue de ${format_entier(Math.min(...portees))} à ${format_entier(Math.max(...portees))} km selon l'azimut ; masquée par le relief sur ${masques}° de tour`;
+  return t("vue.insp.relief", {min: format_entier(Math.min(...portees)), max: format_entier(Math.max(...portees)), masques});
 }
 
 function reseau_radar(monde, indice) {
   const latence = monde.reseau.latences_radars[indice];
-  if (monde.reseau.radars_hs?.[indice]) return "<b>Hors service</b> : il ne voit plus rien.";
-  if (monde.reseau.aucun_centre) return "<b>Aucun centre en service</b> : ses détections ne servent à personne.";
-  if (monde.reseau.mode === "complet") return "Relié à toute la défense : chaque détection profite aussitôt à tous (réseau complet, docs/MODELE.md § 15.2).";
-  if (!Number.isFinite(latence)) return "<b>Non relié à la conduite</b> : ce qu'il voit ne sert à personne.";
-  return `Relié à la conduite : ses détections y arrivent en <b>${format_decimal(latence)} s</b>.`;
+  if (monde.reseau.radars_hs?.[indice]) return t("vue.insp.radar_hs");
+  if (monde.reseau.aucun_centre) return t("vue.insp.aucun_centre");
+  if (monde.reseau.mode === "complet") return t("vue.insp.radar_complet");
+  if (!Number.isFinite(latence)) return t("vue.insp.radar_non_relie");
+  return t("vue.insp.radar_relie", {s: format_decimal(latence)});
 }
 
 function acces_texte(monde, avion) {
-  if (monde.reseau.mode === "complet") return "réseau complet";
-  if (avion.acces === undefined) return "pas encore évaluée";
-  if (!avion.acces) return "<b>hors liaison</b> : la conduite ne peut pas l'affecter";
-  const centre = avion.acces.centre === 0 ? "CDC" : echapper(monde.reseau.centres[avion.acces.centre].nom);
-  return `contrôlé par ${centre}, ${echapper(avion.acces.moyen.nom)} depuis ${libelle_noeud(monde, avion.acces.sol)}, ${format_decimal(avion.acces.latence)} s`;
+  if (monde.reseau.mode === "complet") return t("vue.insp.acces_complet");
+  if (avion.acces === undefined) return t("vue.insp.acces_inconnu");
+  if (!avion.acces) return t("vue.insp.acces_aucun");
+  const centre = avion.acces.centre === 0 ? t("vue.commun.cdc") : echapper(monde.reseau.centres[avion.acces.centre].nom);
+  return t("vue.insp.acces", {centre, moyen: echapper(avion.acces.moyen.nom), depuis: libelle_noeud(monde, avion.acces.sol), s: format_decimal(avion.acces.latence)});
 }
 
 /**
@@ -158,47 +152,45 @@ function inspection_centre(monde, c) {
   const recus = reseau.latences_centres[c].map((l, i) => (Number.isFinite(l) ? `R${i + 1} (${format_decimal(l)} s)` : null)).filter(Boolean);
   const nonRelies = reseau.latences_centres[c].map((l, i) => (Number.isFinite(l) ? null : `R${i + 1}`)).filter(Boolean);
   const controles = monde.avions.filter((a) => a.acces && a.acces.centre === c).length;
-  const designes = monde.cibles.map((cible, i) => (Number.isFinite(reseau.latences_sol[c]?.[i]) && monde.postes.some((p) => p.cible === i) ? (cible.conduite ? "CDC" : `C${i + 1}`) : null)).filter(Boolean);
+  const designes = monde.cibles.map((cible, i) => (Number.isFinite(reseau.latences_sol[c]?.[i]) && monde.postes.some((p) => p.cible === i) ? (cible.conduite ? t("vue.commun.cdc") : `C${i + 1}`) : null)).filter(Boolean);
   const detruit = c === 0 && monde.conduite_detruite !== null;
   const lignes = c === 0 ? reseau.fixes.map((l) => `<li>${libelle_noeud(monde, l.de)} ↔ ${libelle_noeud(monde, l.vers)} : ${echapper(l.moyen.nom)},
-    ${l.active ? `${format_decimal(l.moyen.latence)} s` : `<b>hors portée</b>${l.distance ? ` (${format_decimal(l.distance / 1000)} km pour ${format_decimal(l.portee / 1000)} km)` : ""}`}</li>`).join("") : "";
-  return `<h3>${c === 0 ? "Centre de détection et de contrôle (CDC)" : echapper(centre.nom)}</h3>
-    <p>Il reçoit les détections des radars, en fait des pistes, envoie les avions qu'il contrôle sur les pistes d'intérêt et désigne les drones aux postes sol qu'il joint.</p>
+    ${l.active ? `${format_decimal(l.moyen.latence)} s` : `<b>${t("vue.insp.hors_portee")}</b>${l.distance ? ` ${t("vue.insp.km_pour", {d: format_decimal(l.distance / 1000), p: format_decimal(l.portee / 1000)})}` : ""}`}</li>`).join("") : "";
+  return `<h3>${c === 0 ? t("vue.infobulle.cdc") : echapper(centre.nom)}</h3>
+    <p>${t("vue.insp.role_cdc")}</p>
     <table>${[
-      ligne("Position", position(centre.geo)),
-      ligne("Réseau", reseau.mode === "complet" ? "complet : tout le monde parle avec tout le monde, sans délai" : "liaisons listées"),
-      ligne("État", detruit ? `<b>détruit</b> par l'essaim à ${format_duree(monde.conduite_detruite)}` : centre.hs ? "<b>hors service</b>"
-        : c === 0 && monde.cible_conduite !== null ? "en service, visé par l'essaim" : "en service"),
-      ligne("Radars reçus", recus.length ? (reseau.mode === "complet" ? "tous, aussitôt" : recus.join(", ")) : "<b>aucun</b>"),
-      ligne("Avions contrôlés", `${format_entier(controles)} à la dernière décision`),
-      ligne("Postes désignés", designes.length ? designes.join(", ") : "<b>aucun</b> : les postes doivent acquérir seuls"),
+      ligne("vue.insp.l_position", position(centre.geo)),
+      ligne("vue.insp.reseau", reseau.mode === "complet" ? t("vue.insp.reseau_complet") : t("vue.insp.liaisons_listees")),
+      ligne("vue.insp.etat", detruit ? t("vue.insp.cdc_detruit", {t: format_duree(monde.conduite_detruite)}) : centre.hs ? `<b>${t("vue.infobulle.hors_service")}</b>`
+        : c === 0 && monde.cible_conduite !== null ? t("vue.insp.en_service_vise") : t("vue.insp.en_service")),
+      ligne("vue.insp.radars_recus", recus.length ? (reseau.mode === "complet" ? t("vue.insp.tous_aussitot") : recus.join(", ")) : `<b>${t("vue.fiche.aucun")}</b>`),
+      ligne("vue.insp.avions_controles", t("vue.insp.a_la_derniere", {n: format_entier(controles)})),
+      ligne("vue.insp.postes_designes", designes.length ? designes.join(", ") : t("vue.insp.aucun_designe")),
     ].join("")}</table>
-    ${reseau.mode === "complet" ? "<p>Pour décrire le réseau : outils Liaison et CDC de l'éditeur (docs/MODELE.md § 15.2 et § 18).</p>" : `
-    ${nonRelies.length ? `<p>Radars qui ne l'informent pas : <b>${nonRelies.join(", ")}</b>.</p>` : ""}
-    ${lignes ? `<h4>Liaisons au sol</h4><ul>${lignes}</ul>` : ""}`}`;
+    ${reseau.mode === "complet" ? `<p>${t("vue.insp.decrire_reseau")}</p>` : `
+    ${nonRelies.length ? `<p>${t("vue.insp.non_relies", {liste: nonRelies.join(", ")})}</p>` : ""}
+    ${lignes ? `<h4>${t("vue.insp.liaisons_sol")}</h4><ul>${lignes}</ul>` : ""}`}`;
 }
 
 function inspection_radar(indice, monde) {
   const {radar} = monde.scenario;
   const geo = positions_radars(monde.scenario)[indice];
   const site = monde.couverture.sites?.[indice];
-  const disposition = radar.disposition === "sites"
-    ? "placé dans l'éditeur"
-    : "matérialise la couverture « frontière » ; le déplacer dans l'éditeur place tous les radars un à un";
+  const disposition = radar.disposition === "sites" ? t("vue.insp.radar_place") : t("vue.insp.radar_frontiere");
   const vus = monde.drones.filter((d) => d.detection !== null).length;
-  return `<h3>Radar R${indice + 1}</h3>
+  return `<h3>${t("vue.fiche.radar", {n: indice + 1})}</h3>
     <p>${lien_fiche("unite", radar.id, radar.nom)} ${fidelite(radar.fidelite)}</p>
     <table>${[
-      ligne("Position", position(geo)),
-      ligne("Disposition", disposition),
-      ligne("Antenne", `${format_entier(radar.hauteur_antenne)} m`),
-      ligne("Portée instrumentée", `${format_entier(radar.portee_max / 1000)} km`),
-      site ? ligne("Portée contre l'essaim", `${format_entier(site.portee / 1000)} km (horizon radar)`) : "",
-      monde.reseau.masques ? ligne("Relief", portees_relief(monde, indice)) : "",
-      ligne("Détection", lien_fiche("algo", radar.algos.detection, radar.algos.detection)),
+      ligne("vue.insp.l_position", position(geo)),
+      ligne("vue.insp.disposition", disposition),
+      ligne("vue.insp.antenne", `${format_entier(radar.hauteur_antenne)} m`),
+      ligne("vue.insp.portee_instrumentee", `${format_entier(radar.portee_max / 1000)} km`),
+      site ? ligne("vue.insp.portee_essaim", t("vue.insp.horizon", {km: format_entier(site.portee / 1000)})) : "",
+      monde.reseau.masques ? ligne("vue.insp.relief_titre", portees_relief(monde, indice)) : "",
+      ligne("vue.insp.detection", lien_fiche("algo", radar.algos.detection, radar.algos.detection)),
     ].join("")}</table>
-    <h4>Réseau</h4>
-    <p>${reseau_radar(monde, indice)} ${format_entier(vus)} drones détectés depuis le début du raid par l'ensemble des radars.</p>`;
+    <h4>${t("vue.insp.reseau")}</h4>
+    <p>${reseau_radar(monde, indice)} ${t("vue.insp.vus", {n: format_entier(vus)})}</p>`;
 }
 
 export function inspection(cible, monde) {
