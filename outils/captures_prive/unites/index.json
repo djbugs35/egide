@@ -1,0 +1,5 @@
+[
+  {"id": "prive/capteurs/radars/mon_radar", "nom": "Demo radar", "famille": "capteurs", "fidelite": "notionnel", "base": false, "pays": null, "icone": "radar_pylone"},
+  {"id": "prive/sites/postes/ma_batterie", "nom": "Demo battery", "famille": "sites", "fidelite": "notionnel", "base": false, "pays": null, "icone": "batterie_moyenne"},
+  {"id": "prive/vecteurs/drones_defensifs/mon_intercepteur", "nom": "Demo interceptor", "famille": "vecteurs", "fidelite": "notionnel", "base": false, "pays": null, "icone": "intercepteur"}
+]

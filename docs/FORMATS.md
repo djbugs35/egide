@@ -418,7 +418,7 @@ Each message carries its `type`:
 | `ordre` | `avions` (ranks in `statique.vecteurs`), `e`, `n` (m, frame of § 6.3) | the vehicles head for this point, at the next step |
 | `recommencer` | | same scenario, at the initial instant, paused |
 | `modifier` | `modifications`: `{path: value}` | scenario changed by path (§ 5), restarted at the initial instant, paused |
-| `langue` | `code`: `en` or `fr` | language of the texts the server sends from then on (palette, lists, refusals); palette and lists are sent again if it changes |
+| `langue` | `code`: `en` or `fr` | language of the texts the server sends from then on (unit names of the header, palette, lists, refusals); if it changes, the whole opening is sent again |
 
 ### 10.3 Saved game
 

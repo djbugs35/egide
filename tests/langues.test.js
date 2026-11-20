@@ -39,7 +39,8 @@ function cles_code() {
   // passée à t() directement, ou rangée dans une table puis traduite à l'affichage.
   const godot = (dossier) => readdirSync(join(RACINE, dossier), {withFileTypes: true}).flatMap((e) => (e.isDirectory() ? godot(join(dossier, e.name)) : e.name.endsWith(".gd") ? [join(dossier, e.name)] : []));
   const cites = (liste, motif) => liste.flatMap((f) => [...lire(f).matchAll(motif)].map((m) => m[1]));
-  return [...cites([...fichiers("src"), ...fichiers("outils")], /["'`]((?:vue|page|commun|cli)\.[a-z0-9_.]+)["'`]/g), ...cites(godot("clients/godot/scripts"), /"(godot\.[a-z0-9_.]+)"/g)];
+  const python = readdirSync(join(RACINE, "analyse")).filter((f) => f.endsWith(".py")).map((f) => join("analyse", f));
+  return [...cites([...fichiers("src"), ...fichiers("outils"), ...python], /["'`]((?:vue|page|commun|cli)\.[a-z0-9_.]+)["'`]/g), ...cites(godot("clients/godot/scripts"), /"(godot\.[a-z0-9_.]+)"/g)];
 }
 
 test("langues : toute clé citée par les pages et par le code existe ; aucune clé du dictionnaire n'est orpheline", () => {

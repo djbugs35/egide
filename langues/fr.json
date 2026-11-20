@@ -15,6 +15,27 @@
   "catalogue.index_catalogue.remplacement.texte": "Remplacer",
   "catalogue.page.description.content": "Fiches des unités et des algorithmes d'Égide : fidélité, équations, hypothèses, domaine de validité, sources et code.",
   "catalogue.page.title": "Égide — catalogue",
+  "cli.abaques.avions_garantis": "avions garantis sur la route",
+  "cli.abaques.avions_orbite": "nombre d'avions en orbite N",
+  "cli.abaques.carte_titre": "Postes sol nécessaires face à {n} drones par cible",
+  "cli.abaques.concentration": "concentration adverse maximale sur une cible (drones)",
+  "cli.abaques.ecrits": "Abaques écrits dans {dossier}/",
+  "cli.abaques.n_avions": {
+    "one": "{n} avion",
+    "other": "{n} avions"
+  },
+  "cli.abaques.postes_titre": "Postes sol-air nécessaires (avions à {vitesse} km/h)",
+  "cli.abaques.postes_total": "postes sol au total",
+  "cli.abaques.postes_total_cibles": {
+    "one": "postes sol au total ({n} cible)",
+    "other": "postes sol au total ({n} cibles)"
+  },
+  "cli.abaques.sans_avions": "sans avions",
+  "cli.abaques.scenario": "scénario",
+  "cli.abaques.turbopropulseurs": "turbopropulseurs",
+  "cli.abaques.vitesse_minimale": "vitesse minimale (km/h)",
+  "cli.abaques.vitesse_mise_a_poste": "vitesse de mise à poste (km/h)",
+  "cli.abaques.vitesse_titre": "Vitesse minimale de mise à poste",
   "cli.autoconfig.ecrit": "{chemin} (bibliothèque réindexée)",
   "cli.autoconfig.essai": "essai {fait}/{total} {strategie} : {frappes} frappes",
   "cli.autoconfig.pays_introuvable": "pays introuvable : {pays} (lancer node outils/frontieres.js ?)",

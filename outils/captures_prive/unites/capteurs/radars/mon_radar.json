@@ -1,0 +1,9 @@
+{
+  "herite_de": "capteurs/radars/radar_basse_altitude_notionnel",
+  "nom": "Demo radar",
+  "sources": ["Demonstration unit of the private catalogue, for the screenshots: notional values"],
+  "pays": null,
+  "icone": "radar_pylone",
+  "hauteur_antenne_m": 25,
+  "portee_max_km": 220
+}

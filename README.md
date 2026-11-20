@@ -12,7 +12,7 @@ what, and explains why each unit acted.
 Two ways to use it, on the same engine: the **browser** to analyse and prove, **Godot** to play the defence in real
 time, like a strategy game, and to edit scenarios and terrain there.
 
-![The interface playing: "ant" attack, aircraft converge on the swarm, the summary updates live](docs/images/interface.gif)
+![The interface playing: "ant" attack, aircraft converge on the swarm, the summary updates live](docs/images/en/interface.gif)
 
 > Notional scenario: public orders of magnitude, no real performance of any identified system. The public repository
 > only contains notional models; models of real systems go into a private catalogue (`prive/`, ignored by git) that
@@ -135,21 +135,21 @@ inspected or edited.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/eclatement.gif" alt="Ant tactic, zoomed in: the corridor bursts and the aircraft converge"></td>
-<td width="50%"><img src="docs/images/direct.gif" alt="Direct groups: each group comes from a different heading towards its target"></td>
+<td width="50%"><img src="docs/images/en/eclatement.gif" alt="Ant tactic, zoomed in: the corridor bursts and the aircraft converge"></td>
+<td width="50%"><img src="docs/images/en/direct.gif" alt="Direct groups: each group comes from a different heading towards its target"></td>
 </tr>
 <tr>
 <td><b>Ant</b>, zoomed in: the whole swarm enters through one corridor, bursts, then spreads over its targets while the aircraft converge.</td>
 <td><b>Direct groups</b>: each group comes from a random heading, in a tight wave, straight at its target.</td>
 </tr>
 <tr>
-<td colspan="2" align="center"><img src="docs/images/disperse.gif" alt="Scattered: a ring of isolated drones converges on the whole area" width="60%"></td>
+<td colspan="2" align="center"><img src="docs/images/en/disperse.gif" alt="Scattered: a ring of isolated drones converges on the whole area" width="60%"></td>
 </tr>
 <tr>
 <td colspan="2"><b>Scattered</b>: each drone comes alone, from any heading, with staggered departures. The easiest to defend: the aircraft find targets everywhere. The fourth tactic, <b>Flight plan</b>, follows the route you draw (editor tool P); the Profile panel plots its altitude above the terrain.</td>
 </tr>
 <tr>
-<td colspan="2" align="center"><img src="docs/images/reactif.gif" alt="Reactive scattered, from 9:00 to 21:00: the drones bypass defended sites and leave C3 for C9 and C10, the log tells each decision"></td>
+<td colspan="2" align="center"><img src="docs/images/en/reactif.gif" alt="Reactive scattered, from 9:00 to 21:00: the drones bypass defended sites and switch targets; the log tells each decision"></td>
 </tr>
 <tr>
 <td colspan="2"><b>Reactive</b>, here on scattered, from 9:00 to 21:00: the drones bypass the sites where the swarm has already lost some of its own, then leave C3, which kills, for C9 and C10, already hit. The log, filtered on "Swarm reactions", tells each decision. The Reactive box combines with any tactic (see below).</td>
@@ -171,7 +171,7 @@ your defence; it learns from its losses, which its mesh network shares with ever
 The summary counts reassignments, detours and dodged shots; the log ("Swarm reactions" family) groups the decisions;
 click a drone: the inspector tells **why it changed course**.
 
-![Reactive scattered raid at 18:00: the log shows the detours and the switches from C3 to C9 and C10; the inspector explains drone 27's two decisions](docs/images/essaim_reactif_inspecteur.png)
+![Reactive scattered raid at 18:00: the log shows the detours and the target switches; the inspector explains drone 27's decisions](docs/images/en/essaim_reactif_inspecteur.png)
 
 Same raid, same seed, with and without reaction (paired duel over 10 seeds of the reference scenario, 95 % CI):
 
@@ -200,8 +200,8 @@ Same ant raid, same seed, at the end of the raid:
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/fin_de_raid.png" alt="End of raid with 50 aircraft: 469 hits"></td>
-<td width="50%"><img src="docs/images/sans_avions.png" alt="End of raid without aircraft: 713 hits"></td>
+<td width="50%"><img src="docs/images/en/fin_de_raid.png" alt="End of raid with 50 aircraft: 469 hits"></td>
+<td width="50%"><img src="docs/images/en/sans_avions.png" alt="End of raid without aircraft: 713 hits"></td>
 </tr>
 <tr><td>With 50 aircraft: <b>469 hits</b>.</td><td>Without aircraft: <b>713 hits</b>.</td></tr>
 </table>
@@ -212,7 +212,7 @@ Pause, then "Edit": the editor switches to **orders mode**. Select aircraft (cli
 to send them from the CRC; select a radar, a CRC or a link then Del to take it out of service at that instant.
 Everything is recorded in the scenario with its time, and the raid replays identically.
 
-![Orders at 7:00: aircraft sent north-west, radar R4 taken out of service (red cross), R1's optical link out of range](docs/images/ordres.png)
+![Orders at 7:00: aircraft sent north-west, radar R4 out of service since 5:00 (red cross)](docs/images/en/ordres.png)
 
 ### Watching the raid in 3D
 
@@ -221,7 +221,7 @@ imagery and real terrain. Each flying unit is at its height, tied to the ground 
 air-defence bubbles, links and shots are volumes. Altitudes (100 m over a 600 km theatre) can be stretched for display,
 the factor staying written on screen: the computation does not depend on it.
 
-![The raid in 3D: commander view with altitudes × 10, then from a radar, then close to the swarm](docs/images/vue3d.gif)
+![The raid in 3D (CesiumJS) from 7:00: aircraft, swarm and targets above the theatre](docs/images/en/vue3d.gif)
 
 Near the camera, a unit that has a **3D model** shows it instead of its pictogram: at its real size, painted
 (camouflage, panels, markings), never below 80 pixels. The 40 drones closest to the swarm are drawn as models too, and
@@ -229,7 +229,7 @@ Near the camera, a unit that has a **3D model** shows it instead of its pictogra
 (`node outils/modeles3d/classes.js`, unversioned files in `modeles/`); a private catalogue stores its own in
 `prive/modeles/`. Stretched altitudes lengthen the terrain and flight heights, never the shape of the models.
 
-![From the attacked site at 12:09: support aircraft as 3D models above the ground bubbles, the swarm in red on the horizon](docs/images/modeles3d.png)
+![From the attacked site at 12:09: support aircraft as 3D models above the ground bubbles, the swarm in red on the horizon](docs/images/en/modeles3d.png)
 
 Six cameras to choose from: free, follow selection, from a radar, from the attacked site, commander view, top view.
 Clicking a unit opens the same inspector as in 2D. For a 3D view without a network, prepare the theatre:
@@ -250,7 +250,7 @@ start and end is announced on screen and written to the log. In 2D, a hampered r
 percentage, an unavailable battery a cross; in 3D, the element out of service fades. Rules:
 [docs/MODELE.md § 29](docs/MODELE.md).
 
-![Random incidents: R2 and R8 hampered by weather, range reduced to 51 and 69 %; control radio sends the first missions](docs/images/incidents.png)
+![Random incidents set in the scenario: radars hampered by weather or failures; control radio sends the first missions](docs/images/en/incidents.png)
 
 ### Smoke, radio and sound effects
 
@@ -261,7 +261,7 @@ effects**, off at start: explosions, missile and rocket launches, interceptions,
 computed by `node outils/sons/generer.js`, with no borrowed sound. None of this touches the simulation
 ([docs/MODELE.md § 30](docs/MODELE.md)).
 
-![Close to C9 and C10, from 16:12 to 18:38: plumes rise from the hit targets while the radio announces contacts and hits](docs/images/ambiance.gif)
+![Close to C9 and C10, from 16:12 to 18:38: plumes rise from the hit targets while the radio announces contacts and hits](docs/images/en/ambiance.gif)
 
 ### The debriefing
 
@@ -278,7 +278,7 @@ Godot is a full interface in its own right, like the browser. The simulation rem
 it, Godot sends it orders and receives the state live. A played game is recorded with its orders and replays
 identically (MODELE § 26).
 
-![A game in Godot: selection box, 46 aircraft sent ahead of the swarm, then combat and hits seen closer](docs/images/godot_partie.gif)
+![A game in Godot: selection box, the whole fleet sent ahead of the swarm, then the combat](docs/images/en/godot_partie.gif)
 
 `./jouer.command` (or `jouer.bat`) starts the server and the client. The game starts paused: Space to start.
 
@@ -299,7 +299,7 @@ On a Mac, the F keys may need the `fn` key.
 the ground; links, flight plans, zones, eraser and undo are in the top bar. Each gesture goes through the same
 computations as the browser editor, and the scenario restarts at each gesture.
 
-![The scenario editor in Godot: four radars placed from the palette, then the terrain painted with a brush](docs/images/godot_edition.gif)
+![The scenario editor in Godot: four radars placed from the palette, then the terrain painted with a brush](docs/images/en/godot_edition.gif)
 
 **Editing the terrain (F6).** Four brushes: raise, lower, flatten, smooth. Saving applies the terrain to the scenario,
 and the engine then computes radar masks and lines of sight on it. Going back to the game without saving discards the
@@ -315,7 +315,7 @@ imagery (altitude tints), fog drawn as discs without terrain masking.
 selected unit on the right, the toolbar at the bottom and, above it, a hint telling at any time what the next click
 does.
 
-![A long-range surveillance radar placed from the palette, dragged into position without changing tool, linked to the CRC by satellite; its sheet then lists the connection](docs/images/edition.gif)
+![A long-range surveillance radar placed from the palette, linked to the CRC by satellite; its sheet then lists the connection](docs/images/en/edition.gif)
 
 ### Placing units
 
@@ -330,7 +330,7 @@ a unit:
 While a placing tool is armed, dragging a unit moves it and dragging the background moves the map: only a click
 without movement places.
 
-![Deployment: a long-range surveillance radar (R11) linked to the CRC, three medium-range batteries (B1 to B3) with their bubble, around the reference layout](docs/images/deploiement.png)
+![Deployment: a long-range surveillance radar (R11) linked to the CRC by satellite, three medium-range batteries with their bubble, around the reference layout](docs/images/en/deploiement.png)
 
 | Family | What a drop does |
 |---|---|
@@ -363,7 +363,7 @@ distance and heading along the geodesic; **snapping** aligns placements on a 1 t
 Before placing, a radar shows its range against the swarm, a battery its bubble, and a link being drawn its range, in
 red if the other end is too far. A "×3" badge flags stacked aircraft.
 
-![The ruler measures 158 km at heading 072°, snapped to the 25 km grid](docs/images/aides_deploiement.png)
+![The ruler measures 182 km at heading 073°, snapped to the 25 km grid](docs/images/en/aides_deploiement.png)
 
 ### Equipping and linking
 
@@ -401,7 +401,7 @@ offered are those of the `algos/` folder (and of your private catalogue).
 The sheet also lists the unit's **connections**, sorted by family of means (wire, radio, satellite, optical): the
 other end, the means, the distance against the range, the latency and the state (active, out of range, masked, failed).
 
-![Sheet of radar R11: its model, its declared means and its satellite connection to the CRC, 156 km, 3 s, active](docs/images/fiche_unite.png)
+![Sheet of radar R11: its model, its declared means and its satellite connection to the CRC, 191 km, 3 s, active](docs/images/en/fiche_unite.png)
 
 ### Saving and reloading
 
@@ -425,7 +425,7 @@ explicit, and information takes time and can be lost:
   range is no longer assigned (red cross);
 - failures are dated; the CRC can become a target of the swarm (Scenario panel), destroyed at the first hit.
 
-![Network in links: wire from most radars, satellite from R10, R1's optical link too long; the CRC inspector lists links and unlinked radars](docs/images/reseau.png)
+![Network in links: wire from most radars, satellite from R10, optical link from R1; the CRC inspector lists links and unlinked radars](docs/images/en/reseau.png)
 
 ### Seeing information flow
 
@@ -433,7 +433,7 @@ Blue pulse from a radar to the C2 with the number of drones reported (red and st
 white pulse from the C2 to the aircraft it sends, white circle when the mission is received, yellow dashes when an
 aircraft locks a drone with its own sensor.
 
-![Scattered, from 2:45 to 3:35: the radars report the drones to the CRC, then, once the reaction delay has elapsed, the burst of missions goes out to the aircraft](docs/images/information.gif)
+![Scattered, from 2:45 to 3:35: the radars report the drones to the CRC, then, once the reaction delay has elapsed, the burst of missions goes out to the aircraft](docs/images/en/information.gif)
 
 The **Log** panel tells the same story in sentences, filterable; a drone's inspector gives the whole chain: seen by
 such radar, known to the C2, reaction delay, locked, fired at.
@@ -447,7 +447,7 @@ the ground posts it reaches. It exchanges its tracks with the others over the ne
 centre that falls. A designated ground post fires as soon as the drone enters its bubble; alone, it must first acquire
 it (10 s, notional).
 
-![A second centre to the south-west, linked by radio to the posts of C2: its inspector lists the radars it receives and the posts it designates](docs/images/cdc.png)
+![A second centre to the south-west, linked by radio to the posts of C2: its inspector lists the radars it receives and the posts it designates](docs/images/en/cdc.png)
 
 | Reference scenario with links, 8 raids | Ground kills | Hits |
 |---|---|---|
@@ -474,7 +474,7 @@ and **interception**. Fire control is a real constraint: an effector does not fi
 merges the envelopes of the objects linked to it. The Layers panel shows fire control and resultant; the inspected
 object always shows its own.
 
-![Reference scenario with the "C2 coverage" layer: in purple, the union of the envelopes of the objects linked to the CRC](docs/images/couvertures.png)
+![Reference scenario with the "C2 coverage" layer: in purple, the union of the envelopes of the objects linked to the CRC](docs/images/en/couvertures.png)
 
 ## 8 · Defensive drones
 
@@ -483,7 +483,7 @@ engagement): **armed drones** (two short-range charges), **single-use intercepto
 lost), **jammers** (neutralisation at a constant rate within a radius, with no signal model). Place them from the
 palette, or set their number in the Scenario panel.
 
-![Armed drones (diamonds), interceptors (triangles) and jammers (circles and their radius) in contact with the swarm; the summary counts drones neutralised by jamming and interceptors lost](docs/images/drones_defensifs.png)
+![Armed drones (diamonds), interceptors (triangles) and jammers (circles and their radius) in contact with the swarm; the summary counts drones neutralised by jamming and interceptors lost](docs/images/en/drones_defensifs.png)
 
 | Added to the 50 aircraft, ant tactic, 6 raids | Hits |
 |---|---|
@@ -498,7 +498,7 @@ A catalogue terrain, chosen in the Scenario panel or dropped from the palette, g
 each radar has its horizon mask, a drone flying low behind a ridge is not seen, and radio and optical links require
 line of sight. The screen draws each radar's real coverage.
 
-![Demonstration terrain: a ridge to the north and a massif to the south-east cut into the coverage of R1, R2, R10 and R5](docs/images/relief.png)
+![Demonstration terrain: a ridge to the north and a massif to the south-east cut into the coverage of R1, R2, R10 and R5](docs/images/en/relief.png)
 
 The repository ships a synthetic demonstration terrain. For a theatre's real relief, from a machine with a network:
 
@@ -525,8 +525,8 @@ editor.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/autoconfig.png" alt="The Auto panel on Belgium: successive trials and the layout kept"></td>
-<td width="50%"><img src="docs/images/autoconfig_scenario.png" alt="The resulting scenario: Belgian border as protected zone, radars beyond, targets and drones spread"></td>
+<td width="50%"><img src="docs/images/en/autoconfig.png" alt="The Auto panel on Belgium: successive trials and the layout kept"></td>
+<td width="50%"><img src="docs/images/en/autoconfig_scenario.png" alt="The resulting scenario: Belgian border as protected zone, radars beyond, targets and drones spread"></td>
 </tr>
 </table>
 
@@ -560,7 +560,7 @@ the public units) or **Replace** (they take the place of the public units of the
 classes remain). The choice is remembered by the browser and also applies to the simulation palette (see
 [§ 13](#13--extending-units-algorithms-maps)).
 
-![Catalogue: public only, then merged with a demonstration private catalogue ("Mon radar" sheet, lineage and private file), then replacing the public radars](docs/images/catalogue_prive.gif)
+![Catalogue: public only, then merged with a demonstration private catalogue ("Demo radar" sheet, lineage and private file), then replacing the public radars](docs/images/en/catalogue_prive.gif)
 
 ## 12 · Analysing and proving
 
@@ -587,8 +587,8 @@ uv run --with matplotlib python -m analyse.abaques              # analytical cha
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/vitesse_minimale.png" alt="Minimum speed to get on station versus the number of aircraft"></td>
-<td width="50%"><img src="docs/images/postes_sol.png" alt="Ground posts needed versus the enemy concentration"></td>
+<td width="50%"><img src="docs/images/en/vitesse_minimale.png" alt="Minimum speed to get on station versus the number of aircraft"></td>
+<td width="50%"><img src="docs/images/en/postes_sol.png" alt="Ground posts needed versus the enemy concentration"></td>
 </tr>
 <tr>
 <td>Minimum speed to get on station to guarantee k aircraft on any route.</td>
@@ -655,7 +655,7 @@ After any addition: `node outils/indexer.js`, then `npm test` — conformance ch
 indexer also writes `prive/unites/index.json` (outside git), read by the private catalogue import: choose **Merge** or
 **Replace** on the Catalogue page, and your units appear in the palette, can be dropped and fight like the others.
 
-![Palette in Replace mode: radar, batteries and interceptors from a demonstration private catalogue dropped on the map, private threat at 400 km/h, then the raid played](docs/images/palette_privee.gif)
+![Palette in Replace mode: demonstration private radar, batteries and interceptor dropped on the map, then the raid played](docs/images/en/palette_privee.gif)
 
 To measure the effect of a change: `node src/preuve.js duel --variante bleu.conduite.allocation=global/allocation/plus_proche`.
 

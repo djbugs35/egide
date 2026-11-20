@@ -42,7 +42,7 @@ func brancher(partie: Node) -> void:
 	_barre.position = Vector2(10.0, 50.0)
 	var rangee := HBoxContainer.new()
 	for outil: Array in OUTILS:
-		_boutons[outil[0]] = _bouton(outil[1], _choisir_outil.bind(outil[0]))
+		_boutons[outil[0]] = _bouton(Langue.t(outil[1]), _choisir_outil.bind(outil[0]))
 		_boutons[outil[0]].toggle_mode = true
 		rangee.add_child(_boutons[outil[0]])
 	_preparer_curseur(_curseur_rayon, RAYON_MIN_M, RAYON_MAX_M, _rayon, func(v: float) -> void: _rayon = v)

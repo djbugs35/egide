@@ -1,0 +1,6 @@
+{
+  "herite_de": "vecteurs/drones_defensifs/intercepteur_kamikaze_notionnel",
+  "nom": "Demo interceptor",
+  "sources": ["Demonstration unit of the private catalogue, for the screenshots: notional values"],
+  "pays": null
+}

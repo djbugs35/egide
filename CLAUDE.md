@@ -98,6 +98,8 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
   `--langue fr` ou `EGIDE_LANGUE`, anglais par défaut ; ses messages sont des clés `cli.*`.
   Le client Godot lit `Langue.t("godot.…")` (`scripts/langue.gd`) ; après toute clé `godot.*` modifiée :
   `node outils/langues.js --godot`.
+  Captures du README : `node outils/captures.js` (navigateur), `outils/captures_godot.sh` (Godot), `python -m analyse.abaques
+  --langue en` (graphiques) ; images dans `docs/images/<langue>/`.
 - Ne jamais tuer un processus qu'on n'a pas lancé soi-même.
 
 ## Vérifications avant commit

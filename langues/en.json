@@ -15,6 +15,27 @@
   "catalogue.index_catalogue.remplacement.texte": "Replace",
   "catalogue.page.description.content": "Égide unit and algorithm sheets: fidelity, equations, assumptions, validity domain, sources and code.",
   "catalogue.page.title": "Égide — catalogue",
+  "cli.abaques.avions_garantis": "aircraft guaranteed on the route",
+  "cli.abaques.avions_orbite": "number of aircraft in orbit N",
+  "cli.abaques.carte_titre": "Ground posts needed against {n} drones per target",
+  "cli.abaques.concentration": "maximum enemy concentration on one target (drones)",
+  "cli.abaques.ecrits": "Charts written to {dossier}/",
+  "cli.abaques.n_avions": {
+    "one": "{n} aircraft",
+    "other": "{n} aircraft"
+  },
+  "cli.abaques.postes_titre": "Surface-to-air posts needed (aircraft at {vitesse} km/h)",
+  "cli.abaques.postes_total": "total ground posts",
+  "cli.abaques.postes_total_cibles": {
+    "one": "total ground posts ({n} target)",
+    "other": "total ground posts ({n} targets)"
+  },
+  "cli.abaques.sans_avions": "no aircraft",
+  "cli.abaques.scenario": "scenario",
+  "cli.abaques.turbopropulseurs": "turboprops",
+  "cli.abaques.vitesse_minimale": "minimum speed (km/h)",
+  "cli.abaques.vitesse_mise_a_poste": "positioning speed (km/h)",
+  "cli.abaques.vitesse_titre": "Minimum positioning speed",
   "cli.autoconfig.ecrit": "{chemin} (library reindexed)",
   "cli.autoconfig.essai": "trial {fait}/{total} {strategie}: {frappes} hits",
   "cli.autoconfig.pays_introuvable": "country not found: {pays} (run node outils/frontieres.js?)",

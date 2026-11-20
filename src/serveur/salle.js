@@ -3,6 +3,7 @@
 import {modifier_scenario} from "../moteur/scenario.js";
 import {langue, LANGUES, t} from "../i18n.js";
 import {installer_langue_node} from "../langue_node.js";
+import {nom_unite} from "../catalogue_langue.js";
 
 export const VITESSE_MAX = 60;
 // Temps de calcul accordé à chaque tic de la période nominale : le reste sert à envoyer et à répondre aux commandes.
@@ -28,7 +29,9 @@ export function creer_salle({brut, preparer, diffuser, archiver, maintenant, ext
   // Après l'en-tête et avant le statique : un client place les objets fixes sur le terrain qu'il vient de recevoir.
   function ouverture_complete(arrivee) {
     const [tete, ...reste] = partie.ouverture();
-    return [tete, ...arrivee, ...(ajouts.ouverture?.() ?? []), ...reste, etat()];
+    // Noms des unités dans la langue du serveur (langues/catalogue.<code>.json) : le client les affiche tels quels.
+    const traduite = tete.genre === "entete" && tete.catalogue ? {...tete, catalogue: tete.catalogue.map((fiche) => ({...fiche, nom: nom_unite(fiche.id, fiche.nom)}))} : tete;
+    return [traduite, ...arrivee, ...(ajouts.ouverture?.() ?? []), ...reste, etat()];
   }
 
   const etat = () => ({genre: "etat", t: partie.instant(), pause, vitesse, vitesse_obtenue: obtenue, termine: partie.termine(), bilan: partie.bilan()});
@@ -76,7 +79,8 @@ export function creer_salle({brut, preparer, diffuser, archiver, maintenant, ext
       if (!Object.hasOwn(LANGUES, code)) throw new CommandeInvalide(t("cli.serveur.langue_inconnue", {code}));
       if (code === langue()) return;
       installer_langue_node(code);
-      (ajouts.arrivee?.() ?? []).forEach(diffuser);
+      // Toute l'ouverture repart : en-tête (noms des unités), palette et listes, dans la nouvelle langue.
+      ouverture_complete(ajouts.arrivee?.() ?? []).forEach(diffuser);
     },
     ordre: (message) => partie.ordonner(message),
     recommencer: () => relancer(partie.brut),

@@ -1,0 +1,6 @@
+{
+  "herite_de": "sites/postes/batterie_moyenne_portee_notionnelle",
+  "nom": "Demo battery",
+  "sources": ["Demonstration unit of the private catalogue, for the screenshots: notional values"],
+  "pays": null
+}

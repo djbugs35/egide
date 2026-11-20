@@ -881,7 +881,12 @@ async function demarrer() {
   rafraichir_reglages();
   requestAnimationFrame((t) => image(t, t));
   // Captures de la documentation (outils/captures.js) : « ?capture » donne la main sur la lecture et l'inspecteur.
-  if (new URLSearchParams(location.search).has("capture")) globalThis.egide_capture = {etat, sauter_a, inspecter};
+  if (new URLSearchParams(location.search).has("capture")) {
+    globalThis.egide_capture = {etat, sauter_a, inspecter, appliquer: appliquer_edition, charger,
+      // Position à l'écran d'un point {lat, lon, alt} en radians, ou de (lat, lon) en degrés.
+      ecran_de: async (geo) => (await import("./ecran.js")).ecran(etat.camera, geo),
+      ecran_deg: async (lat, lon) => (await import("./ecran.js")).ecran(etat.camera, {lat: (lat * Math.PI) / 180, lon: (lon * Math.PI) / 180, alt: 0})};
+  }
 }
 
 demarrer();
