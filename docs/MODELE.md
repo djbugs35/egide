@@ -1,892 +1,908 @@
-# Modèle mathématique d'Égide
+# Égide's mathematical model
 
-Référence de toutes les formules codées. Le code cite le paragraphe (`MODELE § 3.4`) ; une hypothèse
-entre ici avant d'entrer dans le code. Unités SI dans les équations ; g = 9,806 65 m/s².
+*English · [Français](MODELE.fr.md)*
 
-## 1 · Repère et scénario
-- Territoire : disque de rayon R ; cibles fixes réparties dans le disque.
-- Drones : vitesse constante v_d, altitude h_d, trajectoire inconnue du défenseur jusqu'à détection.
-- Le défenseur connaît la position des drones dès qu'ils entrent en couverture radar (§ 2), sans
-  connaître leur destination.
+Reference for every formula in the code. The code cites the paragraph (`MODELE § 3.4`); an assumption enters here
+before it enters the code. SI units in the equations; g = 9.806 65 m/s². Identifiers, scenario keys and file names are
+French (`interception_profondeur_km`, `rouge.tactique`…) and are written as in the files.
 
-## 2 · Détection : horizon radar
-Portée géométrique entre une antenne à h_r et une cible à h_d (atmosphère standard, rayon terrestre
-effectif 4/3) :
+## 1 · Frame and scenario
+- Territory: disc of radius R; fixed targets spread over the disc.
+- Drones: constant speed v_d, altitude h_d, trajectory unknown to the defender until detection.
+- The defender knows the drones' position as soon as they enter radar coverage (§ 2), without knowing their
+  destination.
 
-  d_h = √(2 k R_T) · (√h_r + √h_d) ≈ 4,12 km · (√h_r[m] + √h_d[m])
+## 2 · Detection: radar horizon
+Geometric range between an antenna at h_r and a target at h_d (standard atmosphere, effective Earth radius 4/3):
 
-Portée de détection : d_det = min(d_h, portée instrumentée). Exemple : 20 m / 100 m → ≈ 60 km.
+  d_h = √(2 k R_T) · (√h_r + √h_d) ≈ 4.12 km · (√h_r[m] + √h_d[m])
 
-## 3 · Avions : mise à poste
-### 3.1 Virage
-Rayon en palier au facteur de charge n : r = v² / (g √(n² − 1)). Demi-tour : t = π r / v.
-À 500 km/h et 5 g : r ≈ 400 m, t ≈ 9 s — négligeable devant les délais du § 3.2.
+Detection range: d_det = min(d_h, instrumented range). Example: 20 m / 100 m → ≈ 60 km.
 
-### 3.2 Délai disponible
-Un drone détecté à d_det de la frontière (§ 2) et intercepté à la profondeur p dans la zone
-(clé `interception_profondeur_km`) laisse :
+## 3 · Aircraft: positioning
+### 3.1 Turn
+Level-flight radius at load factor n: r = v² / (g √(n² − 1)). Half-turn: t = π r / v.
+At 500 km/h and 5 g: r ≈ 400 m, t ≈ 9 s — negligible compared with the delays of § 3.2.
 
-  t = (d_det + p) / v_d − t_réaction
+### 3.2 Available delay
+A drone detected at d_det from the border (§ 2) and intercepted at depth p inside the area
+(key `interception_profondeur_km`) leaves:
 
-### 3.3 Portée de mise à poste
-Un avion ne poursuit pas (v_a < v_d) : il doit se placer sur la route avant le passage. Il peut agir sur
-tout point à moins de ρ = v_a · t + r_arme de sa position au moment de l'ordre.
+  t = (d_det + p) / v_d − t_reaction
 
-### 3.4 Avions concentrables
-Hypothèse : N avions répartis uniformément sur le disque de rayon R (orbites jointives). Le nombre
-d'avions pouvant atteindre un point donné est en moyenne :
+### 3.3 Positioning range
+An aircraft does not pursue (v_a < v_d): it must place itself on the route before the drone passes. It can act on any
+point less than ρ = v_a · t + r_weapon from its position when the order is given.
+
+### 3.4 Aircraft that can be concentrated
+Assumption: N aircraft spread uniformly over the disc of radius R (adjoining orbits). The number of aircraft that can
+reach a given point is on average:
 
   k = N · min(1, (ρ / R)²)
 
-C'est un majorant pour un point proche du bord (une partie du disque de rayon ρ sort de la zone).
+It is an upper bound for a point near the edge (part of the disc of radius ρ falls outside the area).
 
-### 3.5 Vitesse minimale de mise à poste
-Inversion de § 3.4 pour garantir k avions sur une route quelconque :
+### 3.5 Minimum positioning speed
+Inverting § 3.4 to guarantee k aircraft on any route:
 
-  v_min = (R √(k / N) − r_arme) / t,   ramenée à 0 si négative, infinie si k > N.
+  v_min = (R √(k / N) − r_weapon) / t,   brought back to 0 if negative, infinite if k > N.
 
-## 4 · Engagement air-air
-### 4.1 Fenêtre de tir
-Pendant un passage face à face, un avion dispose d'une fenêtre T_f = 2 r_arme / (v_d + v_e), où v_e est
-sa **vitesse d'engagement** (une fois à poste), distincte de la vitesse de mise à poste v_a du § 3.
-Sans cette distinction, accélérer la mise à poste raccourcirait la fenêtre et ferait paradoxalement
-remonter le besoin en postes sol au-delà de 600 km/h.
-### 4.2 Tirs utiles par passage
-- Laser : n_L = min(emport, ⌊T_f / t_désignation⌋) — un tir attend l'impact du précédent.
-- IR : n_IR = min(emport, ⌊T_f / t_cadence⌋).
-### 4.3 Destructions attendues
-E = n · Pk ; un drone reçoit au plus un tir à la fois (pas de double tir dans ce modèle de base).
+## 4 · Air-to-air engagement
+### 4.1 Firing window
+During a head-on pass, an aircraft has a window T_f = 2 r_weapon / (v_d + v_e), where v_e is its **engagement speed**
+(once on station), distinct from the positioning speed v_a of § 3. Without this distinction, faster positioning would
+shorten the window and would paradoxically push up the need for ground posts beyond 600 km/h.
+### 4.2 Useful shots per pass
+- Laser: n_L = min(payload, ⌊T_f / t_designation⌋) — a shot waits for the previous one's impact.
+- IR: n_IR = min(payload, ⌊T_f / t_rate⌋).
+### 4.3 Expected kills
+E = n · Pk; a drone receives at most one shot at a time (no double shot in this basic model).
 
-## 5 · Défense sol (sans avions)
-Un poste réalise e engagements utiles par passage de vague dans sa bulle.
-- Tirs nécessaires pour n drones visant une cible : n / Pk.
-- Postes nécessaires par cible : P = ⌈ n / (Pk · e) ⌉ ; total = somme sur les cibles.
-- Dimensionnement robuste : n = concentration maximale que l'attaquant peut porter sur une cible
-  inconnue, et non n_total / nombre_de_cibles.
+## 5 · Ground defence (without aircraft)
+A post achieves e useful engagements per pass of a wave through its bubble.
+- Shots needed for n drones aiming at one target: n / Pk.
+- Posts needed per target: P = ⌈ n / (Pk · e) ⌉; total = sum over the targets.
+- Robust sizing: n = maximum concentration the attacker can bring onto an unknown target, not
+  n_total / number_of_targets.
 
-## 6 · Attrition multicouche (approximation analytique)
-Survivants après les couches successives i : S_{i+1} = S_i − min(S_i, capacité_i · Pk_i).
-### 6.1 Partage des avions entre groupes et pré-attrition
-Pour porter c drones sur une cible, l'essaim forme G = min(cibles, ⌈n_total / c⌉) groupes simultanés.
-Les avions se partagent entre eux : un groupe reçoit A = min(k, N / G) avions (k du § 3.4).
-Pré-attrition d'un groupe : A · E (E du § 4.3, un seul passage par avion). Chaque cible est
-dimensionnée pour c drones moins cette pré-attrition, car on ignore laquelle sera visée.
+## 6 · Multi-layer attrition (analytical approximation)
+Survivors after the successive layers i: S_{i+1} = S_i − min(S_i, capacity_i · Pk_i).
+### 6.1 Sharing aircraft between groups and pre-attrition
+To bring c drones onto a target, the swarm forms G = min(targets, ⌈n_total / c⌉) simultaneous groups. The aircraft are
+shared between them: a group receives A = min(k, N / G) aircraft (k of § 3.4). Pre-attrition of a group: A · E (E of
+§ 4.3, a single pass per aircraft). Each target is sized for c drones minus this pre-attrition, since we do not know
+which one will be targeted.
 
-La simulation (étape 2) remplace cette approximation et doit la retrouver quand l'essaim est
-uniformément réparti.
+The simulation (step 2) replaces this approximation and must find it again when the swarm is uniformly spread.
 
-## 7 · Limites connues
-- Couverture radar sans relief : continue le long de la frontière, à l'horizon du § 2 (le relief arrive au jalon 2).
-- Pas de contre-mesures, pas de leurres, pas de manœuvre d'évitement des drones.
-- Radar parfait dans sa couverture (pas de fausse alarme ni de perte de piste).
-- Pas de rechargement des avions pendant le raid.
+## 7 · Known limits
+- Radar coverage without terrain: continuous along the border, at the horizon of § 2 (terrain arrives in milestone 2).
+- No countermeasures, no decoys, no avoidance manoeuvres by the drones.
+- Perfect radar within its coverage (no false alarm, no track loss).
+- No reloading of the aircraft during the raid.
 
-## 8 · Simulation multi-agents (étape 2, `src/moteur/`)
-### 8.1 Temps et hasard
-Pas fixe `simulation_pas_s` (0,5 s). Tout tirage passe par un générateur à graine (`hasard.js`) : une graine
-rejoue un raid à l'identique. Une campagne (`src/campagne.js`) enchaîne les graines `graine`, `graine + 1`, …
-et résume chaque grandeur par sa moyenne et son intervalle de confiance à 95 % (1,96 σ / √N).
+## 8 · Multi-agent simulation (step 2, `src/moteur/`)
+### 8.1 Time and randomness
+Fixed step `simulation_pas_s` (0.5 s). Every draw goes through a seeded generator (`hasard.js`): a seed replays a raid
+identically. A campaign (`src/campagne.js`) runs the seeds `graine`, `graine + 1`, … and summarises each quantity by its
+mean and its 95% confidence interval (1.96 σ / √N).
 
-### 8.2 Menace
-Répartition sur les cibles : § 6.1 (G groupes de taille égale, cibles tirées au hasard). Les drones naissent
-20 km avant la couverture radar et volent à vitesse constante ; ils ne réagissent à la défense que si le scénario
-leur donne un algorithme de réaction (`rouge.reaction`, § 22).
-- `direct` : chaque groupe arrive d'un cap tiré au hasard, en vague serrée (±1 km), et va droit sur sa cible.
-- `disperse` : chaque drone a son propre cap et part à un instant tiré dans `drones_etalement_s`.
-- `fourmi` : tout l'essaim entre par un même cap, en colonne de 4 km sur `fourmi_largeur_couloir_km`, jusqu'au
-  point d'éclatement à `fourmi_eclatement_rayon_km` du centre, puis chaque drone rejoint sa cible.
+### 8.2 Threat
+Distribution over the targets: § 6.1 (G groups of equal size, targets drawn at random). Drones are born 20 km before
+radar coverage and fly at constant speed; they only react to the defence if the scenario gives them a reaction
+algorithm (`rouge.reaction`, § 22).
+- `direct`: each group arrives from a random heading, in a tight wave (±1 km), and goes straight to its target.
+- `disperse`: each drone has its own heading and leaves at an instant drawn within `drones_etalement_s`.
+- `fourmi` (ant): the whole swarm enters on the same heading, in a 4 km column over `fourmi_largeur_couloir_km`, up to
+  the burst point at `fourmi_eclatement_rayon_km` from the centre, then each drone heads for its target.
 
-Un drone qui atteint sa cible la frappe (fuite) ; il n'y a pas de rayon létal autour de la cible.
+A drone that reaches its target hits it (leak); there is no lethal radius around the target.
 
-### 8.3 Détection et planification
-Un drone est vu dès qu'il entre dans le disque de rayon R + d_det (§ 2) ; il n'est utilisable par la conduite
-qu'après `delai_reaction_s`. Toutes les `avions_pas_decision_s`, la conduite :
-1. regroupe les drones vus en pistes (cellules de 5 km), chacune pondérée par son effectif ;
-2. extrapole chaque piste en ligne droite — elle ignore la destination et le point d'éclatement ;
-3. pour chaque avion libre (armé, sans drone en approche), calcule le plus petit délai t tel que
-   |D + V t| ≤ v_a t + r_arme (racine du trinôme, `delai_interception`), dans un horizon de 15 min ;
-4. envoie l'avion au point extrapolé qui maximise effectif / (1 + avions déjà envoyés dans la même cellule).
+### 8.3 Detection and planning
+A drone is seen as soon as it enters the disc of radius R + d_det (§ 2); it is only usable by control after
+`delai_reaction_s`. Every `avions_pas_decision_s`, control:
+1. groups the drones seen into tracks (5 km cells), each weighted by its strength;
+2. extrapolates each track in a straight line — it ignores the destination and the burst point;
+3. for each free aircraft (armed, with no drone approaching), computes the shortest delay t such that
+   |D + V t| ≤ v_a t + r_weapon (root of the quadratic, `delai_interception`), within a 15-min horizon;
+4. sends the aircraft to the extrapolated point that maximises strength / (1 + aircraft already sent to the same cell).
 
-### 8.4 Mouvement des avions
-Mise à poste à `avions_vitesse_kmh` (ligne droite ; le virage, § 3.1, est négligé). Dès qu'un drone se
-rapproche à moins de 3 portées d'arme, l'avion passe en engagement et vole vers lui à
-`avions_vitesse_engagement_kmh`. Sans cible restante, il se replanifie ou revient à son orbite.
+### 8.4 Aircraft movement
+Positioning at `avions_vitesse_kmh` (straight line; the turn, § 3.1, is neglected). As soon as a drone comes within 3
+weapon ranges, the aircraft switches to engagement and flies towards it at `avions_vitesse_engagement_kmh`. With no
+target left, it replans or returns to its orbit.
 
-### 8.5 Tirs
-- Air : sur le drone non visé le plus proche à portée. Laser : impact après `laser_duree_designation_s`, l'avion
-  ne tire pas entre-temps. IR : impact après le vol de la roquette (700 m/s), tir suivant après `ir_cadence_s`.
-  Un drone visé n'est pas visé une seconde fois avant l'impact.
-- Sol : postes sur les cibles, stock partagé à parts égales ; tir sur le drone le plus proche dans la bulle,
-  résultat immédiat ; cadence = (r_sol / v_d) / e, pour réaliser les e engagements du § 5 pendant la traversée.
+### 8.5 Shots
+- Air: at the nearest untargeted drone in range. Laser: impact after `laser_duree_designation_s`, the aircraft does not
+  fire meanwhile. IR: impact after the rocket's flight (700 m/s), next shot after `ir_cadence_s`. A targeted drone is not
+  targeted a second time before the impact.
+- Ground: posts on the targets, stock shared equally; shot at the nearest drone in the bubble, immediate result;
+  rate = (r_sol / v_d) / e, to achieve the e engagements of § 5 during the crossing.
 
-### 8.6 Écart attendu avec les formules fermées
-Le pas discret place un tir à l'entrée de la bulle et un à l'arrivée sur la cible : un poste réalise 8 à 9 tirs
-là où le § 5 en compte 8. Les tests d'acceptation (`tests/simulation.test.js`) vérifient cette fourchette et
-que les destructions valent tirs × Pk à l'intervalle de confiance près.
+### 8.6 Expected gap with the closed-form formulas
+The discrete step places one shot on entering the bubble and one on arrival at the target: a post achieves 8 to 9 shots
+where § 5 counts 8. The acceptance tests (`tests/simulation.test.js`) check this range and that kills equal shots × Pk
+within the confidence interval.
 
-## 9 · Géodésie et scénario v2 (jalon 0)
-### 9.1 Scénario v2 et catalogue
-Un scénario (`scenarios/*.json`, format 2) cite ses unités par identifiant ; chaque unité est un fichier de
-`unites/` (public, notionnel) ou de `prive/unites/` (hors git, identifiant préfixé `prive/`). Une unité hérite des
-clés de son parent (`herite_de`) ; toute clé porte sa phrase d'aide chez elle ou chez un ancêtre. Le scénario peut
-remplacer une valeur d'unité (`surcharges`, `surcharges_emport`). La résolution rend un scénario en SI où chaque groupe
-porte ses propres paramètres : la flotte peut être hétérogène. Toute valeur se modifie par son chemin
-(`bleu.avions.1.nombre`, `rouge.surcharges.vitesse_kmh`), que ce soit dans l'interface, un balayage ou la ligne de commande.
-Un scénario v1 (clés plates de la v0.1) est migré à la lecture ; la migration est vérifiée par les tests.
+## 9 · Geodesy and scenario v2 (milestone 0)
+### 9.1 Scenario v2 and catalogue
+A scenario (`scenarios/*.json`, format 2) names its units by identifier; each unit is a file in `unites/` (public,
+notional) or in `prive/unites/` (outside git, identifier prefixed `prive/`). A unit inherits its parent's keys
+(`herite_de`); every key carries its help sentence in the unit or in an ancestor. The scenario can replace a unit value
+(`surcharges`, `surcharges_emport`). Resolution gives an SI scenario in which each group carries its own parameters:
+the fleet can be heterogeneous. Any value is changed by its path (`bleu.avions.1.nombre`, `rouge.surcharges.vitesse_kmh`),
+whether in the interface, a sweep or the command line. A v1 scenario (flat keys of v0.1) is migrated on reading; the
+migration is checked by the tests.
 
-### 9.2 Ellipsoïde et repères
-WGS84 : a = 6 378 137 m, f = 1/298,257 223 563. Une position est (φ, λ, h) en radians et mètres ; sa position
-géocentrique (ECEF) est gardée en cache. Deux distances, chacune à sa place :
-- **oblique** (ligne droite ECEF) pour tout ce que mesure un capteur ou ce que couvre une arme : portées, bulles sol ;
-- **géodésique** (Vincenty, sur l'ellipsoïde) pour la couverture radar autour du centre et le placement des entités.
+### 9.2 Ellipsoid and frames
+WGS84: a = 6,378,137 m, f = 1/298.257 223 563. A position is (φ, λ, h) in radians and metres; its geocentric position
+(ECEF) is cached. Two distances, each in its place:
+- **slant** (straight ECEF line) for everything a sensor measures or a weapon covers: ranges, ground bubbles;
+- **geodesic** (Vincenty, on the ellipsoid) for radar coverage around the centre and the placement of entities.
 
-Vincenty est vérifié sur les exemples publiés de GeographicLib (JFK → Heathrow, Wellington → Salamanque, ce dernier
-presque antipodal) à mieux que le millimètre. La méthode ne converge pas pour des points exactement antipodaux : elle
-lève alors une erreur plutôt que de rendre une valeur fausse.
+Vincenty is checked against GeographicLib's published examples (JFK → Heathrow, Wellington → Salamanca, the latter
+nearly antipodal) to better than a millimetre. The method does not converge for exactly antipodal points: it then
+raises an error rather than return a wrong value.
 
-### 9.3 Mouvement à altitude constante
-À chaque pas, la direction du but est recalculée dans le plan tangent local (Est, Nord, Haut) et le mobile avance de
-v·Δt horizontalement, par les rayons de courbure méridien M et normal N :
-Δφ = Δn / (M + h), Δλ = Δe / ((N + h) cos φ). Recalculer la direction à chaque pas fait suivre la géodésique : sur
-100 km par pas de 111 m, la longueur parcourue diffère de la géodésique de moins de 10 m (test).
+### 9.3 Movement at constant altitude
+At each step, the direction of the goal is recomputed in the local tangent plane (East, North, Up) and the vehicle moves
+v·Δt horizontally, through the meridian and normal radii of curvature M and N:
+Δφ = Δn / (M + h), Δλ = Δe / ((N + h) cos φ). Recomputing the direction at each step follows the geodesic: over 100 km
+with 111 m steps, the length travelled differs from the geodesic by less than 10 m (test).
 
-### 9.4 Interception en trois dimensions
-Le trinôme du § 8.3 se résout en ECEF, vecteurs à trois composantes. L'extrapolation rectiligne d'une piste suit la
-corde et passe sous la surface d'environ d²/8R (≈ 785 m à 200 km) : on ne garde que la latitude et la longitude du
-point extrapolé, et l'avion y vole à l'altitude de son groupe. Les portées d'arme sont des distances obliques : un avion
-à 1 000 m atteint un drone à 100 m jusqu'à √(8² − 0,9²) ≈ 7,95 km de distance au sol.
+### 9.4 Interception in three dimensions
+The quadratic of § 8.3 is solved in ECEF, with three-component vectors. A track's straight-line extrapolation follows
+the chord and passes under the surface by about d²/8R (≈ 785 m at 200 km): only the latitude and longitude of the
+extrapolated point are kept, and the aircraft flies there at its group's altitude. Weapon ranges are slant distances:
+an aircraft at 1,000 m reaches a drone at 100 m up to √(8² − 0.9²) ≈ 7.95 km of ground distance.
 
-### 9.5 Index spatial
-Cases cubiques de 12 km en ECEF, sans singularité aux pôles ni à l'antiméridien. Une recherche parcourt les cases du
-cube englobant, ou les cases occupées quand elles sont moins nombreuses. 12 km est le compromis mesuré entre essaim
-compact et essaim dispersé ; la taille des cases ne change aucun résultat, seulement le temps de calcul.
+### 9.5 Spatial index
+12 km cubic cells in ECEF, with no singularity at the poles or the antimeridian. A search walks the cells of the
+enclosing cube, or the occupied cells when there are fewer of them. 12 km is the measured compromise between a compact
+and a scattered swarm; the cell size changes no result, only the computing time.
 
-### 9.6 Équivalence avec la v0.1
-Le moteur plan de la v0.1 a été figé en statistiques (`tests/references_v01.json`, 20 raids par tactique). Le moteur
-géodésique doit les retrouver à moins de 3 σ sur l'écart des moyennes des frappes et des destructions air et sol
-(`tests/equivalence_v01.test.js`), alors que la géométrie diffère (ellipsoïde, avions à 1 000 m, azimuts comptés depuis
-le nord). Les graines étant fixées, ce test est déterministe.
+### 9.6 Equivalence with v0.1
+The flat engine of v0.1 has been frozen as statistics (`tests/references_v01.json`, 20 raids per tactic). The geodetic
+engine must find them again within 3 σ on the difference of the means of hits and of air and ground kills
+(`tests/equivalence_v01.test.js`), although the geometry differs (ellipsoid, aircraft at 1,000 m, azimuths counted from
+north). With the seeds fixed, this test is deterministic.
 
-### 9.7 Affichage
-Le scope projette les positions en azimutale équidistante sphérique autour du centre (rayon moyen 6 371 008,8 m) :
-les distances au centre sont exactes à 0,5 % près jusqu'à 300 km, et les anneaux restent des cercles. Cette projection
-ne sert qu'à l'affichage ; aucun calcul du moteur ne l'utilise.
+### 9.7 Display
+The scope projects positions in spherical azimuthal equidistant projection around the centre (mean radius
+6,371,008.8 m): distances to the centre are exact to within 0.5% up to 300 km, and the rings stay circles. This
+projection is for display only; no engine computation uses it.
 
-## 10 · Registre d'algorithmes (jalon 1)
-### 10.1 Principe
-Le moteur orchestre (ordre des étapes, index spatial, tirage du Pk, journal) ; chaque décision est confiée à un
-algorithme désigné par une unité (`algos` du fichier d'unité, fusionné rôle par rôle avec ses ancêtres) ou par le
-scénario (`rouge.tactique`, `bleu.conduite.pistage`, `bleu.conduite.allocation`). Un algorithme est un module ES de
-`algos/global/<rôle>/` ou `algos/unites/…`, ou de `prive/algos/…` (identifiant préfixé `prive/`).
+## 10 · Algorithm registry (milestone 1)
+### 10.1 Principle
+The engine orchestrates (order of steps, spatial index, Pk draw, log); each decision is entrusted to an algorithm named
+by a unit (`algos` of the unit file, merged role by role with its ancestors) or by the scenario (`rouge.tactique`,
+`bleu.conduite.pistage`, `bleu.conduite.allocation`). An algorithm is an ES module in `algos/global/<role>/` or
+`algos/unites/…`, or in `prive/algos/…` (identifier prefixed `prive/`).
 
-### 10.2 Contrat d'un algorithme
-- Il exporte `meta` : rôle, nom, fidélité, description, équations, hypothèses, domaine de validité, références (au
-  moins une) et paramètres lus (clé SI, unité, aide).
-- Il exporte les fonctions de son rôle (`src/moteur/algos.js`, `ROLES`).
-- Il n'importe rien et n'appelle ni hasard global, ni horloge, ni réseau : géodésie et générateur à graine lui sont
-  passés en arguments. Il est donc pur, déterministe, et indépendant de son dossier.
+### 10.2 An algorithm's contract
+- It exports `meta`: role, name, fidelity, description, equations, assumptions, validity domain, references (at least
+  one) and parameters read (SI key, unit, help text).
+- It exports the functions of its role (`src/moteur/algos.js`, `ROLES`).
+- It imports nothing and calls no global randomness, clock or network: geodesy and the seeded generator are passed to it
+  as arguments. It is therefore pure, deterministic, and independent of its folder.
 
-| Rôle | Porté par | Fonctions |
+| Role | Carried by | Functions |
 |---|---|---|
-| comportement | scénario (`rouge.tactique`) | `planifier_drone(contexte, cible, hasard, outils)` |
-| mouvement | unité (drone, avion) | `avancer(mobile, route, distance, outils)` |
-| detection | unité (radar) | `preparer(scenario, radar, outils)`, `detecte(etat, drone, outils)` |
-| pistage | scénario (`bleu.conduite.pistage`) | `pister(drones, outils)` |
-| allocation | scénario (`bleu.conduite.allocation`) | `allouer(avions, pistes, outils)` |
-| tir | unité (arme) | `planifier_tir(arme, distance)` |
-| tir_sol | unité (poste) | `cadence(poste, vitesse_cible)` |
+| comportement | scenario (`rouge.tactique`) | `planifier_drone(contexte, cible, hasard, outils)` |
+| mouvement | unit (drone, aircraft) | `avancer(mobile, route, distance, outils)` |
+| detection | unit (radar) | `preparer(scenario, radar, outils)`, `detecte(etat, drone, outils)` |
+| pistage | scenario (`bleu.conduite.pistage`) | `pister(drones, outils)` |
+| allocation | scenario (`bleu.conduite.allocation`) | `allouer(avions, pistes, outils)` |
+| tir | unit (weapon) | `planifier_tir(arme, distance)` |
+| tir_sol | unit (post) | `cadence(poste, vitesse_cible)` |
 
-### 10.3 Preuve du portage
-Les huit algorithmes de `algos/global/` sont le comportement du jalon 0 sorti du moteur. Quatre raids de référence
-(trois tactiques, plus un petit raid à cheval sur l'antiméridien) rendent exactement les bilans du jalon 0
-(`tests/portage_j0.test.js`).
+### 10.3 Proof of the port
+The eight algorithms of `algos/global/` are milestone 0's behaviour taken out of the engine. Four reference raids (three
+tactics, plus a small raid straddling the antimeridian) give exactly milestone 0's outcomes (`tests/portage_j0.test.js`).
 
-### 10.4 Conformité automatique
-`tests/conformite.test.js` s'applique à tout fichier déposé, public ou privé, sans test écrit à la main : fiche
-complète, rangement sous le bon rôle, aucune dépendance cachée, algorithmes cités existants et du bon rôle,
-paramètres lus présents dans l'unité, déterminisme et invariants par rôle (un mouvement ne va jamais plus loin que
-demandé ni ne change d'altitude ; un pistage compte chaque drone dans une seule piste ; un comportement mène chaque
-drone sur sa cible). Les index `unites/index.json` et `algos/index.json` sont régénérés par `node outils/indexer.js`.
+### 10.4 Automatic conformity
+`tests/conformite.test.js` applies to any file dropped in, public or private, with no hand-written test: complete sheet,
+placement under the right role, no hidden dependency, named algorithms existing and of the right role, parameters read
+present in the unit, determinism and per-role invariants (a movement never goes further than asked nor changes
+altitude; a tracking counts each drone in a single track; a behaviour leads each drone to its target). The indexes
+`unites/index.json` and `algos/index.json` are regenerated by `node outils/indexer.js`.
 
-## 11 · Fond de carte (jalon 2)
-La carte n'entre dans aucun calcul : elle sert de fond à l'affichage. Le moteur garde sa géodésie (§ 9) ; le scope se
-dessine sur un canevas transparent posé sur la carte MapLibre, chaque position géographique passant par la projection
-de la carte (`src/vue/ecran.js`). Anneaux, frontière, couverture et bulles sont tracés en polygones géodésiques
-(sommets calculés par Vincenty direct), donc justes sur toute projection : Mercator, globe, vue inclinée.
-La barre d'échelle donne la taille au sol d'un pixel au centre de la vue ; en vue inclinée ou sur le globe, elle ne
-vaut que près du centre.
+## 11 · Base map (milestone 2)
+The map enters no computation: it is the background of the display. The engine keeps its geodesy (§ 9); the scope is
+drawn on a transparent canvas laid over the MapLibre map, each geographic position going through the map's projection
+(`src/vue/ecran.js`). Rings, border, coverage and bubbles are drawn as geodesic polygons (vertices computed by Vincenty
+direct), hence right on any projection: Mercator, globe, tilted view. The scale bar gives the ground size of one pixel at
+the centre of the view; in a tilted view or on the globe, it only holds near the centre.
 
-Les sources (fonds, relief, bâtiments) sont des fichiers de `cartes/` au format de `cartes/_format.json`, chacun avec
-son attribution et ses conditions d'usage ; la conformité vérifie leurs clés et la présence de l'attribution.
+The sources (base maps, terrain, buildings) are files in `cartes/` in the format of `cartes/_format.json`, each with its
+attribution and terms of use; the conformity suite checks their keys and the presence of the attribution.
 
-## 12 · Éditeur et plan de vol (jalon 3)
+## 12 · Editor and flight plan (milestone 3)
 
-**Gestes de préparation.** Glisser le fond déplace la carte, Maj+glisser trace le cadre de sélection. Un outil de pose agit au relâchement,
-si la souris n'a pas bougé : on peut donc déplacer la carte sans quitter l'outil, et glisser une unité la déplace même outil armé. Au même point, une unité passe avant le milieu d'une liaison. Si plusieurs unités se recouvrent à l'écran (moins de 6 px d'écart), un clic sans mouvement, à la sélection, à la liaison ou à l'effacement, ouvre la liste pour désigner la bonne ; le glisser prend la plus proche du curseur. Le clic droit quitte l'outil en cours ; il n'envoie la
-sélection qu'en cours de raid (mode ordres). Pendant la préparation, le raid n'est pas simulé à chaque geste : seul le monde à t = 0 est
-reconstruit, et la simulation complète a lieu en quittant l'éditeur. Ces choix ne touchent que l'interface, pas les résultats.
+**Preparation gestures.** Dragging the background moves the map, Shift+drag draws the selection box. A placing tool acts
+on release, if the mouse has not moved: you can therefore move the map without leaving the tool, and dragging a unit
+moves it even with a tool armed. At the same point, a unit takes precedence over the middle of a link. If several units
+overlap on screen (less than 6 px apart), a click without movement, in selection, link or erase mode, opens the list to
+pick the right one; dragging takes the one nearest the cursor. Right click leaves the current tool; it only sends the
+selection during the raid (orders mode). During preparation, the raid is not simulated at each gesture: only the world
+at t = 0 is rebuilt, and the full simulation takes place when leaving the editor. These choices only affect the
+interface, not the results.
 
-**Taille des symboles.** Au-delà de 1 km par pixel, les symboles se réduisent en puissance 3/4 de l'échelle, jusqu'à 30 % ; sous 50 %, les noms, les latences des liaisons actives et les badges de groupe s'effacent, les liens rompus et les frappes restent écrits. Le survol et la fiche donnent toujours les valeurs. Cela ne touche que l'affichage.
-### 12.1 Positions placées
-Le scénario peut fixer des cibles (`theatre.cibles_placees`) et des orbites d'avions (`bleu.avions[].orbites_placees`)
-en {lat_deg, lon_deg}. Les éléments placés passent d'abord ; le complément jusqu'au nombre demandé est tiré au hasard
-comme avant (§ 8). Le nombre de cibles ne descend jamais sous le nombre de cibles placées.
+**Symbol size.** Beyond 1 km per pixel, symbols shrink as the 3/4 power of the scale, down to 30%; below 50%, the names,
+the latencies of active links and the group badges disappear, broken links and hits remain written. Hovering and the
+sheet always give the values. This only affects the display.
+### 12.1 Placed positions
+The scenario can fix targets (`theatre.cibles_placees`) and aircraft orbits (`bleu.avions[].orbites_placees`) in
+{lat_deg, lon_deg}. Placed elements come first; the remainder up to the number requested is drawn at random as before
+(§ 8). The number of targets never goes below the number of placed targets.
 
-### 12.2 Gestes de l'éditeur
-Chaque geste devient des modifications par chemin du scénario (`src/vue/edition.js`, pur et testé), exactement comme
-un curseur : l'annulation, l'export, les réglages enregistrés et la reproductibilité par la graine valent donc pour
-l'édition. Déplacer un élément fige toutes les cibles, ou toutes les orbites de son groupe : rien d'autre ne bouge à
-la relecture. Un déplacement est une translation géodésique : chaque élément garde sa distance et son azimut par
-rapport au point de référence (barycentre de la sélection pour l'envoi au clic droit), donc la formation est conservée.
+### 12.2 Editor gestures
+Each gesture becomes changes by path of the scenario (`src/vue/edition.js`, pure and tested), exactly like a slider:
+undo, export, saved settings and reproducibility by seed therefore apply to editing. Moving an element freezes all the
+targets, or all the orbits of its group: nothing else moves on rereading. A move is a geodesic translation: each element
+keeps its distance and azimuth from the reference point (the selection's barycentre for a right-click dispatch), so the
+formation is preserved.
 
-### 12.3 Comportement « plan de vol »
-L'essaim suit les points de passage dessinés, en colonne de largeur `fourmi_largeur_couloir_km` et de 4 km de
-profondeur ; chaque drone garde son décalage latéral, mesuré perpendiculairement au tronçon, à chaque point. Après le
-dernier point, il rejoint sa cible. Le premier point est le départ : s'il est dans la couverture radar, l'essaim est vu
-d'emblée.
+### 12.3 "Flight plan" behaviour
+The swarm follows the drawn waypoints, in a column of width `fourmi_largeur_couloir_km` and 4 km deep; each drone keeps
+its lateral offset, measured perpendicular to the leg, at each point. After the last point, it heads for its target. The
+first point is the start: if it is inside radar coverage, the swarm is seen at once.
 
-### 12.4 Ordres en cours de raid
-En pause à l'instant t, l'éditeur passe en mode ordres : on sélectionne des avions et on les envoie à un point. L'ordre
-est enregistré dans le scénario (`bleu.ordres` : instant, numéros d'avions, point), puis le raid est recalculé depuis
-le début et rejoué jusqu'à t. Au premier pas où l'instant de l'ordre est atteint, les avions cités encore armés passent
-en ralliement vers le point, à leur altitude ; la conduite ne les réaffecte plus avant leur arrivée, mais ils engagent
-toujours un drone qui les approche, puis reprennent leur route. Arrivés, ils redeviennent libres. Comme toute
-modification, l'ordre se rejoue à l'identique avec la même graine.
+### 12.4 Orders during the raid
+Paused at instant t, the editor switches to orders mode: you select aircraft and send them to a point. The order is
+recorded in the scenario (`bleu.ordres`: instant, aircraft numbers, point), then the raid is recomputed from the start
+and replayed up to t. At the first step where the order's instant is reached, the named aircraft still armed switch to
+heading for the point, at their altitude; control no longer reassigns them before they arrive, but they still engage a
+drone that approaches them, then resume their route. Once arrived, they become free again. Like any change, the order
+replays identically with the same seed.
 
-### 12.5 Zones
-Une zone est un polygone de sommets géographiques. Une zone « protégée » compte, toutes les 2 s, les drones actifs qui
-s'y trouvent (chaque drone une seule fois) : c'est le nombre d'incursions, ajouté au bilan quand le scénario a des zones.
-L'appartenance se teste dans le plan tangent au barycentre de la zone (lancer de rayon), ce qui reste juste pour des
-zones de quelques centaines de km. Une zone « annotation » ne sert qu'à l'affichage.
+### 12.5 Areas
+An area is a polygon of geographic vertices. A "protected" area counts, every 2 s, the active drones inside it (each
+drone only once): that is the number of incursions, added to the outcome when the scenario has areas. Membership is
+tested in the tangent plane at the area's barycentre (ray casting), which stays right for areas of a few hundred km. An
+"annotation" area is for display only.
 
-### 12.6 Vue en profil
-Le plan de vol est échantillonné tous les km le long des géodésiques (600 échantillons au plus) ; sous chaque
-échantillon, l'altitude du relief est lue dans les tuiles terrarium de `cartes/relief/` au zoom 10 (environ 150 m par
-pixel) : altitude = R × 256 + V + B / 256 − 32 768. Le profil trace l'altitude de vol de l'essaim au-dessus du relief.
-Sans réseau, il se replie sur l'altitude de vol seule. Le moteur, lui, ne tient pas encore compte du relief.
+### 12.6 Profile view
+The flight plan is sampled every km along the geodesics (at most 600 samples); under each sample, the terrain altitude
+is read from the terrarium tiles of `cartes/relief/` at zoom 10 (about 150 m per pixel):
+altitude = R × 256 + G + B / 256 − 32,768. The profile draws the swarm's flight altitude above the terrain. Without a
+network, it falls back to the flight altitude alone. The engine itself does not yet take terrain into account.
 
-## 13 · Physique expliquée (jalon 4)
-### 13.1 Fiches
-Chaque unité et chaque algorithme a sa fiche dans l'explorateur (`catalogue.html`) : niveau de fidélité, équations,
-hypothèses, domaine de validité, sources ou références, paramètres (avec, pour une unité, l'ancêtre qui fixe chaque
-valeur), lien vers le fichier de code ou de données, et ce qui l'utilise. Les fiches sont tirées des fichiers eux-mêmes
-(`meta` des algorithmes, `_aide` et `sources` des unités) : elles ne peuvent pas diverger du code.
+## 13 · Physics explained (milestone 4)
+### 13.1 Sheets
+Each unit and each algorithm has its sheet in the explorer (`catalogue.html`): fidelity level, equations, assumptions,
+validity domain, sources or references, parameters (with, for a unit, the ancestor that sets each value), link to the
+code or data file, and what uses it. The sheets are drawn from the files themselves (the algorithms' `meta`, the units'
+`_aide` and `sources`): they cannot diverge from the code. Their English texts come from `langues/catalogue.en.json`,
+beside the files, which do not change (CATALOGUE.md § 6.1).
 
-### 13.2 Inspecteur « pourquoi »
-Un clic sur une entité ouvre son inspection, mise à jour en direct :
-- avion : état, position, vitesse, munitions, et la dernière décision de la conduite — piste retenue, score
-  effectif / (1 + avions déjà envoyés), délai d'interception, pistes connues et atteignables, trois meilleures
-  alternatives écartées. L'algorithme d'allocation rend cette explication avec sa décision, sans la modifier (les
-  bilans de référence restent exacts, `tests/portage_j0.test.js`) ;
-- drone : état, détection, distance et temps restants, chaque tir subi avec son Pk et son issue, et la probabilité de
-  survivre à ces tirs, Π(1 − Pk) ;
-- cible : postes, munitions, frappes, et la cadence de tir déduite du § 5.
+### 13.2 "Why" inspector
+Clicking an entity opens its inspection, updated live:
+- aircraft: state, position, speed, munitions, and control's last decision — chosen track, score
+  strength / (1 + aircraft already sent), interception delay, known and reachable tracks, three best discarded
+  alternatives. The allocation algorithm returns this explanation with its decision, without changing it (the reference
+  outcomes stay exact, `tests/portage_j0.test.js`);
+- drone: state, detection, remaining distance and time, each shot taken with its Pk and outcome, and the probability of
+  surviving these shots, Π(1 − Pk);
+- target: posts, munitions, hits, and the firing rate deduced from § 5.
 
-### 13.3 Preuve des renvois
-Le code renvoie au modèle par « MODELE § x » ; `tests/conformite.test.js` vérifie que chaque renvoi du code, des
-algorithmes et des analyses désigne une section existante de ce document.
+### 13.3 Proof of the references
+The code refers to the model with "MODELE § x"; `tests/conformite.test.js` checks that every reference in the code, the
+algorithms and the analyses names an existing section of this document.
 
-## 14 · Outils de preuve (jalon 5)
-### 14.1 Empreinte de reproductibilité
-Un résultat n'a de valeur que si on peut le refaire. Chaque résultat des outils de preuve porte une empreinte :
-SHA-256 de quatre parties, chacune hachée à part pour dire ce qui a changé entre deux résultats :
-- `scenario` : le scénario v2 complet, en JSON canonique (clés triées, blocs `_aide` retirés) ;
-- `unites` : les fichiers d'unités chargés, bases et emports compris ;
-- `algos` : pour chaque algorithme que le scénario fait tourner, sa fiche `meta` et le code de chacune de ses fonctions ;
-- `moteur` : le code de `src/moteur/`.
+## 14 · Proof tools (milestone 5)
+### 14.1 Reproducibility fingerprint
+A result is only worth something if it can be redone. Each result of the proof tools carries a fingerprint: SHA-256 of
+four parts, each hashed separately to say what changed between two results:
+- `scenario`: the complete v2 scenario, in canonical JSON (sorted keys, `_aide` blocks removed);
+- `unites`: the unit files loaded, bases and payloads included;
+- `algos`: for each algorithm the scenario runs, its `meta` sheet and the code of each of its functions;
+- `moteur`: the code of `src/moteur/`.
 
-Le hasard ne dépend que de la graine (§ 8.1, mulberry32) : deux résultats de même empreinte, mêmes graines et mêmes
-tirages sont identiques au bit près. Le résultat porte aussi ses écarts au scénario de référence, chemin par chemin.
+Randomness only depends on the seed (§ 8.1, mulberry32): two results with the same fingerprint, same seeds and same
+draws are bit-for-bit identical. The result also carries its differences from the reference scenario, path by path. The
+display language enters none of these parts: translations live beside the files and are applied only on display.
 
-### 14.2 Convergence en pas de temps
-Le moteur avance par pas fixe Δt (0,5 s par défaut : 111 m pour un drone à 800 km/h). Un résultat ne doit pas dépendre
-de ce choix. La campagne est rejouée à plusieurs pas, sur les mêmes graines, et chaque pas est comparé au plus fin
-tirage par tirage : différence moyenne d̄, écart-type s_d, écart réduit apparié z = |d̄| / (s_d / √n). Un pas est
-conforme si, pour chaque grandeur, z ≤ 3 (écart indiscernable du hasard) ou |d̄| ≤ 1 % de la valeur au pas fin
-(écart réel mais négligeable : la durée du raid, par exemple, se mesure à un pas près).
+### 14.2 Time-step convergence
+The engine advances by a fixed step Δt (0.5 s by default: 111 m for a drone at 800 km/h). A result must not depend on
+this choice. The campaign is replayed at several steps, on the same seeds, and each step is compared with the finest one
+draw by draw: mean difference d̄, standard deviation s_d, paired reduced gap z = |d̄| / (s_d / √n). A step is compliant
+if, for each quantity, z ≤ 3 (gap indistinguishable from chance) or |d̄| ≤ 1% of the value at the fine step (real but
+negligible gap: the raid's duration, for instance, is measured to within one step).
 
-### 14.3 Duel A/B à nombres aléatoires communs
-Comparer deux variantes d'un scénario (une tactique contre une autre, 30 avions contre 40) sur les mêmes graines :
-le tirage i de A et le tirage i de B partent de la même graine. Les différences sont alors appariées : leur variance
-est Var(A) + Var(B) − 2 Cov(A, B), plus petite que celle de deux campagnes indépendantes dès que les deux variantes
-réagissent dans le même sens au même hasard. Le gain des nombres communs, (Var A + Var B) / Var(B − A), dit combien de
-tirages indépendants il faudrait de plus pour la même précision. Verdict : « B > A » ou « B < A » si z > 3,
-« indiscernable » sinon. Un seul générateur sert tout le raid : dès que les variantes divergent, leurs tirages se
-désynchronisent, et le gain baisse — il est mesuré, jamais supposé.
+### 14.3 A/B duel with common random numbers
+Compare two variants of a scenario (one tactic against another, 30 aircraft against 40) on the same seeds: draw i of A
+and draw i of B start from the same seed. The differences are then paired: their variance is
+Var(A) + Var(B) − 2 Cov(A, B), smaller than that of two independent campaigns as soon as both variants react the same
+way to the same chance. The gain of common numbers, (Var A + Var B) / Var(B − A), says how many more independent draws
+would be needed for the same precision. Verdict: "B > A" or "B < A" if z > 3, "indistinguishable" otherwise. A single
+generator serves the whole raid: as soon as the variants diverge, their draws fall out of step, and the gain drops — it
+is measured, never assumed.
 
-### 14.4 Criblage de sensibilité de Morris
-Quels réglages pèsent vraiment sur une grandeur ? La méthode de Morris (Morris 1991 ; Campolongo, Cariboni et
-Saltelli 2007) répond avec r (k + 1) évaluations pour k facteurs. Chaque facteur est ramené à [0, 1] sur sa plage
-[min, max], sur une grille de p niveaux (p pair) ; le pas vaut Δ = p / (2(p − 1)). Une trajectoire part d'un point de
-la moitié basse de la grille et augmente chaque facteur de Δ à son tour, dans un ordre tiré au hasard. L'effet
-élémentaire du facteur i est EEᵢ = (y(x + Δᵢeᵢ) − y(x)) / Δᵢ, Δᵢ étant le pas réellement fait après arrondi d'un
-facteur entier : il se lit comme la variation de la grandeur quand le facteur parcourt toute sa plage. Sur r
-trajectoires :
-- μ* = moyenne des |EEᵢ| : l'influence du facteur, qui sert au classement ;
-- μ = moyenne des EEᵢ : le sens de l'effet ;
-- σ = écart-type des EEᵢ : grand devant μ*, l'effet dépend des autres facteurs (non-linéarité, interactions).
+### 14.4 Morris sensitivity screening
+Which settings really weigh on a quantity? The Morris method (Morris 1991; Campolongo, Cariboni and Saltelli 2007)
+answers with r (k + 1) evaluations for k factors. Each factor is brought back to [0, 1] over its range [min, max], on a
+grid of p levels (p even); the step is Δ = p / (2(p − 1)). A trajectory starts from a point in the lower half of the
+grid and increases each factor by Δ in turn, in a random order. The elementary effect of factor i is
+EEᵢ = (y(x + Δᵢeᵢ) − y(x)) / Δᵢ, Δᵢ being the step actually taken after rounding an integer factor: it reads as the
+change in the quantity when the factor runs over its whole range. Over r trajectories:
+- μ* = mean of the |EEᵢ|: the factor's influence, used for ranking;
+- μ = mean of the EEᵢ: the direction of the effect;
+- σ = standard deviation of the EEᵢ: large compared with μ*, the effect depends on the other factors (non-linearity,
+  interactions).
 
-Chaque point est la moyenne de quelques raids aux mêmes graines. Le bruit de Monte-Carlo d'un effet élémentaire est
-estimé par 1,96 √2 σ̄_moyenne / Δ : un μ* en dessous ne se distingue pas du hasard. Morris classe ; une décomposition
-de variance (Sobol) chiffrera ensuite la part de chaque facteur.
+Each point is the mean of a few raids on the same seeds. The Monte Carlo noise of an elementary effect is estimated by
+1.96 √2 σ̄_mean / Δ: a μ* below it cannot be told from chance. Morris ranks; a variance decomposition (Sobol) will then
+quantify each factor's share.
 
-### 14.5 Dossier de preuve
-`node src/preuve.js dossier` écrit un dossier Markdown : empreinte, écarts au scénario de référence, résultats avec
-leur IC à 95 %, convergence en pas de temps, unités et algorithmes en jeu (fidélité, sources, hypothèses), limites
-connues et commande pour le reproduire.
+### 14.5 Evidence file
+`node src/preuve.js dossier` writes a Markdown file: fingerprint, differences from the reference scenario, results with
+their 95% CI, time-step convergence, units and algorithms in play (fidelity, sources, assumptions), known limits and
+the command to reproduce it. It is written in the chosen language (`--langue fr` or `EGIDE_LANGUE`, English by
+default); its numbers and its fingerprint do not depend on it.
 
-## 15 · Radars placés et réseau (jalon 6)
-### 15.1 Disposition des radars
-Deux dispositions, au choix du scénario (`bleu.radar.disposition`) :
-- **frontière** (référence, § 2) : des radars jalonnent la frontière ; un drone est vu dès qu'il entre à moins de
-  d = min(horizon radar, portée max) de la zone. Pour l'affichage et l'édition, cette couverture est matérialisée par
-  n = ⌈2π R / (√3 d)⌉ radars (3 au moins) répartis sur le cercle de la zone : deux voisins sont à √3 d au plus l'un de
-  l'autre, si bien que tout drone qui franchit la frontière passe à moins de d de l'un d'eux ;
-- **sites** : chaque radar est placé sur la carte (`bleu.radar.sites`). Un drone est vu dès qu'il est dans la portée
-  d'au moins un site, en distance oblique entre positions ECEF : ‖P_drone − P_site‖² ≤ d² + (h_drone − h_antenne)².
-  Les drones apparaissent au-delà de la couverture la plus lointaine et, au moins, de la frontière.
+## 15 · Placed radars and network (milestone 6)
+### 15.1 Radar layout
+Two layouts, chosen by the scenario (`bleu.radar.disposition`):
+- **frontiere** (border, reference, § 2): radars line the border; a drone is seen as soon as it comes within
+  d = min(radar horizon, max range) of the area. For display and editing, this coverage is materialised by
+  n = ⌈2π R / (√3 d)⌉ radars (at least 3) spread over the area's circle: two neighbours are at most √3 d apart, so that
+  any drone crossing the border passes within d of one of them;
+- **sites**: each radar is placed on the map (`bleu.radar.sites`). A drone is seen as soon as it is within range of at
+  least one site, in slant distance between ECEF positions: ‖P_drone − P_site‖² ≤ d² + (h_drone − h_antenna)². Drones
+  appear beyond the furthest coverage and, at least, beyond the border.
 
-Dans l'éditeur, déplacer, ajouter ou supprimer un radar fait passer le scénario en disposition « sites » en y
-inscrivant la position de tous les radars affichés. La détection reste mémorisée : un drone vu une fois reste pisté.
+In the editor, moving, adding or removing a radar switches the scenario to the "sites" layout by writing in the
+position of all the radars displayed. Detection stays memorised: a drone seen once stays tracked.
 
-### 15.2 Réseau d'information
-Le réseau dit ce que la conduite sait et qui elle peut joindre (`bleu.reseau`). Ses nœuds : le centre de conduite
-(« conduite », au centre du théâtre sauf position donnée), chaque radar (« radar:<i> », R<i+1>) et chaque groupe
-d'avions (« avions:<g> »). Une liaison relie deux nœuds par un moyen du catalogue (`unites/liaisons/`) : famille
-(filaire, radio, satellite, optique), latence de bout en bout λ, portée P et, pour les moyens à vue directe, une
-hauteur d'antenne au sol h. La portée effective entre deux extrémités de hauteurs h₁ et h₂ vaut
-P_eff = min(P, √(2 k R_T) (√h₁ + √h₂)), k = 4/3, pour un moyen à vue directe, P sinon.
+### 15.2 Information network
+The network says what control knows and whom it can reach (`bleu.reseau`). Its nodes: the control centre ("conduite",
+at the centre of the theatre unless a position is given), each radar ("radar:<i>", R<i+1>) and each aircraft group
+("avions:<g>"). A link joins two nodes by a means from the catalogue (`unites/liaisons/`): family (wired, radio,
+satellite, optical), end-to-end latency λ, range P and, for line-of-sight means, a ground antenna height h. The
+effective range between two ends of heights h₁ and h₂ is P_eff = min(P, √(2 k R_T) (√h₁ + √h₂)), k = 4/3, for a
+line-of-sight means, P otherwise.
 
-- **Mode complet** (référence) : tout le monde parle avec tout le monde, sans délai. La conduite apprend chaque
-  détection à l'instant même ; chaque avion est joignable. Les bilans sont ceux d'avant le réseau, à l'identique
+- **Full mode** (reference): everyone talks to everyone, with no delay. Control learns each detection at that very
+  instant; each aircraft can be reached. The outcomes are those before the network, identically
   (`tests/portage_j0.test.js`).
-- **Mode liaisons** : seules les liaisons listées portent l'information, dans les deux sens.
-  - Les liaisons entre nœuds au sol sont actives si leurs extrémités sont à moins de P_eff ; la latence d'un radar
-    jusqu'à la conduite est celle du plus court chemin par liaisons actives (relais possibles), infinie sans chemin.
-  - Un drone vu par le radar i à l'instant t est connu de la conduite à t + λ_i ; un radar non relié voit pour
-    rien. Le radar qui voit est désigné par l'algorithme de détection (`detecte_par`) ou, à défaut, est le plus proche.
-  - Le délai de réaction de la conduite court à partir de l'instant où elle connaît le drone.
-  - Un avion est joignable s'il est à portée d'au moins une liaison entre son groupe et un nœud au sol relié à la
-    conduite, à l'altitude de l'avion. Un avion hors liaison n'est plus affecté : il finit sa mission en cours, puis
-    reste où il est ; ses propres capteurs d'arme engagent toujours les drones qui passent à sa portée.
+- **Links mode**: only the listed links carry information, both ways.
+  - Links between ground nodes are active if their ends are less than P_eff apart; a radar's latency to control is that
+    of the shortest path through active links (relays possible), infinite with no path.
+  - A drone seen by radar i at instant t is known to control at t + λ_i; an unlinked radar sees for nothing. The radar
+    that sees is named by the detection algorithm (`detecte_par`) or, failing that, is the nearest.
+  - Control's reaction delay runs from the instant it knows the drone.
+  - An aircraft can be reached if it is within range of at least one link between its group and a ground node linked to
+    control, at the aircraft's altitude. An aircraft out of contact is no longer assigned: it finishes its current
+    mission, then stays where it is; its own weapon sensors still engage the drones that pass within its range.
 
-Dans l'éditeur, l'outil Liaison relie deux nœuds (radar, centre de conduite, avion pour son groupe) par le moyen
-choisi ; depuis le réseau complet, la première liaison matérialise d'abord le réseau par défaut (chaque radar à la
-conduite au fil, la conduite à chaque groupe par radio). « Réseau complet » y revient. Le centre de conduite se
-déplace comme une unité. Limites de ce premier lot : la latence des ordres vers les avions, le débit, le brouillage
-et les liaisons entre drones ne sont pas encore modélisés (docs/PLAN_V2.md, jalon 7).
+In the editor, the Link tool joins two nodes (radar, control centre, aircraft for its group) by the chosen means; from
+the full network, the first link first materialises the default network (each radar to control by wire, control to each
+group by radio). "Full network" goes back to it. The control centre moves like a unit. Limits of this first batch: the
+latency of orders to the aircraft, throughput, jamming and links between drones are not yet modelled (docs/PLAN_V2.md,
+milestone 7).
 
-### 15.3 Interface centrée sur la carte
-La carte (ou le scope) occupe tout l'écran. Le reste flotte par-dessus et se replie : barre de tactique et d'édition
-en haut, rail de panneaux à gauche (scénario, calques, balayage, profil, aide ; un à la fois, touches 1 à 5), bilan
-compact en haut à droite avec ses détails repliés, inspecteur dessous, lecture en bas. Les **calques** affichent ou
-masquent chaque famille d'entités (avions IR, avions laser, radars, couverture, bulles sol, drones détectés ou non,
-plots, plan de vol, tirs, cibles, zones, anneaux) ; une entité masquée ne se survole, ne s'inspecte ni ne s'édite.
-C'est un filtre d'affichage : la simulation n'en dépend pas.
+### 15.3 Map-centred interface
+The map (or the scope) takes the whole screen. The rest floats on top and folds away: tactic and editing bar at the top,
+rail of panels on the left (scenario, layers, sweep, profile, help; one at a time, keys 1 to 5), compact outcome at the
+top right with its details folded, inspector below, playback at the bottom. The **layers** show or hide each family of
+entities (IR aircraft, laser aircraft, radars, coverage, ground bubbles, detected or undetected drones, plots, flight
+plan, shots, targets, areas, rings); a hidden entity cannot be hovered, inspected or edited. It is a display filter: the
+simulation does not depend on it.
 
-### 15.4 Pannes, centre de conduite visé, vue du CDC
-- **Latence des consignes** : une décision de la conduite, ou un ordre donné dans l'éditeur, part du centre de
-  conduite et n'atteint l'avion qu'après la latence de son accès (§ 15.2) ; un avion injoignable ne la reçoit pas.
-  Un ordre en route a priorité sur les décisions suivantes de la conduite.
-- **Pannes datées** (`bleu.reseau.pannes`) : à l'instant t, un radar cesse de voir, une liaison cesse de porter
-  l'information, ou le centre de conduite cesse de fonctionner (plus rien n'est connu, plus personne n'est affecté) ;
-  une durée la rend temporaire, sinon elle est définitive. Le réseau est recalculé à chaque changement. Dans
-  l'éditeur, en cours de raid, Suppr met hors service le radar, le CDC ou la liaison sélectionnés, à cet instant.
-  Après la panne du CDC, un drone vu pendant la panne n'est connu qu'à son retour, s'il est encore vu.
-- **Centre de conduite visé** (`bleu.reseau.conduite_ciblee`) : il devient une cible de plus de l'essaim, la
-  dernière, défendue par des postes sol comme les autres ; à la première frappe, il est détruit pour de bon.
-- **Vue du CDC** : l'écran ne montre que les drones que la conduite connaît, et les pistes de son algorithme de
-  pistage ; la vérité terrain reste à un bouton (V). Les positions affichées sont les positions vraies des drones
-  connus : le retard de mise à jour des pistes n'est pas encore représenté.
+### 15.4 Failures, targeted control centre, CRC view
+- **Latency of instructions**: a decision of control, or an order given in the editor, leaves from the control centre
+  and only reaches the aircraft after the latency of its access (§ 15.2); an aircraft that cannot be reached does not
+  receive it. An order on its way takes priority over control's following decisions.
+- **Dated failures** (`bleu.reseau.pannes`): at instant t, a radar stops seeing, a link stops carrying information, or
+  the control centre stops working (nothing is known any more, nobody is assigned any more); a duration makes it
+  temporary, otherwise it is permanent. The network is recomputed at each change. In the editor, during the raid,
+  Delete puts the selected radar, CRC or link out of service, at that instant. After the CRC's failure, a drone seen
+  during the failure is only known on its return, if it is still seen.
+- **Targeted control centre** (`bleu.reseau.conduite_ciblee`): it becomes one more target of the swarm, the last one,
+  defended by ground posts like the others; at the first hit, it is destroyed for good.
+- **CRC view**: the screen only shows the drones control knows, and the tracks of its tracking algorithm; ground truth
+  is one button away (V). The positions shown are the known drones' true positions: the delay in updating tracks is not
+  yet represented.
 
-## 16 · Relief dans le moteur (jalon 2)
+## 16 · Terrain in the engine (milestone 2)
 ### 16.1 Terrain
-Un terrain est une unité du catalogue (`unites/terrains/`) : grille régulière en latitude et longitude, au pas de 1
-à 2 km, d'altitudes du sol en mètres (entiers 16 bits encodés en base64), avec ses sources. Le scénario le cite par
-`theatre.terrain` (null : Terre lisse, comportement d'avant). `node outils/terrain.js` le fabrique depuis les tuiles
-terrarium (décodeur PNG sans dépendance, `outils/png.js`), ou en relief synthétique pour les essais
-(`terrains/crete_notionnelle` : crête de 1 500 m à 170 km au nord du centre, juste au-delà de la frontière, et massif de 1 200 m au sud-est, qui aveuglent vers l'extérieur les radars voisins). Une fois
-fabriqué, le terrain est un fichier : le moteur travaille hors ligne. L'altitude en un point est interpolée entre
-les quatre nœuds voisins ; hors de la grille, elle vaut 0.
+A terrain is a catalogue unit (`unites/terrains/`): regular grid in latitude and longitude, at 1 to 2 km spacing, of
+ground altitudes in metres (16-bit integers encoded in base64), with its sources. The scenario names it in
+`theatre.terrain` (null: smooth Earth, previous behaviour). `node outils/terrain.js` makes it from terrarium tiles
+(dependency-free PNG decoder, `outils/png.js`), or as synthetic terrain for trials (`terrains/crete_notionnelle`: a
+1,500 m ridge 170 km north of the centre, just beyond the border, and a 1,200 m massif to the south-east, which blind
+the neighbouring radars towards the outside). Once made, the terrain is a file: the engine works offline. The altitude
+at a point is interpolated between the four neighbouring nodes; outside the grid, it is 0.
 
-### 16.2 Masque d'horizon des radars
-Pour chaque radar, d'altitude d'antenne z_a = z_sol + h_antenne, le moteur calcule une fois, dans 360 secteurs de
-1°, l'angle de site du relief à chaque pas de distance jusqu'à la portée d :
-θ(s) = (z_sol(s) − z_a) / s − s / (2 k R_T), k = 4/3, et son maximum courant M(s). Un drone à la distance s, volant à
-h_drone au-dessus du sol (suivi de terrain : l'altitude des drones est alors une hauteur sol), est vu si
-θ_drone(s) > M(s), c'est-à-dire s'il dépasse tout le relief qui le précède. Avec un terrain, chaque radar voit selon
-son masque (en disposition frontière, les radars matérialisés du § 15.1, chacun dans sa portée d) ; un drone est vu
-dès qu'un radar en état le voit. La couverture réelle (portée vue dans chaque secteur) remplace les cercles à l'écran.
-Le calcul passe par le repère ENU du radar (distance et azimut à mieux que 0,1 % jusqu'à 100 km).
+### 16.2 Radar horizon mask
+For each radar, with antenna altitude z_a = z_ground + h_antenna, the engine computes once, in 360 sectors of 1°, the
+terrain's elevation angle at each distance step up to the range d:
+θ(s) = (z_ground(s) − z_a) / s − s / (2 k R_T), k = 4/3, and its running maximum M(s). A drone at distance s, flying at
+h_drone above the ground (terrain following: the drones' altitude is then a height above ground), is seen if
+θ_drone(s) > M(s), that is if it rises above all the terrain before it. With a terrain, each radar sees according to its
+mask (in border layout, the materialised radars of § 15.1, each within its range d); a drone is seen as soon as a
+working radar sees it. The real coverage (range seen in each sector) replaces the circles on screen. The computation
+goes through the radar's ENU frame (distance and azimuth to better than 0.1% up to 100 km).
 
-### 16.3 Vue directe des liaisons
-Une liaison à vue directe (radio, optique) entre deux antennes d'altitudes z₁ et z₂ distantes de D passe si, en
-chaque point à s du premier, z_sol(s) < z₁ + (z₂ − z₁) s / D − s (D − s) / (2 k R_T) (rayon droit, Terre de rayon
-effectif). Le test s'applique aux liaisons entre nœuds au sol et à l'accès de chaque avion (altitude de vol au-dessus
-de l'ellipsoïde).
+### 16.3 Line of sight for links
+A line-of-sight link (radio, optical) between two antennas of altitudes z₁ and z₂, D apart, passes if, at each point s
+from the first, z_ground(s) < z₁ + (z₂ − z₁) s / D − s (D − s) / (2 k R_T) (straight ray, Earth of effective radius).
+The test applies to links between ground nodes and to each aircraft's access (flight altitude above the ellipsoid).
 
-## 17 · Circulation de l'information (jalon 8)
-### 17.1 La chaîne, pas à pas
-1. **Un radar voit.** Un drone entre dans sa portée (ou sort de derrière le relief, § 16.2).
-2. **L'information remonte au CDC** après la latence du chemin le plus court par liaisons actives (§ 15.2), ou n'y
-   arrive jamais si le radar n'est pas relié ; en réseau complet, aussitôt.
-3. **Le CDC attend son délai de réaction** (`bleu.conduite.delai_reaction_s`), puis, à chaque pas de décision, regroupe
-   les drones qu'il connaît en pistes (pistage) et affecte à chaque avion libre et joignable sa meilleure piste
-   (allocation, § 8.3).
-4. **La mission descend à l'avion** après la latence de son accès (§ 15.4) ; l'avion part vers le point
-   d'interception à sa vitesse de mise à poste.
-5. **L'avion accroche un drone avec son propre capteur** dès qu'un drone qui se rapproche passe à moins de trois
-   portées de son arme : il le poursuit sans attendre la conduite, puis tire à portée (§ 4.2).
-6. **Les postes sol tirent sur ce qui entre dans leur bulle** ; ils ne sont pas encore prévenus par le réseau
-   (jalon 9 : désignation par le centre de détection et de contrôle).
+## 17 · Flow of information (milestone 8)
+### 17.1 The chain, step by step
+1. **A radar sees.** A drone enters its range (or comes out from behind the terrain, § 16.2).
+2. **The information goes up to the CRC** after the latency of the shortest path through active links (§ 15.2), or never
+   arrives if the radar is not linked; in a full network, at once.
+3. **The CRC waits for its reaction delay** (`bleu.conduite.delai_reaction_s`), then, at each decision step, groups the
+   drones it knows into tracks (tracking) and assigns each free and reachable aircraft its best track (allocation,
+   § 8.3).
+4. **The mission goes down to the aircraft** after the latency of its access (§ 15.4); the aircraft leaves for the
+   interception point at its positioning speed.
+5. **The aircraft locks onto a drone with its own sensor** as soon as an approaching drone comes within three ranges of
+   its weapon: it pursues it without waiting for control, then fires in range (§ 4.2).
+6. **The ground posts fire at whatever enters their bubble**; they are not yet warned by the network (milestone 9:
+   designation by the control and reporting centre).
 
-### 17.2 Journal et affichage
-Le moteur journalise, en lecture seulement (pas en campagne), chaque maillon : `detection` (drone, radar, instant
-d'arrivée au CDC ou null), `mission` (avion, effectif de la piste, nœud d'accès, instant de réception), `reception`,
-`contact` (avion, drone), `tir`, `impact`, `ordre`, `panne`, `reseau`. Le journal ne change rien au déroulement :
-les bilans de référence restent exacts (`tests/portage_j0.test.js`).
+### 17.2 Log and display
+The engine logs, during playback only (not in campaigns), each link of the chain: `detection` (drone, radar, instant of
+arrival at the CRC or null), `mission` (aircraft, track strength, access node, instant of reception), `reception`,
+`contact` (aircraft, drone), `tir`, `impact`, `ordre`, `panne`, `reseau`. The log changes nothing in the run: the
+reference outcomes stay exact (`tests/portage_j0.test.js`).
 
-À l'écran (calque « Circulation de l'information ») : impulsion bleue d'un radar vers le CDC avec le nombre de drones
-signalés (rouge et arrêtée si l'information ne va nulle part), impulsion blanche du CDC vers l'avion missionné,
-cercle blanc quand l'avion la reçoit, tirets jaunes quand il accroche un drone. Le panneau Journal raconte la même
-histoire en phrases (détections regroupées par radar sur 10 s), filtrable par famille ; l'inspecteur d'un drone en donne la chaîne complète.
+On screen ("Information flow" layer): a blue pulse from a radar to the CRC with the number of drones reported (red and
+stopped if the information goes nowhere), a white pulse from the CRC to the aircraft on mission, a white circle when
+the aircraft receives it, yellow dashes when it locks onto a drone. The Log panel tells the same story in sentences
+(detections grouped by radar over 10 s), filterable by family; a drone's inspector gives its complete chain. These
+sentences are in the interface's language; the events they tell are the same.
 
-## 18 · Centres de détection et de contrôle (jalon 9)
-### 18.1 Plusieurs centres, une situation chacun
-Le centre principal (« conduite », affiché CDC) et les centres ajoutés (`bleu.reseau.centres`, nœuds
-« centre:<k> ») reçoivent les détections des radars, en font des pistes, envoient les avions et désignent les drones
-aux postes sol. Chaque centre a sa propre situation : il connaît un drone vu par le radar i à t + λ_c,i, la latence
-du plus court chemin du radar jusqu'à lui ; un chemin peut passer par un autre centre (échange de pistes entre
-centres). En réseau complet, tous les centres savent tout aussitôt.
+## 18 · Control and reporting centres (milestone 9)
+### 18.1 Several centres, one picture each
+The main centre ("conduite", displayed CRC) and the added centres (`bleu.reseau.centres`, nodes "centre:<k>") receive
+the radars' detections, turn them into tracks, send the aircraft and designate the drones to the ground posts. Each
+centre has its own picture: it knows a drone seen by radar i at t + λ_c,i, the latency of the shortest path from the
+radar to it; a path can go through another centre (track exchange between centres). In a full network, all the
+centres know everything at once.
 
-### 18.2 Contrôle des avions
-Chaque avion est contrôlé par le centre qui le joint le plus vite (§ 15.2, accès par centre). À chaque pas de
-décision, chaque centre affecte les avions libres qu'il contrôle aux pistes des drones qu'il connaît depuis au moins
-le délai de réaction. Si un centre tombe, ses avions passent au centre qui les joint encore ; s'il n'y en a plus, ils
-ne sont plus affectés. Un seul centre en réseau complet redonne les bilans d'avant (`tests/portage_j0.test.js`).
+### 18.2 Aircraft control
+Each aircraft is controlled by the centre that reaches it fastest (§ 15.2, access per centre). At each decision step,
+each centre assigns the free aircraft it controls to the tracks of the drones it has known for at least the reaction
+delay. If a centre falls, its aircraft pass to the centre that still reaches them; if there is none left, they are no
+longer assigned. A single centre in a full network gives back the earlier outcomes (`tests/portage_j0.test.js`).
 
-### 18.3 Désignation des postes sol
-Les postes sol d'une cible forment le nœud « sol:<i> ». Un drone est **désigné** aux postes quand un centre le
-connaît et que l'information a eu le temps d'aller du centre aux postes : connu_c + λ_c,sol ≤ t. Désigné, le poste tire
-aussitôt qu'il est dans sa bulle, sur le plus proche ; sinon, le poste doit l'acquérir seul : il prend le drone qui
-entre dans sa bulle (le plus éloigné, le premier que voit son capteur), que les postes voisins de la même cible n'ont
-pas déjà en acquisition, le garde tant qu'il y reste, et ne tire qu'après le délai d'acquisition de son unité
-(`acquisition_s`, 10 s pour le poste notionnel). Sur le scénario de référence en liaisons (8 raids), les postes
-reliés au CDC abattent 312 drones, contre 231 sans liaison ; les frappes passent de 432 ± 52 à 515 ± 42.
-En réseau complet, tout drone connu est désigné. Le journal distingue les tirs désignés des tirs après acquisition.
+### 18.3 Designation of the ground posts
+A target's ground posts form the node "sol:<i>". A drone is **designated** to the posts when a centre knows it and the
+information has had time to go from the centre to the posts: known_c + λ_c,sol ≤ t. Designated, the post fires as soon
+as it is in its bubble, at the nearest; otherwise, the post must acquire it on its own: it takes the drone that enters
+its bubble (the furthest, the first its sensor sees), that the neighbouring posts of the same target do not already
+have in acquisition, keeps it as long as it stays, and only fires after its unit's acquisition delay (`acquisition_s`,
+10 s for the notional post). On the reference scenario in links mode (8 raids), the posts linked to the CRC shoot down
+312 drones, against 231 without a link; hits go from 432 ± 52 to 515 ± 42. In a full network, every known drone is
+designated. The log tells designated shots from shots after acquisition.
 
-### 18.4 Éditeur
-Outil CDC (K) : ajouter un centre ; il se déplace, se supprime, se met hors service en cours de raid comme un
-radar. L'outil Liaison relie aussi un centre, ou les postes d'une cible (clic sur la cible). Le réseau par défaut
-relie chaque radar au CDC au fil, le CDC à chaque groupe d'avions par radio, aux postes de chaque cible et à chaque
-autre centre au fil.
+### 18.4 Editor
+CRC tool (K): add a centre; it is moved, deleted and put out of service during the raid like a radar. The Link tool also
+joins a centre, or a target's posts (click on the target). The default network links each radar to the CRC by wire,
+the CRC to each aircraft group by radio, to each target's posts and to each other centre by wire.
 
-## 19 · Drones défensifs (jalon 10)
-### 19.1 Principe
-Les drones défensifs sont des vecteurs du catalogue (`unites/vecteurs/drones_defensifs/`), rangés comme les avions
-dans `bleu.avions` : ils attendent sur une position, sont affectés par le centre qui les joint (§ 18.2), rallient
-leur point, accrochent avec leur propre capteur le drone ennemi qui se rapproche (§ 17.1) et l'engagent. Seuls
-changent leur vitesse, leur emport et leur famille (`type_vecteur`). Modèles notionnels par classe : ordres de
-grandeur publics, pas de performances de systèmes réels, ni de loi de guidage.
+## 19 · Defensive drones (milestone 10)
+### 19.1 Principle
+Defensive drones are catalogue vehicles (`unites/vecteurs/drones_defensifs/`), stored like aircraft in `bleu.avions`:
+they wait at a position, are assigned by the centre that reaches them (§ 18.2), head for their point, lock with their
+own sensor onto the approaching enemy drone (§ 17.1) and engage it. Only their speed, payload and family
+(`type_vecteur`) change. Notional models by class: public orders of magnitude, no performance of real systems, no
+guidance law.
 
-### 19.2 Drones armés et intercepteurs à usage unique
-- **Drone armé** : deux charges de courte portée (1 km, Pk 0,4), tir « tire et oublie » (§ 4.2), réutilisable.
-- **Intercepteur à usage unique** : il est son arme ; il percute sa cible à 300 m près (Pk 0,6) et se perd à son
-  premier tir, qu'il la détruise ou non (`consomme_au_tir`). Le bilan compte les intercepteurs perdus.
+### 19.2 Armed drones and single-use interceptors
+- **Armed drone**: two short-range payloads (1 km, Pk 0.4), "fire and forget" shot (§ 4.2), reusable.
+- **Single-use interceptor**: it is its own weapon; it rams its target to within 300 m (Pk 0.6) and is lost on its first
+  shot, whether it destroys it or not (`consomme_au_tir`). The outcome counts the interceptors lost.
 
-### 19.3 Brouilleurs
-Un brouilleur ne tire pas. Effet de zone notionnel, sans modèle de signal ni de contre-mesure : chaque drone ennemi
-actif à moins du rayon r du brouilleur (3 km) est neutralisé, à chaque pas Δt, avec la probabilité
-p = 1 − exp(−Δt / τ), τ étant la constante de temps du brouillage (60 s) ; un drone maintenu t secondes dans le
-rayon y échappe avec la probabilité exp(−t / τ). Le bilan compte les drones neutralisés par brouillage.
+### 19.3 Jammers
+A jammer does not fire. Notional area effect, with no signal or countermeasure model: each active enemy drone within
+radius r of the jammer (3 km) is neutralised, at each step Δt, with probability p = 1 − exp(−Δt / τ), τ being the
+jamming time constant (60 s); a drone kept t seconds within the radius escapes with probability exp(−t / τ). The
+outcome counts the drones neutralised by jamming.
 
-Le scénario de référence porte un groupe vide de chaque famille : ses bilans sont inchangés, et les curseurs
-« Drones défensifs » du panneau Scénario les remplissent.
+The reference scenario carries an empty group of each family: its outcomes are unchanged, and the "Defensive drones"
+sliders of the Scenario panel fill them.
 
-## 20 · Auto-configuration (jalon 11)
+## 20 · Auto-configuration (milestone 11)
 ### 20.1 Construction
-La demande réunit les menaces à considérer (tactique et nombre de drones, une ou plusieurs), les moyens disponibles
-(radars, centres, cibles à défendre, postes et munitions sol, avions, drones défensifs) et une zone : un pays
-(`cartes/frontieres/pays.json`, Natural Earth, domaine public ; on retient son contour le plus étendu, la métropole
-plutôt qu'une île) ou une zone dessinée dans l'éditeur. Le scénario construit :
-- centre le théâtre sur le barycentre de la zone, de rayon le rayon circonscrit, et pose la zone comme zone protégée
-  (les incursions s'y comptent) ;
-- répartit les cibles dans la zone par tirage du point le plus éloigné des points déjà retenus parmi des candidats
-  intérieurs ; le CDC principal au barycentre s'il est dans la zone, sinon sur la cible la plus centrale ; les autres
-  centres de la même façon ;
-- pose les radars à pas régulier le long du contour (disposition « sites », § 15.1).
+The request brings together the threats to consider (tactic and number of drones, one or several), the means available
+(radars, centres, targets to defend, ground posts and munitions, aircraft, defensive drones) and an area: a country
+(`cartes/frontieres/pays.json`, Natural Earth, public domain; its largest outline is kept, the mainland rather than an
+island) or an area drawn in the editor. The scenario built:
+- centres the theatre on the area's barycentre, with the circumscribed radius as radius, and sets the area as a
+  protected area (incursions are counted there);
+- spreads the targets over the area by drawing the point furthest from the points already chosen among inner
+  candidates; the main CRC at the barycentre if it is inside the area, otherwise on the most central target; the other
+  centres the same way;
+- places the radars at regular intervals along the outline ("sites" layout, § 15.1).
 
-### 20.2 Recherche de la répartition
-Trois paramètres décrivent la répartition : `avions` (fraction du chemin du centre de la zone vers des points du
-contour régulièrement espacés, où orbitent les avions : 0,35, 0,6 ou 0,85), `drones` (éloignement des drones
-défensifs autour des cibles, en fraction de la moitié du rayon : 0,1 ou 0,5) et `radars` (poussée des radars
-au-delà du contour, en fraction de leur portée : 0 ou 0,5). Partant de (0,6 ; 0,1 ; 0), la recherche essaie tour à
-tour les autres valeurs de chaque paramètre et garde celles qui baissent les frappes moyennes, toutes menaces et
-toutes graines confondues (nombres aléatoires communs, § 14.3). La répartition **uniforme** (orbites tirées au
-hasard sur le disque du théâtre, radars sur le contour) sert de référence : l'écart retenu − uniforme est donné
-avec son IC à 95 % sur les raids appariés, et déclaré significatif si z > 3. Recherche locale, pas optimum global :
-elle trouve une bonne répartition parmi celles décrites, pas la meilleure possible.
+### 20.2 Searching for the distribution
+Three parameters describe the distribution: `avions` (fraction of the way from the area's centre to regularly spaced
+points of the outline, where the aircraft orbit: 0.35, 0.6 or 0.85), `drones` (distance of the defensive drones around
+the targets, as a fraction of half the radius: 0.1 or 0.5) and `radars` (push of the radars beyond the outline, as a
+fraction of their range: 0 or 0.5). Starting from (0.6; 0.1; 0), the search tries in turn the other values of each
+parameter and keeps those that lower the mean hits, all threats and all seeds together (common random numbers, § 14.3).
+The **uniform** distribution (orbits drawn at random over the theatre's disc, radars on the outline) is the reference:
+the difference chosen − uniform is given with its 95% CI over the paired raids, and declared significant if z > 3.
+Local search, not a global optimum: it finds a good distribution among those described, not the best possible.
 
-### 20.3 Bibliothèque
-`node src/autoconfig.js` écrit le scénario dans `scenarios/` et réindexe la bibliothèque (`scenarios/index.json`) ;
-dans l'interface, le résultat s'applique, se range dans la bibliothèque du navigateur ou s'exporte. La liste
-« Bibliothèque » du panneau Scénario charge un scénario du dépôt ou du navigateur comme nouvelle base.
+### 20.3 Library
+`node src/autoconfig.js` writes the scenario to `scenarios/` and reindexes the library (`scenarios/index.json`); in the
+interface, the result is applied, stored in the browser's library or exported. The "Library" list of the Scenario panel
+loads a scenario from the repository or the browser as the new base.
 
-## 21 · Déploiement unité par unité (jalon 12)
-### 21.1 Radars d'unités différentes
-En disposition `sites`, chaque site peut citer sa propre unité (`bleu.radar.sites[].unite`) et ses surcharges. Sa
-hauteur d'antenne fixe l'altitude du site, et sa portée contre l'essaim est `d_i = min(√(2 k R_T)(√h_i + √h_c),
-portée_max_i)`. Détection, réseau d'information et masques de relief prennent `d_i` site par site. Sans unité propre,
-un site prend celles du radar commun, et le résultat est inchangé.
+## 21 · Unit-by-unit deployment (milestone 12)
+### 21.1 Radars of different units
+In the `sites` layout, each site can name its own unit (`bleu.radar.sites[].unite`) and its overrides. Its antenna
+height sets the site's altitude, and its range against the swarm is
+`d_i = min(√(2 k R_T)(√h_i + √h_c), max_range_i)`. Detection, information network and terrain masks take `d_i` site by
+site. Without its own unit, a site takes those of the common radar, and the result is unchanged.
 
-### 21.2 Batteries placées
-`bleu.sol.batteries[]` place des batteries une à une, en plus des `nombre` postes répartis sur les cibles. Chacune a
-sa position, ses munitions et son unité (portée, Pk, engagements par passage, délai d'acquisition, algorithme
-`tir_sol`). Elle tire sur sa propre bulle avec sa propre cadence. Pour le réseau, elle est rattachée à la cible la
-plus proche et partage son nœud `sol:<i>` (désignation et latence, § 18.3).
+### 21.2 Placed batteries
+`bleu.sol.batteries[]` places batteries one by one, in addition to the `nombre` posts spread over the targets. Each has
+its position, its munitions and its unit (range, Pk, engagements per pass, acquisition delay, `tir_sol` algorithm). It
+fires on its own bubble at its own rate. For the network, it is attached to the nearest target and shares its node
+`sol:<i>` (designation and latency, § 18.3).
 
-### 21.3 Algorithmes par unité, par groupe ou par centre
-Les `surcharges` d'un groupe, d'un site ou d'une batterie peuvent porter `algos` ; ils ne remplacent que les rôles
-qu'ils citent, comme chez une unité fille (§ 10.1). Un centre secondaire peut avoir son algorithme d'allocation
-(`bleu.reseau.centres[].allocation`) ; sinon il prend celui de `bleu.conduite`.
+### 21.3 Algorithms per unit, per group or per centre
+The `surcharges` of a group, a site or a battery can carry `algos`; they only replace the roles they name, as in a child
+unit (§ 10.1). A secondary centre can have its own allocation algorithm (`bleu.reseau.centres[].allocation`); otherwise
+it takes that of `bleu.conduite`.
 
-### 21.4 Équipements de communication
-`bleu.reseau.equipements[]` déclare les moyens dont chaque nœud est équipé (radio, satellite, filaire, optique…).
-Dans le navigateur, la liaison tirée à la main (outil Liaison, ou clic sur un moyen de la palette) prend le moyen
-choisi, même absent de l'équipement déclaré d'un bout, qui en est alors complété ; entre deux nœuds au sol, elle est
-refusée, raison affichée, si la distance dépasse la portée. Le client Godot garde la règle du moyen commun, le plus
-rapide à défaut du choix. La portée d'une liaison de vecteurs se juge à la simulation, avion par avion (§ 15.2).
-La fiche de chaque unité liste ses connexions par famille de moyen : autre extrémité, moyen, distance sur portée
-(à l'orbite moyenne pour des vecteurs), latence et état. « Relier
-automatiquement » relie toute paire de nœuds qui partagent un moyen, si la distance tient dans sa portée et, pour un
-moyen à vue directe, si l'horizon (et le relief) le permet. Le moteur ne lit que les liaisons qui en résultent (§ 15.2).
+### 21.4 Communication equipment
+`bleu.reseau.equipements[]` declares the means each node is equipped with (radio, satellite, wired, optical…). In the
+browser, the link drawn by hand (Link tool, or click on a means in the palette) takes the chosen means, even if absent
+from one end's declared equipment, which is then completed; between two ground nodes, it is refused, with the reason
+shown, if the distance exceeds the range. The Godot client keeps the rule of the common means, the fastest one when no
+choice is made. The range of a vehicle link is judged in the simulation, aircraft by aircraft (§ 15.2). Each unit's
+sheet lists its connections by family of means: other end, means, distance over range (at the mean orbit for vehicles),
+latency and state. "Auto-link" joins any pair of nodes that share a means, if the distance fits in its range and, for a
+line-of-sight means, if the horizon (and the terrain) allows it. The engine only reads the resulting links (§ 15.2).
 
-### 21.5 Éditeur de déploiement
-En mode édition, la palette « Déployer » liste le catalogue par famille. On clique une unité puis la carte, ou on la
-glisse. Un moyen de communication ou un armement se dépose sur une unité déjà placée. Chaque dépôt et chaque réglage
-de la fiche (modèle, algorithmes par rôle, munitions, effectifs, moyens) est une modification par chemin du scénario.
-L'annulation, l'export, la bibliothèque et le rejeu valent donc d'office. Un groupe de vecteurs grossit à chaque dépôt :
-les orbites des avions déjà placés sont figées et les nouveaux orbitent au point déposé.
+### 21.5 Deployment editor
+In editing mode, the "Deploy" palette lists the catalogue by family. Click a unit then the map, or drag it. A means of
+communication or a weapon is dropped on a unit already placed. Each drop and each setting of the sheet (model,
+algorithms by role, munitions, numbers, means) is a change by path of the scenario. Undo, export, the library and the
+replay therefore apply automatically. A vehicle group grows with each drop: the orbits of the aircraft already placed
+are frozen and the new ones orbit at the dropped point.
 
-### 21.6 Aides au déploiement (jalon 13)
-En édition, la vue est verrouillée de dessus : ni inclinaison, ni rotation, ni relief 3D, ni globe ; elle reprend ses
-réglages à la sortie. Ces aides n'entrent jamais dans le calcul : elles ne changent que le point où l'on pose.
+### 21.6 Deployment aids (milestone 13)
+In editing, the view is locked top-down: no tilt, no rotation, no 3D terrain, no globe; it takes back its settings on
+leaving. These aids never enter the computation: they only change the point where you place.
 
-- **Règle** : distance et cap initial sur l'ellipsoïde (Vincenty, § 9), tracés le long de la géodésique.
-- **Aimantation à la grille** : la grille de pas `p` vit dans le plan azimutal équidistant du théâtre. Un point à la
-  distance `d` et à l'azimut `α` de l'origine a pour coordonnées `x = d sin α`, `y = d cos α`, arrondies au multiple de
-  `p` le plus proche, puis ramenées sur l'ellipsoïde. Hypothèse : maille régulière dans ce plan, donc légèrement
-  déformée loin de l'origine ; elle sert à aligner des unités, pas à mesurer.
-- **Aimantation aux unités** : la pose vient sur l'unité à moins de 12 px du curseur, hors unités déplacées.
-- **Aperçus** : un radar montre sa portée contre l'essaim, `min(horizon(h, altitude de l'essaim), portée instrumentée)`
-  (§ 2), sans masquage par le relief ; une batterie, sa bulle ; une liaison, `portée_liaison` (§ 15.2) depuis son premier
-  nœud, l'autre extrémité supposée au sol sur le mât du moyen.
-- **Regroupement** : les avions à moins de 14 px à l'écran portent le nombre d'avions superposés ; le dessin et la
-  sélection de chacun ne changent pas.
+- **Ruler**: distance and initial heading on the ellipsoid (Vincenty, § 9), drawn along the geodesic.
+- **Snap to grid**: the grid of spacing `p` lives in the theatre's azimuthal equidistant plane. A point at distance `d`
+  and azimuth `α` from the origin has coordinates `x = d sin α`, `y = d cos α`, rounded to the nearest multiple of `p`,
+  then brought back onto the ellipsoid. Assumption: regular mesh in this plane, hence slightly distorted far from the
+  origin; it is for aligning units, not for measuring.
+- **Snap to units**: placement goes onto the unit less than 12 px from the cursor, moved units excluded.
+- **Previews**: a radar shows its range against the swarm, `min(horizon(h, swarm altitude), instrumented range)` (§ 2),
+  without terrain masking; a battery, its bubble; a link, `portee_liaison` (§ 15.2) from its first node, the other end
+  assumed on the ground on the means' mast.
+- **Grouping**: aircraft less than 14 px apart on screen carry the number of overlapping aircraft; each one's drawing and
+  selection do not change.
 
-## 22 · Essaim réactif (jalon 16)
-### 22.1 Principe et perception
-Par défaut l'essaim ne réagit pas (`rouge.reaction` null) : tout résultat antérieur est inchangé. Avec un algorithme
-de réaction (rôle `reaction`, `algos/global/reaction/…`), chaque drone remet en cause sa route et sa cible pendant le
-vol, à partir de ce que l'essaim sait de la défense. Modèle notionnel de décision, sans performances réelles.
+## 22 · Reactive swarm (milestone 16)
+### 22.1 Principle and perception
+By default the swarm does not react (`rouge.reaction` null): every earlier result is unchanged. With a reaction
+algorithm (role `reaction`, `algos/global/reaction/…`), each drone questions its route and its target during the flight,
+from what the swarm knows of the defence. Notional decision model, with no real performance.
 
-Hypothèses de perception, toutes simplificatrices :
-- **Réseau maillé connexe** : un drone perdu (abattu air ou sol, neutralisé par brouillage) est connu de tout
-  l'essaim Δ_m secondes plus tard (`reaction_delai_s`) avec sa dernière position et l'instant ; de même une frappe
-  sur une cible. L'essaim ne voit ni les radars, ni les avions, ni les postes : il n'apprend que par ses pertes.
-- **Foyers de pertes** : chaque perte connue rejoint le foyer le plus proche à moins de r_d (`reaction_rayon_danger_km`)
-  de son centre, sinon fonde un foyer centré sur elle. Un foyer de n ≥ n_s pertes (`reaction_seuil_pertes`) est
-  tenu pour défendu.
-- **Bilan par cible** : pour la cible k, P_k pertes connues à moins de r_d d'elle et F_k frappes connues. L'essaim
-  estime la survie au terminal par la règle de succession de Laplace : ŝ_k = (F_k + 1) / (F_k + P_k + 2).
-- Les décisions se prennent tous les Δ_r secondes (`reaction_pas_s`), et seulement quand la connaissance de
-  l'essaim a changé depuis la décision précédente. Aucun tirage aléatoire : la réaction ne change pas le déroulement
-  du générateur, et un duel A/B (§ 14.3) avec et sans réaction garde ses nombres aléatoires communs.
+Perception assumptions, all simplifying:
+- **Connected mesh network**: a lost drone (shot down by air or ground, neutralised by jamming) is known to the whole
+  swarm Δ_m seconds later (`reaction_delai_s`) with its last position and the instant; likewise a hit on a target. The
+  swarm sees neither the radars, nor the aircraft, nor the posts: it only learns from its losses.
+- **Loss hotspots**: each known loss joins the nearest hotspot less than r_d (`reaction_rayon_danger_km`) from its
+  centre, otherwise founds a hotspot centred on it. A hotspot of n ≥ n_s losses (`reaction_seuil_pertes`) is deemed
+  defended.
+- **Per-target outcome**: for target k, P_k known losses within r_d of it and F_k known hits. The swarm estimates the
+  survival at the terminal by Laplace's rule of succession: ŝ_k = (F_k + 1) / (F_k + P_k + 2).
+- Decisions are taken every Δ_r seconds (`reaction_pas_s`), and only when the swarm's knowledge has changed since the
+  previous decision. No random draw: the reaction does not change the generator's sequence, and an A/B duel (§ 14.3)
+  with and without reaction keeps its common random numbers.
 
-### 22.2 Réaffectation de cible
-Un drone engagé (à moins de r_d de sa cible) n'en change plus. Sinon, il compare sa cible c aux cibles k dont la
-distance au sol d_k vérifie d_k ≤ (1 + a) d_c (a : `reaction_allongement_max`) et qui ont déjà été frappées
-(F_k ≥ 1 : brèche avérée), et passe à la meilleure si ŝ_k − ŝ_c ≥ g (`reaction_seuil_gain`), au plus m fois
-(`reaction_reaffectations_max`). Seul le dernier point de sa route change : un plan de vol ou un couloir déjà engagé
-est gardé. L'effet recherché : déporter l'effort des cibles dont les postes tuent vers celles qui laissent passer.
-La condition de brèche est mesurée : sans elle, les drones fuyaient vers des cibles jamais approchées, aussi
-défendues que les autres, et abandonnaient des cibles dont les postes allaient manquer de munitions (essaim dispersé
-du scénario de référence : 100 frappes au lieu de 163 sans réaction, graine 1).
+### 22.2 Target reassignment
+A drone engaged (within r_d of its target) no longer changes it. Otherwise, it compares its target c with the targets k
+whose ground distance d_k satisfies d_k ≤ (1 + a) d_c (a: `reaction_allongement_max`) and that have already been hit
+(F_k ≥ 1: proven breach), and switches to the best if ŝ_k − ŝ_c ≥ g (`reaction_seuil_gain`), at most m times
+(`reaction_reaffectations_max`). Only the last point of its route changes: a flight plan or a corridor already engaged
+is kept. The effect sought: shifting the effort from the targets whose posts kill to those that let through. The
+breach condition is measured: without it, the drones fled towards targets never approached, as defended as the others,
+and abandoned targets whose posts were about to run out of munitions (scattered swarm of the reference scenario: 100
+hits instead of 163 without reaction, seed 1).
 
-### 22.3 Contournement des foyers
-Pour la branche en cours (du drone au prochain point de route, distance d_w, azimut α_w), un foyer défendu de centre
-à la distance d_f et à l'azimut α_f est sur le chemin si 0 < x < d_w et |y| < r_d, avec, sur la sphère de rayon
-R = 6 371 km (approximation sphérique, réservée à la décision ; le mouvement reste géodésique, § 9.3) :
-- écart latéral y = R asin(sin(d_f / R) sin(α_f − α_w)),
-- abscisse x = R acos(cos(d_f / R) / cos(y / R)) si cos(α_f − α_w) > 0, sinon négative.
+### 22.3 Bypassing hotspots
+For the current leg (from the drone to the next waypoint, distance d_w, azimuth α_w), a defended hotspot whose centre is
+at distance d_f and azimuth α_f is on the way if 0 < x < d_w and |y| < r_d, with, on the sphere of radius R = 6,371 km
+(spherical approximation, reserved for the decision; the movement stays geodesic, § 9.3):
+- lateral offset y = R asin(sin(d_f / R) sin(α_f − α_w)),
+- abscissa x = R acos(cos(d_f / R) / cos(y / R)) if cos(α_f − α_w) > 0, otherwise negative.
 
-Seuls les foyers qui contiennent une autre cible que la sienne (à moins de r_d) sont contournés : ce sont des sites
-défendus fixes. Les pertes dues aux avions suivent des avions qui bougent, et les contourner allongeait les routes
-sans gain (−1 % à −3 % de frappes mesurés sur le scénario de référence) ; on ne contourne pas non plus sa propre cible. Le drone insère alors
-un point de détour à la tangente du cercle de rayon ρ = 1,3 r_d, du côté où passe déjà la branche :
-azimut α_f ∓ asin(min(1, ρ / d_f)) (signe opposé à celui de y), distance √(max(d_f² − ρ², 0)) (plan tangent local,
-d_f ≪ R). Le détour est refusé s'il allonge la branche de plus de a d_w, ou si le drone a déjà fait
-`reaction_detours_max` détours. Le foyer le plus proche sur le chemin est traité d'abord ; les suivants le seront
-aux décisions d'après.
+Only the hotspots that contain a target other than its own (within r_d) are bypassed: they are fixed defended sites.
+Losses due to aircraft follow aircraft that move, and bypassing them lengthened the routes with no gain (−1% to −3%
+hits measured on the reference scenario); nor does a drone bypass its own target. The drone then inserts a detour point
+at the tangent of the circle of radius ρ = 1.3 r_d, on the side the leg already passes: azimuth
+α_f ∓ asin(min(1, ρ / d_f)) (sign opposite to that of y), distance √(max(d_f² − ρ², 0)) (local tangent plane, d_f ≪ R).
+The detour is refused if it lengthens the leg by more than a d_w, or if the drone has already made
+`reaction_detours_max` detours. The nearest hotspot on the way is handled first; the following ones will be at the next
+decisions.
 
-### 22.4 Esquive
-Un drone visé par une roquette air en vol le sait (alerte d'approche notionnelle) et manœuvre jusqu'à l'impact : le
-Pk du tir est multiplié par (1 − e) (`reaction_esquive_reduction`) et la progression du drone le long de sa route par
-(1 − v_e) (`reaction_esquive_perte_vitesse`) tant qu'un tir le vise. Les tirs sol, résolus à l'instant (§ 8.5), et le
-brouillage n'ouvrent pas d'esquive. Effet agrégé, sans loi de guidage ni de manœuvre.
+### 22.4 Dodging
+A drone targeted by an air rocket in flight knows it (notional approach warning) and manoeuvres until impact: the
+shot's Pk is multiplied by (1 − e) (`reaction_esquive_reduction`) and the drone's progress along its route by (1 − v_e)
+(`reaction_esquive_perte_vitesse`) as long as a shot targets it. Ground shots, resolved instantly (§ 8.5), and jamming do
+not open a dodge. Aggregated effect, with no guidance or manoeuvre law.
 
-### 22.5 Bilan et inspecteur
-Avec une réaction, le bilan ajoute `reaffectations`, `detours` et `esquives` (nombre de tirs air esquivés, qu'ils
-aient porté ou non). Le journal garde chaque réaction (`reaction` : drone, nature, cible ou point de détour, foyer),
-que l'inspecteur relit pour dire pourquoi un drone a changé de route.
+### 22.5 Outcome and inspector
+With a reaction, the outcome adds `reaffectations`, `detours` and `esquives` (number of air shots dodged, whether they
+hit or not). The log keeps each reaction (`reaction`: drone, nature, target or detour point, hotspot), which the
+inspector reads back to say why a drone changed course.
 
-### 22.6 Effet mesuré
-Duel apparié (§ 14.3) sur le scénario de référence, graines 1 à 10, réglages par défaut : frappes moyennes sans
-réaction, puis écart avec réaction et son intervalle de confiance à 95 % (Student, 9 degrés de liberté).
-- `fourmi` : 362 frappes, +147 ± 80 (+41 %) ; la colonne compacte apprend peu à temps, l'esquive porte l'essentiel.
-- `direct` : 486 frappes, +90 ± 68 (+18 %).
-- `disperse` : 182 frappes, +115 ± 14 (+63 %) ; les départs étalés laissent aux derniers drones le temps d'apprendre
-  des premiers.
+### 22.6 Measured effect
+Paired duel (§ 14.3) on the reference scenario, seeds 1 to 10, default settings: mean hits without reaction, then the
+difference with reaction and its 95% confidence interval (Student, 9 degrees of freedom).
+- `fourmi`: 362 hits, +147 ± 80 (+41%); the compact column learns little in time, the dodge does most of the work.
+- `direct`: 486 hits, +90 ± 68 (+18%).
+- `disperse`: 182 hits, +115 ± 14 (+63%); the spread departures give the last drones time to learn from the first.
 
-## 23 · Vue Observer en 3D (jalon 14)
-La vue 3D (CesiumJS) n'entre jamais dans le calcul : elle montre les positions géodésiques du moteur, sans second
-calcul, selon les mêmes calques que la 2D. Hypothèses d'affichage :
+## 23 · Observer 3D view (milestone 14)
+The 3D view (CesiumJS) never enters the computation: it shows the engine's geodetic positions, with no second
+computation, according to the same layers as 2D. Display assumptions:
 
-- **Altitudes** : drones et vecteurs sont dessinés à leur altitude du moteur **au-dessus du sol affiché**, et non de
-  l'ellipsoïde. Le moteur fait voler l'essaim à altitude constante au-dessus de l'ellipsoïde : un drone à 100 m passerait
-  sinon sous un relief de 1 000 m. Cet écart ne concerne que l'image : la position horizontale est exactement celle du
-  moteur, l'altitude affichée dans l'infobulle aussi, et le calcul n'en dépend pas. Le facteur d'exagération éventuel,
-  affiché à l'écran, multiplie cette hauteur. Une tige relie chaque unité en vol au sol. Radars à la hauteur de leur mât
-  au-dessus du relief, batteries, centres et sites posés au sol.
-- **Silhouettes** : un drone à moins de 80 km de la caméra est dessiné en silhouette orientée selon son cap vers le
-  prochain point de sa route, sinon en point ; au plus 150 tiges de drones, au-delà un nuage de traits ne se lit plus.
-- **Modèles** : une unité dont l'icône a un fichier `modeles/<icone>.glb` (classes notionnelles, `node outils/modeles3d/classes.js`) ou `prive/modeles/<icone>.glb` est dessinée en modèle 3D entre 60 m et
-  400 km de la caméra, à sa taille réelle mais jamais sous 80 pixels ; le pictogramme revient au-delà. Le modèle d'un radar
-  est posé au sol, la hauteur de mât restant celle du moteur. Ces fichiers sont des images d'identification. Leur peinture est
-  cuite dans une texture : chaque partie est dépliée sur les six faces d'un cube, et chaque texel reçoit la couleur d'une
-  fonction évaluée à sa position 3D (camouflage sans raccord, panneaux, marquages). Elle est illustrative, ni relevée sur
-  photographie ni exacte. Dans le navigateur, la lumière suit la caméra et l'ambiance est neutre, pour qu'aucun point de vue
-  ne laisse le modèle à contre-jour ; Godot garde sa lumière figée dans les couleurs de sommets. La caméra « Suivre la
-  sélection » se place à 70 m d'une unité à modèle, contre 12 km pour les autres. Les 40 drones les plus proches, à moins de
-  30 km, sont dessinés en modèle au moins 40 pixels ; le reste de l'essaim garde silhouettes et points. Ces modèles ne se cliquent
-  pas. Les formes viennent d'archétypes paramétrés (`outils/modeles3d/archetypes.js`) : silhouette de classe aux dimensions de
-  l'objet, pas relevé détaillé d'un système.
-- **Orientation** : toutes les vues (2D, 3D, rejeu) lisent le même cap. Celui d'un drone vise le prochain point de sa
-  route. Un vecteur défensif garde l'azimut sphérique de son dernier déplacement ; immobile en orbite, il garde ce cap,
-  et regarde le nord tant qu'il n'a pas bougé. Le cap n'entre dans aucun calcul de la simulation. Unités au sol non orientées.
-- **Relief** : tuiles « terrarium », `h = 256 R + G + B / 256 − 32768` (m), au plus proche voisin sur une grille de
-  65 × 65, sans correction du géoïde (environ 50 m en France), sans effet puisque tout est dessiné au-dessus de ce même
-  sol. Les altitudes négatives sont ramenées à 0 : le fond marin n'est pas montré, et les terres sous le niveau de la mer
-  sont affichées à ce niveau. Les PNG sont décodés sans canvas, parce qu'une relecture de canvas peut être bruitée par la
-  protection anti-pistage du navigateur : un bit de rouge vaut 256 m.
-- **Ombrage** : une couche calculée sur les mêmes tuiles, jusqu'au zoom 12, rend le relief lisible de haut. Lumière du
-  nord-ouest à 45° d'élévation ; `pente = Δh / (2 m) × max(1, (m / 30) ^ 0,25)`, `m` la taille du pixel en mètres, ce
-  renfort compensant le lissage des tuiles lointaines ; opacité `min(0,6 ; 2 |e − e_plat|)`, noire à l'ombre, blanche
-  au soleil, nulle sur le plat. Ces pentes renforcées sont un choix d'image, sans valeur de mesure.
-- **Exagération** : le facteur choisi étire le relief comme les hauteurs de vol, jamais la forme des modèles 3D ; à 1, tout est à l'échelle. Les symboles restent visibles à travers le terrain, pour ne pas perdre une unité derrière une crête. Le relief du moteur (§ 16) reste celui du scénario ; celui de cette vue ne sert qu'à l'image.
-- **Couvertures** : un contour à la hauteur de l'essaim, puis à 1 500 et 5 000 m au-dessus du sol pour ceux qui sont
-  plus hauts que lui. Sur relief, chaque contour vient de `couverture_reelle` (§ 16.2) ; sans relief, de la portée du
-  moteur (§ 2), `min(horizon(h, z), portée instrumentée)`. Hypothèse d'image : un contour est tracé à niveau, au sol du
-  radar plus sa hauteur, sans épouser le relief point par point.
-- **Bulles** : demi-sphères de la portée du poste, centrées au sol sous le poste (arrondi à 20 m), dont l'opacité suit
-  les munitions restantes. Leur bord descend de `r / (2 R) + 0,02` rad sous l'horizontale, `r` le rayon et `R` = 6 371 km,
-  pour rester enterré malgré la courbure de la Terre et le relief.
-- **Satellite** : le sommet de l'arc (120 km) est figuratif, à l'échelle du théâtre, sans rapport avec l'orbite réelle.
-- **Caméras** : une caméra posée sur un radar ou sur un site regarde le barycentre des drones en vol (moyenne de leurs
-  latitudes et longitudes, sans rôle dans le calcul) ; le site observé est la cible que visent le plus de drones en vol,
-  ou la plus frappée s'il n'y en a plus.
+- **Altitudes**: drones and vehicles are drawn at their engine altitude **above the displayed ground**, not above the
+  ellipsoid. The engine flies the swarm at constant altitude above the ellipsoid: a drone at 100 m would otherwise pass
+  under 1,000 m terrain. This gap only concerns the image: the horizontal position is exactly the engine's, so is the
+  altitude shown in the tooltip, and the computation does not depend on it. The exaggeration factor, if any, shown on
+  screen, multiplies this height. A stem links each airborne unit to the ground. Radars at the height of their mast
+  above the terrain, batteries, centres and sites set on the ground.
+- **Silhouettes**: a drone less than 80 km from the camera is drawn as a silhouette oriented by its heading to the next
+  point of its route, otherwise as a dot; at most 150 drone stems, beyond that a cloud of lines can no longer be read.
+- **Models**: a unit whose icon has a file `modeles/<icone>.glb` (notional classes, `node outils/modeles3d/classes.js`)
+  or `prive/modeles/<icone>.glb` is drawn as a 3D model between 60 m and 400 km from the camera, at its real size but
+  never below 80 pixels; the pictogram comes back beyond that. A radar's model is set on the ground, the mast height
+  staying the engine's. These files are identification images. Their paint is baked into a texture: each part is
+  unfolded onto the six faces of a cube, and each texel receives the colour of a function evaluated at its 3D position
+  (seamless camouflage, panels, markings). It is illustrative, neither taken from photographs nor exact. In the browser,
+  the light follows the camera and the ambience is neutral, so that no viewpoint leaves the model backlit; Godot keeps
+  its light baked into the vertex colours. The "Follow the selection" camera sits 70 m from a unit with a model, against
+  12 km for the others. The 40 nearest drones, less than 30 km away, are drawn as models at least 40 pixels across; the
+  rest of the swarm keeps silhouettes and dots. These models cannot be clicked. The shapes come from parameterised
+  archetypes (`outils/modeles3d/archetypes.js`): a class silhouette at the object's dimensions, not a detailed survey of
+  a system.
+- **Orientation**: all views (2D, 3D, replay) read the same heading. A drone's points at the next point of its route. A
+  defensive vehicle keeps the spherical azimuth of its last move; still in orbit, it keeps this heading, and faces north
+  as long as it has not moved. The heading enters no simulation computation. Ground units are not oriented.
+- **Terrain**: "terrarium" tiles, `h = 256 R + G + B / 256 − 32768` (m), nearest neighbour on a 65 × 65 grid, with no
+  geoid correction (about 50 m in France), with no effect since everything is drawn above that same ground. Negative
+  altitudes are brought back to 0: the sea floor is not shown, and land below sea level is displayed at that level. The
+  PNGs are decoded without a canvas, because reading back a canvas can be noised by the browser's anti-tracking
+  protection: one bit of red is worth 256 m.
+- **Shading**: a layer computed on the same tiles, up to zoom 12, makes the terrain readable from above. Light from the
+  north-west at 45° elevation; `slope = Δh / (2 m) × max(1, (m / 30) ^ 0.25)`, `m` the pixel size in metres, this
+  reinforcement making up for the smoothing of distant tiles; opacity `min(0.6; 2 |e − e_flat|)`, black in shadow, white
+  in the sun, zero on the flat. These reinforced slopes are an image choice, with no measurement value.
+- **Exaggeration**: the chosen factor stretches the terrain like the flight heights, never the shape of the 3D models;
+  at 1, everything is to scale. Symbols stay visible through the terrain, so as not to lose a unit behind a ridge. The
+  engine's terrain (§ 16) stays the scenario's; that of this view is only for the image.
+- **Coverages**: an outline at the swarm's height, then at 1,500 and 5,000 m above the ground for those higher than it.
+  On terrain, each outline comes from `couverture_reelle` (§ 16.2); without terrain, from the engine's range (§ 2),
+  `min(horizon(h, z), instrumented range)`. Image assumption: an outline is drawn level, at the radar's ground plus its
+  height, without hugging the terrain point by point.
+- **Bubbles**: half-spheres of the post's range, centred on the ground under the post (rounded to 20 m), whose opacity
+  follows the remaining munitions. Their edge goes down `r / (2 R) + 0.02` rad below the horizontal, `r` the radius and
+  `R` = 6,371 km, to stay buried despite the Earth's curvature and the terrain.
+- **Satellite**: the top of the arc (120 km) is figurative, at the theatre's scale, unrelated to the real orbit.
+- **Cameras**: a camera set on a radar or on a site looks at the barycentre of the airborne drones (mean of their
+  latitudes and longitudes, with no role in the computation); the site observed is the target most airborne drones aim
+  at, or the most hit if there are none left.
 
-## 24 · Rejeu pour moteur de jeu (jalon 15)
+## 24 · Replay for game engines (milestone 15)
 
-Le rejeu met en fichier un raid simulé, pour le relire dans un moteur de jeu. Il observe la simulation et n'y change
-rien : le test vérifie que le bilan est celui d'une simulation sans journal ni observateur. Format : docs/FORMATS.md § 6.
+The replay puts a simulated raid into a file, to read it back in a game engine. It observes the simulation and changes
+nothing in it: the test checks that the outcome is that of a simulation with no log and no observer. Format:
+docs/FORMATS.md § 6.
 
-Hypothèses de restitution, sans effet sur le calcul :
+Rendering assumptions, with no effect on the computation:
 
-- **Échantillonnage.** Une image à chaque multiple du pas d'échantillonnage (0,5 s par défaut), borné par le pas de
-  simulation. Entre deux images, le client interpole : à 800 km/h, un drone parcourt 111 m en 0,5 s en ligne quasi droite.
-- **Repère.** ENU rigide, tangent à l'origine du théâtre : rotation et translation de l'ECEF, sans déformation ni
-  projection. Il redonne la position du moteur à l'arrondi près (10 cm).
-- **Cap.** Celui du moteur (§ 23).
-- **Terrain exporté.** Le maillage relie les nœuds de la grille du moteur par des triangles, sans recalcul d'altitude :
-  entre deux nœuds, il peut s'écarter de l'interpolation bilinéaire du moteur (§ 16), d'autant plus que `--pas-km` est grand.
+- **Sampling.** One frame at each multiple of the sampling step (0.5 s by default), bounded by the simulation step.
+  Between two frames, the client interpolates: at 800 km/h, a drone travels 111 m in 0.5 s in a nearly straight line.
+- **Frame.** Rigid ENU, tangent at the theatre's origin: rotation and translation of ECEF, with no distortion or
+  projection. It gives back the engine's position to within rounding (10 cm).
+- **Heading.** The engine's (§ 23).
+- **Exported terrain.** The mesh joins the nodes of the engine's grid with triangles, with no recomputation of
+  altitude: between two nodes, it can depart from the engine's bilinear interpolation (§ 16), all the more as `--pas-km`
+  is large.
 
-## 25 · Couvertures par objet et résultante des C2 (docs/PLAN_JEU.md, étape 3)
+## 25 · Coverages per object and C2 resultant (docs/PLAN_JEU.md, step 3)
 
-Chaque objet porte jusqu'à trois enveloppes, calculées une seule fois par `src/moteur/couvertures.js` et lues par toutes les
-interfaces. Toutes sont données à l'altitude de l'essaim.
+Each object carries up to three envelopes, computed once by `src/moteur/couvertures.js` and read by all the interfaces.
+All are given at the swarm's altitude.
 
-### 25.1 Détection
+### 25.1 Detection
 
-Un radar voit jusqu'à min(horizon radar, portée instrumentée) (§ 2), réduit par le relief s'il y a un terrain (§ 16.2).
+A radar sees up to min(radar horizon, instrumented range) (§ 2), reduced by the terrain if there is one (§ 16.2).
 
-### 25.2 Conduite de tir
+### 25.2 Fire control
 
-Distance à laquelle un effecteur suit assez bien une cible pour tirer dessus, par son propre capteur (radar de conduite,
-optronique, désignateur). C'est une contrainte du moteur : un effecteur ne tire pas au-delà.
+Distance at which an effector tracks a target well enough to fire at it, with its own sensor (fire-control radar,
+electro-optics, designator). It is a constraint of the engine: an effector does not fire beyond it.
 
-  conduite = portee_conduite si l'unité la déclare, sinon facteur_conduite × portée de l'arme
+  fire control = portee_conduite if the unit declares it, otherwise facteur_conduite × weapon range
 
-- Un **poste** est aussi borné par l'horizon de son capteur, de hauteur `hauteur_conduite_m`, contre un drone à l'altitude
-  de l'essaim (§ 2), et, sur un terrain, par son masque d'horizon (§ 16.2). Sa bulle de tir devient :
+- A **post** is also bounded by the horizon of its sensor, of height `hauteur_conduite_m`, against a drone at the
+  swarm's altitude (§ 2), and, on a terrain, by its horizon mask (§ 16.2). Its firing bubble becomes:
 
-    r_tir = min(portée de l'arme, conduite, horizon de conduite)
+    r_fire = min(weapon range, fire control, fire-control horizon)
 
-  La cadence du § 5 se calcule sur r_tir : la traversée utile est celle que le poste peut suivre.
-- Un **vecteur** (avion, drone défensif) vole au-dessus du relief : ni horizon ni masque. Il tire à min(portée de l'arme,
-  conduite), et sa conduite est aussi la distance à laquelle il accroche seul un drone. Le facteur 3 du catalogue est l'ancienne règle
-  « trois portées d'arme » : le comportement des unités qui ne déclarent rien ne change pas.
+  The rate of § 5 is computed on r_fire: the useful crossing is the one the post can track.
+- A **vehicle** (aircraft, defensive drone) flies above the terrain: neither horizon nor mask. It fires at min(weapon
+  range, fire control), and its fire control is also the distance at which it locks onto a drone on its own. The
+  catalogue's factor 3 is the old "three weapon ranges" rule: the behaviour of the units that declare nothing does not
+  change.
 
-Limite : les formules fermées (§ 4 et § 5) supposent la conduite non contraignante. Quand elle l'est, le moteur fait foi.
+Limit: the closed-form formulas (§ 4 and § 5) assume fire control is not binding. When it is, the engine is
+authoritative.
 
 ### 25.3 Interception
 
-Volume où l'objet peut réellement détruire un drone.
+Volume where the object can really destroy a drone.
 
-- **Poste** : sa bulle de tir r_tir (fixe).
-- **Vecteur** : disque autour de sa position, de rayon
+- **Post**: its firing bubble r_fire (fixed).
+- **Vehicle**: disc around its position, of radius
 
-    r_int = min(portée de l'arme, conduite) + v_mise_a_poste × t
+    r_int = min(weapon range, fire control) + v_positioning × t
 
-  où t est le délai disponible du § 3.2. Il dit jusqu'où le vecteur peut aller chercher un drone détecté à temps. Hypothèses : ligne
-  droite, vitesse constante, pas de virage (§ 3.1). Ce rayon est un indicateur : le moteur, lui, simule le vol. Un objet sans
-  munitions n'a plus d'interception.
+  where t is the available delay of § 3.2. It says how far the vehicle can go to fetch a drone detected in time.
+  Assumptions: straight line, constant speed, no turn (§ 3.1). This radius is an indicator: the engine itself simulates
+  the flight. An object without munitions no longer has an interception envelope.
 
-### 25.4 Résultante d'un C2
+### 25.4 Resultant of a C2
 
-La couverture d'un centre est **l'union des couvertures des objets qui lui sont reliés à l'instant considéré** :
+A centre's coverage is **the union of the coverages of the objects linked to it at the instant considered**:
 
-- détection : les radars en état dont la latence vers ce centre est finie (§ 18) ;
-- conduite et interception : les postes des cibles qu'il joint (§ 18.3), et les vecteurs à portée d'une liaison vers lui (§ 15.2).
+- detection: the working radars whose latency to this centre is finite (§ 18);
+- fire control and interception: the posts of the targets it reaches (§ 18.3), and the vehicles within range of a link
+  to it (§ 15.2).
 
-Elle change avec le réseau : une liaison coupée ou un centre détruit retire aussitôt les objets concernés. Un centre hors
-service n'a aucune couverture. La surface annoncée se mesure sur une grille de 2 km : l'erreur reste petite devant les
-incertitudes de portée, et le calcul n'entre pas dans la simulation.
+It changes with the network: a cut link or a destroyed centre removes the objects concerned at once. A centre out of
+service has no coverage. The area announced is measured on a 2 km grid: the error stays small compared with the range
+uncertainties, and the computation does not enter the simulation.
 
-## 26 · Partie en direct (docs/PLAN_JEU.md, étape 5)
+## 26 · Live game (docs/PLAN_JEU.md, step 5)
 
-Une partie jouée en direct exécute la même boucle `avancer_monde` que `simuler`, un pas à la fois. Le joueur n'ajoute que
-des ordres du § 12.4 : aucune autre règle.
+A game played live runs the same `avancer_monde` loop as `simuler`, one step at a time. The player only adds the orders
+of § 12.4: no other rule.
 
-- **Instant d'un ordre.** Un ordre donné pendant que le monde est à l'instant `t` prend l'instant `t + pas` : celui du pas
-  suivant, le premier à pouvoir l'exécuter. Il garde ensuite le trajet d'un ordre de scénario, latence du réseau comprise.
-- **Rejouabilité.** Le scénario de départ et ses ordres, relus par `simuler`, redonnent la même partie au bit près : le
-  point visé est arrondi à 1e-7 degré (1 cm) puis converti par la fonction de la résolution, et le test le vérifie.
-- **Point visé.** Le client donne `(e, n)` dans le repère ENU du rejeu (§ 24). Le serveur retient le point d'altitude nulle
-  de cette position, en cherchant la hauteur `u` du plan tangent qui l'annule ; la hauteur du relief n'intervient pas,
-  puisqu'un ordre de ralliement ne porte que sur la position horizontale.
-- **Horloge.** Le temps réel décide seulement combien de pas jouer. Si le calcul ne suit pas la vitesse demandée, le retard
-  est abandonné et la vitesse obtenue s'affiche ; les pas joués restent les mêmes, la partie va seulement moins vite.
+- **Instant of an order.** An order given while the world is at instant `t` takes the instant `t + step`: that of the
+  next step, the first that can carry it out. It then follows the path of a scenario order, network latency included.
+- **Replayability.** The starting scenario and its orders, read back by `simuler`, give the same game bit for bit: the
+  aimed point is rounded to 1e-7 degree (1 cm) then converted by the resolution's function, and the test checks it.
+- **Aimed point.** The client gives `(e, n)` in the replay's ENU frame (§ 24). The server keeps the zero-altitude point
+  of this position, by looking for the height `u` of the tangent plane that cancels it; the terrain height plays no
+  part, since an order to head somewhere only concerns the horizontal position.
+- **Clock.** Real time only decides how many steps to play. If the computation cannot keep up with the speed requested,
+  the delay is dropped and the achieved speed is displayed; the steps played stay the same, the game just goes slower.
+- **Language.** The client tells the server its language (FORMATS § 10.2): it only changes the texts sent (palette,
+  lists, refusals), never a rule or a value.
 
-Les éditeurs du client (FORMATS § 10.4 et 10.5) ne changent aucune règle de simulation. Le pinceau de relief calcule ses distances en
-plan local, à titre d'outil de dessin ; seules les altitudes enregistrées entrent dans le moteur, comme celles d'un terrain importé (§ 16).
-Un terrain retouché garde son identifiant : le moteur compare son contenu, et non son nom, pour décider de refaire grille et masques.
+The client's editors (FORMATS § 10.4 and 10.5) change no simulation rule. The terrain brush computes its distances in a
+local plane, as a drawing tool; only the saved altitudes enter the engine, like those of an imported terrain (§ 16). A
+retouched terrain keeps its identifier: the engine compares its content, not its name, to decide whether to redo grid
+and masks.
 
-## 27 · Menaces multiples, SER et trajectoire balistique
+## 27 · Multiple threats, RCS and ballistic trajectory
 
-L'essaim reste la menace principale : un seul type, une seule altitude. `rouge.groupes` ajoute des groupes, chacun avec son unité, son
-point de départ, sa cible, son altitude ou sa trajectoire. Sans groupe, sans `ser_m2` et sans `ser_reference_m2`, rien ne change.
+The swarm remains the main threat: a single type, a single altitude. `rouge.groupes` adds groups, each with its unit,
+its starting point, its target, its altitude or its trajectory. With no group, no `ser_m2` and no `ser_reference_m2`,
+nothing changes.
 
-### 27.1 Portée radar et surface équivalente
+### 27.1 Radar range and radar cross-section
 
-L'équation du radar donne une portée proportionnelle à la racine quatrième de la SER. La portée du catalogue vaut pour la SER de référence du radar :
+The radar equation gives a range proportional to the fourth root of the RCS. The catalogue's range holds for the
+radar's reference RCS:
 
-    d = min(horizon(h_r, h_c), portee_max × (SER / SER_ref)^(1/4))
+    d = min(horizon(h_r, h_c), portee_max × (RCS / RCS_ref)^(1/4))
 
-Si le radar n'a pas de `ser_reference_m2` ou la menace pas de `ser_m2`, le facteur vaut 1. Hypothèses : SER constante quel que soit l'aspect,
-pas de fluctuation (radar parfait dans sa portée, § 7) ; les SER sont des ordres de grandeur.
+If the radar has no `ser_reference_m2` or the threat no `ser_m2`, the factor is 1. Assumptions: constant RCS whatever
+the aspect, no fluctuation (perfect radar within its range, § 7); the RCS values are orders of magnitude.
 
-### 27.2 Détection des groupes et affichage
+### 27.2 Detecting the groups and display
 
-Un objet de groupe se détecte à son altitude du moment (§ 2) et selon sa SER. Le calque « Portée radar par menace » trace, pour chaque radar,
-la portée instrumentée et une couleur par classe de menace, avec le même calcul ; un arc balistique s'y lit à son apogée. Limite : sur un
-terrain, les masques d'horizon restent calculés à l'altitude de l'essaim (§ 16.2), donc approchés pour les groupes.
+A group object is detected at its current altitude (§ 2) and according to its RCS. The "Radar range per threat" layer
+draws, for each radar, the instrumented range and one colour per threat class, with the same computation; a ballistic
+arc reads there at its apogee. Limit: on a terrain, the horizon masks stay computed at the swarm's altitude (§ 16.2),
+hence approximate for the groups.
 
-### 27.3 Trajectoire balistique
+### 27.3 Ballistic trajectory
 
-Arc au-dessus de la géodésique, à vitesse au sol constante V, de longueur L et d'apogée H :
+Arc above the geodesic, at constant ground speed V, of length L and apogee H:
 
     h(s) = 4 H (s / L) (1 − s / L)
 
-Hypothèses : ni propulsion, ni rentrée atmosphérique, ni manœuvre. Le modèle situe altitude et temps de vol ; il ne décrit aucun missile réel.
+Assumptions: no propulsion, no re-entry, no manoeuvre. The model places altitude and flight time; it describes no real
+missile.
 
 ### 27.4 Engagement
 
-Un avion n'engage pas une trajectoire balistique. Seul un poste déclaré `anti_balistique` le peut, dans sa bulle de tir habituelle. Limites :
-la bulle reste calculée à l'altitude de l'essaim (§ 25.2), ce qui est prudent contre un objet plus haut ; la cadence (§ 5) et le Pk ne
-dépendent pas de la vitesse de la cible.
+An aircraft does not engage a ballistic trajectory. Only a post declared `anti_balistique` can, within its usual firing
+bubble. Limits: the bubble stays computed at the swarm's altitude (§ 25.2), which is cautious against a higher object;
+the rate (§ 5) and the Pk do not depend on the target's speed.
 
 
-## 28 · Débriefing de fin de raid
-Le débriefing se calcule après le raid, à partir de l'état final du monde et de son journal (`src/vue/debriefing.js`). Il
-ne change rien à la simulation : c'est une lecture, valable en vue 2D comme en 3D.
+## 28 · End-of-raid debriefing
+The debriefing is computed after the raid, from the world's final state and its log (`src/vue/debriefing.js`). It
+changes nothing in the simulation: it is a reading, valid in the 2D view as in 3D.
 
-### 28.1 Note de la défense
-Les menaces comptent l'essaim et les groupes (§ 27). Une menace est interceptée si elle est détruite (air, sol ou
-brouillage), et frappe si elle arrive. Taux d'interception τ = interceptées / menaces. Note : A si τ ≥ 95 %, B si
-τ ≥ 85 %, C si τ ≥ 70 %, D si τ ≥ 50 %, E sinon. Ces seuils sont un barème de jeu, sans autre fondement.
+### 28.1 The defence's grade
+The threats count the swarm and the groups (§ 27). A threat is intercepted if it is destroyed (air, ground or jamming),
+and hits if it arrives. Interception rate τ = intercepted / threats. Grade: A if τ ≥ 95%, B if τ ≥ 85%, C if τ ≥ 70%,
+D if τ ≥ 50%, E otherwise. These thresholds are a game scale, with no other basis.
 
-### 28.2 Cause de chaque frappe
-Une frappe reçoit la première cause qui s'applique : **non détectée** (aucun radar ne l'a vue), **détectée, inconnue de
-la conduite** (vue, mais l'information n'a atteint aucun centre), **connue, jamais engagée** (aucun tir ne l'a visée),
-**engagée, manquée** (au moins un tir, aucun n'a porté). La cause dominante d'une cible est la plus fréquente parmi ses
-frappes.
+### 28.2 Cause of each hit
+A hit receives the first cause that applies: **not detected** (no radar saw it), **detected, unknown to control** (seen,
+but the information reached no centre), **known, never engaged** (no shot targeted it), **engaged, missed** (at least
+one shot, none hit). A target's main cause is the most frequent among its hits.
 
-### 28.3 Tireurs, capteurs, chronologie
-- **Tireurs** : par unité (postes sol regroupés par unité, avions par groupe), tirs, coups au but et réussite
-  (coups / tirs). Un poste est **épuisé** s'il n'a plus de munitions ; son instant d'épuisement est celui de son dernier
-  tir. Les tirs sont ceux du journal : un tir dont la cible est tombée entre-temps n'y figure pas.
-- **Capteurs** : premières détections par radar, d'après le journal (§ 17). En réseau complet, la première détection
-  est attribuée au radar le plus proche du drone : un radar « sans détection » a pu voir des drones déjà connus.
-- **Chronologie** : frappes par tranche de 5 min.
+### 28.3 Shooters, sensors, timeline
+- **Shooters**: per unit (ground posts grouped by unit, aircraft by group), shots, kills and success (kills / shots). A
+  post is **exhausted** if it has no munitions left; its exhaustion instant is that of its last shot. The shots are those
+  of the log: a shot whose target fell in the meantime does not appear.
+- **Sensors**: first detections per radar, from the log (§ 17). In a full network, the first detection is attributed to
+  the radar nearest the drone: a radar "with no detection" may have seen drones already known.
+- **Timeline**: hits per 5-min slot.
 
-### 28.4 Points faibles
-Au plus cinq constats, chacun chiffré, dans cet ordre : cause dominante de toutes les frappes ; cible la plus frappée et
-sa cause dominante ; postes épuisés avant la fin du raid, avec le premier instant d'épuisement ; radars sans aucune
-détection ; plus de la moitié des munitions air restantes alors que des menaces ont frappé (aviation sous-employée).
+### 28.4 Weak points
+At most five findings, each quantified, in this order: main cause of all the hits; most-hit target and its main cause;
+posts exhausted before the end of the raid, with the first exhaustion instant; radars with no detection at all; more
+than half the air munitions left while threats have hit (air assets under-used). They are written in the interface's
+language; the figures are the same.
 
-## 29 · Incidents de scénario
-Un incident est une panne datée (§ 15.4) que le concepteur du scénario pose, avec une cause qui se lit à l'écran. Aucun
-adversaire ne le provoque : il raconte ce qui arrive à un dispositif réel (usure, entretien, ciel, transmissions).
+## 29 · Scenario incidents
+An incident is a dated failure (§ 15.4) that the scenario designer sets, with a cause that reads on screen. No adversary
+causes it: it tells what happens to a real system (wear, maintenance, sky, transmissions).
 
-- **Cause** (`pannes[].cause`) : `panne` (défaut), `maintenance`, `meteo` ou `coupure`. Elle ne change que le récit :
-  journal, annonce à l'écran, débriefing.
-- **Portée réduite** (`pannes[].portee`, radar seulement) : facteur f dans ]0, 1[. Le radar reste en service mais ne voit
-  qu'à f fois sa portée (distance oblique au drone). Sans `portee`, l'élément est hors service. Avec la couverture
-  frontière (§ 15.1), qui ne désigne pas de radar, le drone vu est attribué au radar en état le plus proche, qui doit
-  encore le voir à sa portée réduite.
-- **Batterie** (`batterie:<j>`, j-ième batterie placée, § 21.2) : hors service, elle ne tire ni n'acquiert pendant
-  l'incident ; ses munitions restent.
-- **Récit** : chaque début et chaque fin d'incident s'inscrit au journal (`incident` : élément, cause, portée, début ou
-  fin) et s'annonce à l'écran, en 2D comme en 3D.
-- **Tirage au hasard** : l'éditeur peut poser des incidents tirés à graine (`src/vue/incidents.js`) ; le tirage ne
-  touche pas au générateur du raid, il écrit des pannes dans le scénario comme un geste de l'éditeur.
+- **Cause** (`pannes[].cause`): `panne` (fault), `maintenance`, `meteo` (weather) or `coupure` (transmission cut). It
+  only changes the story: log, on-screen announcement, debriefing.
+- **Reduced range** (`pannes[].portee`, radar only): factor f in ]0, 1[. The radar stays in service but only sees to f
+  times its range (slant distance to the drone). Without `portee`, the element is out of service. With border coverage
+  (§ 15.1), which names no radar, the drone seen is attributed to the nearest working radar, which must still see it at
+  its reduced range.
+- **Battery** (`batterie:<j>`, j-th placed battery, § 21.2): out of service, it neither fires nor acquires during the
+  incident; its munitions remain.
+- **Story**: each start and each end of an incident is written in the log (`incident`: element, cause, range, start or
+  end) and announced on screen, in 2D as in 3D.
+- **Random draw**: the editor can set incidents drawn with a seed (`src/vue/incidents.js`); the draw does not touch the
+  raid's generator, it writes failures into the scenario like an editor gesture.
 
-## 30 · Mise en scène
-Effets d'écran tirés de l'état du monde et de son journal, sans aucun effet sur la simulation (`src/vue/ambiance.js`,
+## 30 · Staging
+Screen effects drawn from the world's state and its log, with no effect at all on the simulation (`src/vue/ambiance.js`,
 `src/vue/radio.js`, `src/vue/sons.js`).
 
-- **Dégâts d'une cible** : niveau 0 intacte, 1 touchée (au moins une frappe), 2 endommagée (au moins 20 % de
-  `rouge.concentration_max`), 3 en flammes (au moins 60 %). Un panache de fumée monte de la cible, d'autant plus haut et
-  dense que le niveau est grand ; au niveau 3, sa base brûle. Le nombre exact de frappes reste écrit près de la cible.
-- **Radio de la conduite** : le journal se lit aussi en messages radio sous-titrés. La conduite s'appelle « Égide », les
-  radars « Vigie n », les avions par l'indicatif de leur groupe (oiseaux de proie, inventés) et leur rang. Au plus un
-  message toutes les 1,5 s de temps réel, le plus important d'abord : impact, puis mission et contact, puis tir et
-  détection.
-- **Bruitages** : banque de sons calculée hors ligne par `outils/sons/generer.js` (synthèse à graine : explosions en
-  couches avec réverbération, départs de missiles et de roquettes, interceptions, radio, alerte), écrite en WAV dans
-  `sons/`, sans aucun enregistrement emprunté. Une explosion répond à une frappe, un départ de missile à un tir sol, une
-  roquette à un tir air, une interception à un tir au but, une alerte au début d'un incident (§ 29). Chaque son est joué
-  dans une variante tirée au hasard, à ±10 % de hauteur, derrière un compresseur ; au plus dix à la fois, avec un écart
-  minimal par sorte. Coupés au départ : bouton Son ou touche M.
+- **Damage to a target**: level 0 intact, 1 hit (at least one hit), 2 damaged (at least 20% of
+  `rouge.concentration_max`), 3 on fire (at least 60%). A plume of smoke rises from the target, all the higher and denser
+  as the level is high; at level 3, its base burns. The exact number of hits stays written near the target.
+- **Control radio**: the log also reads as subtitled radio messages. Control is called "Égide", the radars "Lookout n"
+  ("Vigie n" in French), the aircraft by their group's callsign (birds of prey, invented, translated with the
+  interface) and their rank. At most one message every 1.5 s of real time, the most important first: impact, then
+  mission and contact, then shot and detection.
+- **Sound effects**: sound bank computed offline by `outils/sons/generer.js` (seeded synthesis: layered explosions with
+  reverberation, missile and rocket launches, interceptions, radio, alert), written as WAV in `sons/`, with no borrowed
+  recording. An explosion answers a hit, a missile launch a ground shot, a rocket an air shot, an interception a kill, an
+  alert the start of an incident (§ 29). Each sound is played in a randomly drawn variant, within ±10% pitch, behind a
+  compressor; at most ten at once, with a minimum gap per kind. Muted at the start: Sound button or M key.
 
-## 31 · Brouillard de guerre (vue du CDC)
-Affichage seulement : la simulation garde ses positions vraies (`src/vue/brouillard.js`). Dans la vue du CDC (touche V),
-un drone connu de la conduite s'affiche en piste, et non à sa position vraie.
+## 31 · Fog of war (CRC view)
+Display only: the simulation keeps its true positions (`src/vue/brouillard.js`). In the CRC view (V key), a drone known
+to control is displayed as a track, not at its true position.
 
-- **Renouvellement** : la piste est mise à jour toutes les 10 s, comptées depuis l'instant où la conduite a connu le drone.
-  Entre deux mises à jour, elle reste au dernier plot relevé à cet instant ou avant (plots toutes les 4 s, § 23).
-- **Erreur de position** : à chaque mise à jour, la piste s'écarte du plot d'au plus 300 m, dans une direction et d'une
-  longueur fixées par le drone et le rang de la mise à jour (pas de tirage : la même lecture redonne la même image).
-- **Incertitude** : un cercle de rayon 300 m + v × âge, v la vitesse de l'essaim et âge le temps depuis le plot,
-  entoure la piste : un drone de l'essaim y est toujours (un objet de groupe, plus rapide, peut en sortir).
+- **Refresh**: the track is updated every 10 s, counted from the instant control knew the drone. Between two updates, it
+  stays at the last plot taken at that instant or before (plots every 4 s, § 23).
+- **Position error**: at each update, the track departs from the plot by at most 300 m, in a direction and by a length
+  set by the drone and the update's rank (no draw: the same reading gives back the same image).
+- **Uncertainty**: a circle of radius 300 m + v × age, v the swarm's speed and age the time since the plot, surrounds
+  the track: a swarm drone is always inside it (a group object, faster, can leave it).

@@ -12,7 +12,7 @@ in [FORMATS.md](FORMATS.md).
 
 This guide explains how these files fit together, how to add some, and how to prove the effect of an addition. The
 equations and the formal contract are in [MODELE.md](MODELE.md) (§ 9.1 scenario and catalogue, § 10 algorithm
-registry, in French). File keys and identifiers are French (`herite_de`, `portee_km`…) and are written as shown.
+registry). File keys and identifiers are French (`herite_de`, `portee_km`…) and are written as shown.
 
 ## 1 · Overview
 
@@ -345,4 +345,4 @@ included.
 
 The duel compares A and B on the **same draws** (same seeds) and gives the difference with its confidence interval:
 that is what lets you say an algorithm or a unit does better, and not merely that chance was kind. The methods are
-described in [MODELE.md § 14](MODELE.md) (in French).
+described in [MODELE.md § 14](MODELE.md).

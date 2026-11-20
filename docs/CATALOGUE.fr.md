@@ -11,7 +11,7 @@ Pour un outil externe qui génère ces fichiers, le format exact, les schémas J
 [FORMATS.fr.md](FORMATS.fr.md).
 
 Ce guide explique comment ces fichiers s'articulent, comment en ajouter, et comment prouver l'effet d'un ajout.
-Les équations et le contrat formel sont dans [MODELE.md](MODELE.md) (§ 9.1 scénario et catalogue, § 10 registre
+Les équations et le contrat formel sont dans [MODELE.fr.md](MODELE.fr.md) (§ 9.1 scénario et catalogue, § 10 registre
 d'algorithmes).
 
 ## 1 · Vue d'ensemble
@@ -344,4 +344,4 @@ node src/preuve.js dossier                                       # dossier.md : 
 
 Le duel compare A et B sur les **mêmes tirages** (mêmes graines) et donne l'écart avec son intervalle de confiance :
 c'est ce qui permet de dire qu'un algorithme ou une unité fait mieux, et pas seulement que le hasard a été favorable.
-Les méthodes sont décrites dans [MODELE.md § 14](MODELE.md).
+Les méthodes sont décrites dans [MODELE.fr.md § 14](MODELE.fr.md).

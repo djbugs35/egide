@@ -127,3 +127,15 @@ import {texte_godot} from "../outils/langues.js";
 test("langues : les dictionnaires du client Godot sont à jour (node outils/langues.js --godot)", () => {
   for (const code of Object.keys(LANGUES)) assert.equal(lire(`clients/godot/langues/${code}.json`), texte_godot(code), `clients/godot/langues/${code}.json périmé`);
 });
+
+// Documentation (lots 27.7 et 27.8) : l'anglais en .md, le français en .fr.md, mêmes sections, pour que les renvois
+// « FORMATS § 6 » ou « MODELE § 14 » du code vaillent dans les deux langues.
+test("documentation : chaque document a sa version française, aux mêmes numéros de section, et chacune renvoie à l'autre", () => {
+  const sections = (texte) => [...texte.matchAll(/^#{2,3} ([0-9]+(?:\.[0-9]+)*) /gm)].map((m) => m[1]);
+  for (const base of ["docs/FORMATS", "docs/CATALOGUE", "docs/MODELE", "clients/README", "README"]) {
+    const [en, fr] = [lire(`${base}.md`), lire(`${base}.fr.md`)];
+    assert.deepEqual(sections(fr), sections(en), `${base} : sections différentes`);
+    const nom = base.split("/").at(-1);
+    assert.ok(en.includes(`(${nom}.fr.md)`) && fr.includes(`(${nom}.md)`), `${base} : liens croisés manquants`);
+  }
+});
