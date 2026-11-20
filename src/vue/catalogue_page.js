@@ -7,7 +7,7 @@ import {charger_algos} from "../moteur/algos.js";
 import {charger_unites, unite_brute} from "../moteur/catalogue.js";
 import {charger_index, ecrire_mode, lire_mode} from "./catalogue_prive.js";
 import {publier_couleurs} from "./couleurs.js";
-import {echapper, fiche_algo, fiche_unite, utilisations} from "./fiches.js";
+import {echapper, fiche_algo, fiche_unite, nom_famille, nom_role, utilisations} from "./fiches.js";
 
 const $ = (selecteur) => document.querySelector(selecteur);
 
@@ -19,9 +19,9 @@ async function lire_json(chemin) {
 
 function remplir_index(indexUnites, indexAlgos) {
   const groupes = (elements, cle) => Object.entries(Object.groupBy(elements, (e) => e[cle]));
-  $("[data-liste='unites']").innerHTML = groupes(indexUnites, "famille").map(([famille, unites]) => `<li><span class="groupe">${echapper(famille)}</span><ul>
+  $("[data-liste='unites']").innerHTML = groupes(indexUnites, "famille").map(([famille, unites]) => `<li><span class="groupe">${echapper(nom_famille(famille))}</span><ul>
     ${unites.map((u) => `<li data-texte="${echapper(`${u.nom} ${u.id}`.toLowerCase())}"><a href="#unite/${encodeURIComponent(u.id)}" class="${u.base ? "base" : ""}">${echapper(u.base ? `base ${u.id.split("/").at(-1)}` : u.nom)}</a></li>`).join("")}</ul></li>`).join("");
-  $("[data-liste='algos']").innerHTML = groupes(indexAlgos, "role").map(([role, algos]) => `<li><span class="groupe">${echapper(role)}</span><ul>
+  $("[data-liste='algos']").innerHTML = groupes(indexAlgos, "role").map(([role, algos]) => `<li><span class="groupe">${echapper(nom_role(role))}</span><ul>
     ${algos.map((a) => `<li data-texte="${echapper(`${a.nom} ${a.id}`.toLowerCase())}"><a href="#algo/${encodeURIComponent(a.id)}">${echapper(a.nom)}</a></li>`).join("")}</ul></li>`).join("");
 }
 

@@ -385,7 +385,7 @@ export function creer_editeur(env) {
     }
     const touche = element_sous(elements(), vers_ecran, etat.curseur, RAYON_TOUCHE);
     ctx.fillStyle = EFFACEMENT;
-    ctx.fillText(touche ? "− Effacer" : "−", x + 12, y - 10);
+    ctx.fillText(touche ? `− ${t("vue.editeur.curseur_effacer")}` : "−", x + 12, y - 10);
     if (!touche) return;
     const p = vers_ecran(touche.geo);
     ctx.strokeStyle = EFFACEMENT;
@@ -550,7 +550,7 @@ export function creer_editeur(env) {
       ctx.fillText(zone.nom, centre.x, centre.y - 4);
       if (protegee) {
         ctx.fillStyle = monde.incursions[i].size ? COULEURS.hostile : COULEURS.texte_secondaire;
-        ctx.fillText(`${monde.incursions[i].size} incursions`, centre.x, centre.y + 12);
+        ctx.fillText(t("vue.editeur.incursions", {n: monde.incursions[i].size}), centre.x, centre.y + 12);
       }
       ctx.textAlign = "start";
     });

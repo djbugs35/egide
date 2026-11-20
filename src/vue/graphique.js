@@ -55,7 +55,7 @@ function serie(echelle, points, {cle, couleur, libelle}) {
       <circle cx="${x}" cy="${echelle.y(moyenne)}" r="4.5" fill="${couleur}" stroke="${COULEURS.fond}" stroke-width="2"/>`;
   });
   const dernier = points.at(-1);
-  const etiquette = `<text x="${echelle.x(dernier.valeur) + 10}" y="${echelle.y(dernier.resume[cle].moyenne) + 4}" fill="${COULEURS.texte}">${libelle}</text>`;
+  const etiquette = `<text x="${echelle.x(dernier.valeur) + 10}" y="${echelle.y(dernier.resume[cle].moyenne) + 4}" fill="${COULEURS.texte}">${t(libelle)}</text>`;
   return `<path d="${trace}" fill="none" stroke="${couleur}" stroke-width="2"/>${marques.join("")}${etiquette}`;
 }
 

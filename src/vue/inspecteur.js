@@ -4,7 +4,7 @@ import {nom_unite} from "../catalogue_langue.js";
 import {inverse, vers_degres} from "../moteur/geodesie.js";
 import {COULEURS} from "./couleurs.js";
 import {ecran} from "./ecran.js";
-import {echapper, libelle_fidelite} from "./fiches.js";
+import {echapper, libelle_fidelite, nom_fidelite} from "./fiches.js";
 import {format_decimal, format_duree, format_entier} from "./format.js";
 import {ms_vers_kmh} from "../moteur/unites.js";
 import {positions_radars} from "../moteur/radars.js";
@@ -19,7 +19,7 @@ const ETATS = {orbite: "vue.insp.orbite", ralliement: "vue.insp.ralliement", eng
 
 // Le nom affiché suit la langue (langues/catalogue.<code>.json) ; un algorithme se montre par son identifiant.
 const lien_fiche = (genre, id, texte) => `<a href="catalogue.html#${genre}/${encodeURIComponent(id)}" target="_blank" rel="noopener">${echapper(genre === "unite" ? nom_unite(id, texte) : texte)}</a>`;
-const fidelite = (niveau) => `<span class="badge fidelite-${niveau}" title="${echapper(libelle_fidelite(niveau))}">${echapper(niveau)}</span>`;
+const fidelite = (niveau) => `<span class="badge fidelite-${niveau}" title="${echapper(libelle_fidelite(niveau))}">${echapper(nom_fidelite(niveau))}</span>`;
 const ligne = (cle, valeur) => `<tr><th scope="row">${t(cle)}</th><td>${valeur}</td></tr>`;
 const position = (geo) => t("vue.insp.position", {lat: vers_degres(geo.lat).toFixed(3).replace(".", format_decimal(0.5).charAt(1)), lon: vers_degres(geo.lon).toFixed(3).replace(".", format_decimal(0.5).charAt(1))});
 const pourcent = (p) => `${format_decimal(100 * p)} %`;

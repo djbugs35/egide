@@ -15,6 +15,16 @@ export const LIBELLES_FIDELITE = {
   "6ddl": "vue.fidelite.6ddl",
 };
 
+/** Clés des noms des rôles d'algorithme et des familles du catalogue, pour l'affichage (les identifiants ne changent pas). */
+const ROLES = {allocation: "vue.role.allocation", comportement: "vue.role.comportement", detection: "vue.role.detection", mouvement: "vue.role.mouvement",
+  pistage: "vue.role.pistage", reaction: "vue.role.reaction", tir: "vue.role.tir", tir_sol: "vue.role.tir_sol"};
+const FAMILLES = {_unite: "vue.famille_cat._unite", capteurs: "vue.famille_cat.capteurs", effecteurs: "vue.famille_cat.effecteurs", liaisons: "vue.famille_cat.liaisons",
+  sites: "vue.famille_cat.sites", terrains: "vue.famille_cat.terrains", vecteurs: "vue.famille_cat.vecteurs"};
+/** Rendre le nom affiché d'un rôle d'algorithme. */
+export const nom_role = (role) => (ROLES[role] ? t(ROLES[role]) : role);
+/** Rendre le nom affiché d'une famille du catalogue (premier dossier sous unites/). */
+export const nom_famille = (famille) => (FAMILLES[famille] ? t(FAMILLES[famille]) : famille);
+
 /** Rendre un texte sûr pour l'insérer en HTML (les fichiers privés ne sont pas sous notre contrôle). */
 export const echapper = (texte) => String(texte).replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"})[c]);
 
@@ -22,6 +32,10 @@ const lien_unite = (id, nom) => `<a href="#unite/${encodeURIComponent(id)}">${ec
 const lien_algo = (id, nom) => `<a href="#algo/${encodeURIComponent(id)}">${echapper(nom_algo(id, nom))}</a>`;
 /** Rendre le libellé traduit d'un niveau de fidélité. */
 export const libelle_fidelite = (niveau) => (LIBELLES_FIDELITE[niveau] ? t(LIBELLES_FIDELITE[niveau]) : "");
+/** Clés des noms courts des niveaux de fidélité, pour le badge. */
+const FIDELITES_COURTES = {notionnel: "vue.fidelite.court_notionnel", cinematique: "vue.fidelite.court_cinematique", point_masse: "vue.fidelite.court_point_masse", "6ddl": "vue.fidelite.court_6ddl"};
+/** Rendre le nom court traduit d'un niveau de fidélité (le niveau lui-même s'il est inconnu). */
+export const nom_fidelite = (niveau) => (FIDELITES_COURTES[niveau] ? t(FIDELITES_COURTES[niveau]) : niveau);
 const badge = (classe, texte, titre = "") => `<span class="badge ${classe}" title="${echapper(titre)}">${echapper(texte)}</span>`;
 const liste = (elements) => (elements.length ? `<ul>${elements.map((e) => `<li>${e}</li>`).join("")}</ul>` : "<p class=\"vide\">—</p>");
 
@@ -55,7 +69,7 @@ export function fiche_unite(id, fichiers, metas) {
   const algos = Object.entries(unite.algos ?? {}).map(([role, idAlgo]) => `<tr><th scope="row">${echapper(role)}</th><td>${lien_algo(idAlgo, metas[idAlgo]?.nom)}</td></tr>`);
   const nom = nom_unite(id, unite.nom);
   return `<header><h2>${echapper(nom)}</h2>
-    ${badge(`fidelite-${unite.fidelite}`, unite.fidelite, libelle_fidelite(unite.fidelite))}
+    ${badge(`fidelite-${unite.fidelite}`, nom_fidelite(unite.fidelite), libelle_fidelite(unite.fidelite))}
     <p class="chemin">${t("vue.fichecat.fichier")} <a href="${echapper(chemin_unite(id))}"><code>${echapper(chemin_unite(id))}</code></a></p></header>
     <section><h3>${t("vue.fichecat.lignee")}</h3><p class="lignee">${unite._lignee.map((a) => (a === id ? `<b>${echapper(nom)}</b>` : lien_unite(a, fichiers[a]?.nom))).join(" → ")}</p></section>
     <section><h3>${t("vue.fichecat.sources")}</h3>${liste(sources_unite(id, unite.sources).map(echapper))}</section>
@@ -68,7 +82,7 @@ export function fiche_algo(id, meta, usages = [], fichiers = {}) {
   const parametres = Object.entries(meta.parametres).map(([cle, p]) => `<tr><th scope="row"><code>${echapper(cle)}</code></th><td>${echapper(p.unite || "—")}</td><td>${echapper(p.aide)}</td></tr>`);
   const usage = usages.map((u) => (u.unite ? t("vue.fichecat.usage_unite", {unite: lien_unite(u.unite, fichiers[u.unite]?.nom), role: echapper(u.role)}) : t("vue.fichecat.usage_scenario", {reglage: echapper(u.reglage)})));
   return `<header><h2>${echapper(meta.nom)}</h2>
-    ${badge("role", meta.role)} ${badge(`fidelite-${meta.fidelite}`, meta.fidelite, libelle_fidelite(meta.fidelite))}
+    ${badge("role", nom_role(meta.role))} ${badge(`fidelite-${meta.fidelite}`, nom_fidelite(meta.fidelite), libelle_fidelite(meta.fidelite))}
     <p class="chemin">${t("vue.fichecat.code")} <a href="${echapper(chemin_algo(id))}"><code>${echapper(chemin_algo(id))}</code></a></p></header>
     <section><p class="description">${echapper(meta.description)}</p></section>
     <section><h3>${t("vue.fichecat.equations")}</h3>${meta.equations.length ? `<div class="equations">${meta.equations.map((e) => `<p>${echapper(e)}</p>`).join("")}</div>` : `<p class="vide">${t("vue.fichecat.aucune_equation")}</p>`}</section>

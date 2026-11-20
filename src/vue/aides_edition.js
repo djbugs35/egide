@@ -1,6 +1,7 @@
 // Aides au déploiement (jalon 13, MODELE § 21.6) : règle, aimantation, aperçus avant pose, regroupement des unités
 // proches. Pur, sans DOM, testé ; editeur.js ne fait que lire les gestes et dessiner ce qui est rendu ici.
 import {sans_mention} from "../catalogue_langue.js";
+import {format_decimal} from "./format.js";
 import {unite_si} from "../moteur/catalogue.js";
 import {direct, inverse, vers_degres} from "../moteur/geodesie.js";
 import {enveloppe_poste} from "../moteur/couvertures.js";
@@ -24,11 +25,11 @@ export function mesure(a, b) {
 /** Rendre une distance en m lisible : « 850 m », « 1,2 km », « 123 km ». */
 export function texte_distance(metres) {
   if (metres < 1000) return `${Math.round(metres)} m`;
-  return metres < 10_000 ? `${(metres / 1000).toFixed(1).replace(".", ",")} km` : `${Math.round(metres / 1000)} km`;
+  return metres < 10_000 ? `${(metres / 1000).toFixed(1).replace(".", format_decimal(0.5).charAt(1))} km` : `${Math.round(metres / 1000)} km`;
 }
 
 /** Rendre le texte d'une mesure : « 123 km · cap 045° ». */
-export const texte_mesure = ({distance, cap_deg: cap}) => `${texte_distance(distance)} · cap ${String(Math.round(cap) % 360).padStart(3, "0")}°`;
+export const texte_mesure = ({distance, cap_deg: cap}) => `${texte_distance(distance)} · ${t("vue.aide.cap", {cap: String(Math.round(cap) % 360).padStart(3, "0")})}`;
 
 /** Rendre `segments` + 1 points de la géodésique de `a` à `b`, pour la tracer juste sur toute projection. */
 export function points_geodesique(a, b, segments = 24) {

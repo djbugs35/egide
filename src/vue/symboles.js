@@ -9,6 +9,7 @@ import {avancement} from "./effets.js";
 import {niveau_degats, panache} from "./ambiance.js";
 import {piste} from "./brouillard.js";
 import {dessiner_icone, dessiner_silhouette} from "./icones.js";
+import {t} from "../i18n.js";
 
 const TAILLE = 6;
 
@@ -37,7 +38,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
       if (monde.fuites[indice]) {
         ctx.fillStyle = COULEURS.hostile;
         ctx.font = "12px system-ui, sans-serif";
-        ctx.fillText(`${monde.fuites[indice]} frappes`, ecran.x + 14, ecran.y + 14);
+        ctx.fillText(t("vue.symbole.frappes", {n: monde.fuites[indice]}), ecran.x + 14, ecran.y + 14);
       }
       return;
     }
@@ -53,7 +54,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
     if (noms_lisibles(k)) ecrire_nom(ctx, `C${indice + 1}`, ecran.x + 9, ecran.y - 6);
     if (monde.fuites[indice]) {
       ctx.fillStyle = COULEURS.hostile;
-      ctx.fillText(`${monde.fuites[indice]} frappes`, ecran.x + 9, ecran.y + 9);
+      ctx.fillText(t("vue.symbole.frappes", {n: monde.fuites[indice]}), ecran.x + 9, ecran.y + 9);
     }
   });
   if (calques.postes) dessiner_batteries(ctx, camera, monde, calques);

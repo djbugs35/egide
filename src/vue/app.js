@@ -28,7 +28,7 @@ import {dessiner_profil} from "./profil.js";
 import {altitudes_relief, echantillonner_chemin} from "./relief.js";
 import {publier_couleurs} from "./couleurs.js";
 import {absorber, creer_effets, sauter} from "./effets.js";
-import {echapper_html, format_duree} from "./format.js";
+import {echapper_html, format_decimal, format_duree} from "./format.js";
 import {decrire} from "./infobulles.js";
 import {MULTIPLICATEURS, aller_a, avancer_temps_reel, creer_lecteur} from "./lecteur.js";
 import {creer_rejeu, texte_rejeu} from "../moteur/rejeu.js";
@@ -418,7 +418,7 @@ function brancher_transport() {
   $("[data-action='debut']").addEventListener("click", () => sauter_a(0));
   $("[name='temps']").addEventListener("input", (e) => sauter_a(Number(e.target.value)));
   const vitesses = $("[data-zone='vitesses']");
-  vitesses.innerHTML = MULTIPLICATEURS.map((m) => `<label><input type="radio" name="vitesse" value="${m}" ${m === 1 ? "checked" : ""}>×${String(m).replace(".", ",")}</label>`).join("");
+  vitesses.innerHTML = MULTIPLICATEURS.map((m) => `<label><input type="radio" name="vitesse" value="${m}" ${m === 1 ? "checked" : ""}>×${String(m).replace(".", format_decimal(0.5).charAt(1))}</label>`).join("");
   vitesses.addEventListener("change", (e) => (etat.lecteur.multiplicateur = Number(e.target.value)));
   $("[name='graine']").addEventListener("change", (e) => modifier({"simulation.graine": Number(e.target.value)}));
   // Bruitages coupés au départ : un son qui part sans prévenir surprend ; le joueur les active d'un clic (ou M).
@@ -880,6 +880,8 @@ async function demarrer() {
   await charger();
   rafraichir_reglages();
   requestAnimationFrame((t) => image(t, t));
+  // Captures de la documentation (outils/captures.js) : « ?capture » donne la main sur la lecture et l'inspecteur.
+  if (new URLSearchParams(location.search).has("capture")) globalThis.egide_capture = {etat, sauter_a, inspecter};
 }
 
 demarrer();
