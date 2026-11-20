@@ -106,13 +106,13 @@ The catalogue holds 35 fictional units inspired by classes from 14 countries: ra
 aircraft and helicopters, defensive drones, attack drones. Their names are plant names (Ajonc 300, Genêt 35, Orpin H,
 Chardon D…) and their values those of their class, rounded: none of them matches a real system.
 
-![Units from several countries deployed as game icons; the palette filtered on France](docs/images/icones.png)
+![The deployment palette filtered on France: the generic radars and the French-inspired Gorse 300](docs/images/en/icones.png)
 
 The **Layers** panel picks the base map (IGN aerial photographs by default, dark, OpenStreetMap or plan, hillshade or
 3D terrain, 3D buildings, globe) and shows or hides each family of entities. What is hidden cannot be hovered,
 inspected or edited.
 
-![The Layers panel: base map and fifteen families of entities, each with its legend swatch](docs/images/calques.png)
+![The Layers panel: base map and the families of entities, each with its legend swatch](docs/images/en/calques.png)
 
 ### Shortcuts
 
@@ -270,7 +270,7 @@ the interception rate, the **cause** of each hit (undetected, unknown to control
 hits per target, each shooter's record with its posts out of ammunition, the timeline in 5-minute slices and at most
 five quantified **weak points**. Everything is read from the raid log ([docs/MODELE.md § 28](docs/MODELE.md)).
 
-![Debriefing of the reference raid: grade D, 53 % intercepted; 98 % of hits come from drones known but never engaged, 60 posts out of ammunition from 9 min](docs/images/debriefing.png)
+![Debriefing of the reference raid: grade D, 53% intercepted; 98% of hits come from drones known but never engaged, 60 posts out of ammunition from 9 min](docs/images/en/debriefing.png)
 
 ## 5 · Playing in Godot
 
@@ -354,7 +354,7 @@ is crossed out; Shift+click erases it. The **Eraser** tool (X) does the same at 
 map — radars, batteries, posts, vehicles, other C2s, links, means, zones, flight plan, orders — to start from scratch;
 the main CRC and one site to defend remain, and Ctrl+Z brings everything back.
 
-![Editor: radar R11 added then selected, its range bubble, its sheet on the right and the hint above the toolbar](docs/images/editeur.png)
+![Editor: the Deploy palette on the left, the editing toolbar at the bottom and its hint above it](docs/images/en/editeur.png)
 
 ### Deployment aids
 
@@ -438,7 +438,7 @@ aircraft locks a drone with its own sensor.
 The **Log** panel tells the same story in sentences, filterable; a drone's inspector gives the whole chain: seen by
 such radar, known to the C2, reaction delay, locked, fired at.
 
-![Information log and chain of drone 999: seen by R10 at 1:58, known to the CRC at once, actionable at 3:28, locked by aircraft 31, destroyed at 5:40](docs/images/journal.png)
+![Information log at 7:00: missions, locks and shots, most recent first, filterable by family](docs/images/en/journal.png)
 
 ### Several centres
 
@@ -457,14 +457,14 @@ it (10 s, notional).
 **CRC view** (V): the screen only shows what the centre knows — the drones it knows of, grouped into tracks by its
 tracking algorithm. Ground truth comes back with the same button.
 
-![CRC view: control's tracks, with their strength](docs/images/vue_pc.png)
+![CRC view: control's tracks, with their strength](docs/images/en/vue_pc.png)
 
 The **fog of war** is rendered there: each drone appears as a track, at the last plot received, updated every 10 s and
 offset by an error of at most 300 m, inside an uncertainty circle that grows with the plot's age. The trail only keeps
 plots already received. Only the display changes: the simulation keeps the true positions
 ([docs/MODELE.md § 31](docs/MODELE.md)).
 
-![CRC view at 7:17: the swarm entering near R1 is just a bundle of tracks, each in its uncertainty circle](docs/images/brouillard.png)
+![CRC view at 7:17: the swarm entering near R1 is just a bundle of tracks, each in its uncertainty circle](docs/images/en/brouillard.png)
 
 ### Coverages: detect, control fire, intercept
 
@@ -543,15 +543,15 @@ score, delay, alternatives discarded) and over which link it reaches it; for a d
 probability Π(1 − Pk) and the cause of its loss; for a site, its defence; for a radar, its range, its terrain masking
 and its latency to the C2; for a C2, the state of the whole network.
 
-![Inspector: aircraft 42 was sent to a track of 519 drones, scoring 519, against 116 for the alternative](docs/images/inspecteur.png)
+![Inspector: aircraft 42 was sent to a track of 427 drones, scoring 427, the best among 4 reachable tracks](docs/images/en/inspecteur.png)
 
 The **Catalogue** link opens the explorer: one sheet per unit (fidelity, lineage, sources, parameters with the ancestor
 that sets them, algorithms) and per algorithm (equations, assumptions, validity domain, references, code, users).
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/catalogue_unite.png" alt="Unit sheet: IR turboprop, lineage and inherited parameters"></td>
-<td width="50%"><img src="docs/images/catalogue_algo.png" alt="Algorithm sheet: ant swarm, equations and assumptions"></td>
+<td width="50%"><img src="docs/images/en/catalogue_unite.png" alt="Unit sheet: IR turboprop, lineage and inherited parameters"></td>
+<td width="50%"><img src="docs/images/en/catalogue_algo.png" alt="Algorithm sheet: ant swarm, equations and assumptions"></td>
 </tr>
 </table>
 
@@ -571,7 +571,7 @@ A raid is one draw: only a series of raids tells whether one deployment does bet
 The **Sweep** panel varies a setting, replays the raid over several seeds per value and plots each quantity with its
 confidence interval, computed in the background.
 
-![Sweep of the number of laser aircraft: air kills, ground kills, hits, with confidence intervals](docs/images/balayage.png)
+![Sweep of the number of laser aircraft: air kills, ground kills, hits, with confidence intervals](docs/images/en/balayage.png)
 
 ### Command line
 
@@ -668,7 +668,7 @@ node outils/valider.js prive/unites/capteurs/radars/mon_radar.json prive/algos/a
 node outils/valider.js --json …     # machine report, exit code 0 or 1
 ```
 
-**The complete guide is in [docs/CATALOGUE.md](docs/CATALOGUE.md)** (in French): unit families, inheritance, suffixes,
+**The complete guide is in [docs/CATALOGUE.md](docs/CATALOGUE.md)**: unit families, inheritance, suffixes,
 overrides, roles and contract of algorithms, step-by-step example, private catalogue, conformance, maps, terrains,
 links, deployment keys, and proving a change.
 
@@ -743,8 +743,8 @@ The proof dossier (`node src/preuve.js dossier`) gives 403 ± 26 hits again with
 
 ## Documentation
 
-The project's design documents are in French for now; translating them is part of the multilingual plan
-([docs/PLAN_V3.md](docs/PLAN_V3.md), milestone 27).
+The reference documents exist in English and in French (same name, `.fr.md`); the plans stay in French
+([docs/PLAN_V3.md](docs/PLAN_V3.md), milestone 27 for the languages).
 
 - [docs/MODELE.md](docs/MODELE.md): every equation and assumption.
 - [docs/CATALOGUE.md](docs/CATALOGUE.md): extending Égide — units, algorithms, private catalogue, proving a change.
@@ -764,4 +764,4 @@ ruff check analyse tests
 godot --headless --path clients/godot --script res://scripts/jeu/verifier_jeu.gd   # game rules
 ```
 
-<img src="docs/images/mobile.png" alt="The interface on a phone screen" width="280">
+<img src="docs/images/en/mobile.png" alt="The interface on a phone screen" width="280">

@@ -183,7 +183,7 @@ Même raid, même graine, avec et sans réaction (duel apparié sur 10 graines d
 
 Le dispersé, la tactique la plus facile à défendre, gagne le plus : ses départs étalés laissent aux derniers drones le
 temps d'apprendre des premiers. Les réglages (délai du réseau, rayon d'un site défendu, seuils, esquive) sont des
-clés `rouge.reaction_*` du scénario ; modèle et hypothèses : [docs/MODELE.md § 22](docs/MODELE.md).
+clés `rouge.reaction_*` du scénario ; modèle et hypothèses : [docs/MODELE.fr.md § 22](docs/MODELE.fr.md).
 
 ### Régler le scénario
 
@@ -251,7 +251,7 @@ porte maintenant une **cause**, et un radar peut garder une **portée réduite**
 « Incidents au hasard » du panneau Scénario en tire quelques-uns à la graine du raid (même graine, mêmes incidents) ;
 « Retirer les incidents » les enlève. Chaque début et chaque fin s'annonce à l'écran et s'inscrit au journal. En 2D,
 un radar gêné porte un anneau orange et son pourcentage, une batterie indisponible une croix ; en 3D, l'élément hors
-service s'estompe. Règles : [docs/MODELE.md § 29](docs/MODELE.md).
+service s'estompe. Règles : [docs/MODELE.fr.md § 29](docs/MODELE.fr.md).
 
 ![Incidents tirés au hasard : R2 et R8 gênés par la météo, portée réduite à 51 et 69 % ; la radio de la conduite envoie les premières missions](docs/images/incidents.png)
 
@@ -262,7 +262,7 @@ aussi en **messages radio** sous-titrés : « Égide à Faucon 1 : rejoignez la 
 « Égide, à tous : impact sur C5 » (indicatifs inventés, le plus important d'abord). Le bouton **Son** de la barre de
 lecture (touche M) active les **bruitages**, coupés au départ : explosions, départs de missiles et de roquettes,
 interceptions, radio, alerte d'incident. Ils sont calculés par `node outils/sons/generer.js`, sans aucun son emprunté.
-Rien de cela ne touche à la simulation ([docs/MODELE.md § 30](docs/MODELE.md)).
+Rien de cela ne touche à la simulation ([docs/MODELE.fr.md § 30](docs/MODELE.fr.md)).
 
 ![Au plus près de C9 et C10, de 16:12 à 18:38 : les panaches montent des cibles frappées pendant que la radio annonce contacts et tirs au but](docs/images/ambiance.gif)
 
@@ -272,7 +272,7 @@ Rien de cela ne touche à la simulation ([docs/MODELE.md § 30](docs/MODELE.md))
 d'après le taux d'interception, la **cause** de chaque frappe (non détectée, inconnue de la conduite, jamais engagée,
 engagée mais manquée), les frappes par cible, le bilan de chaque tireur avec ses postes à sec, la chronologie par
 tranche de 5 min et au plus cinq **points faibles** chiffrés. Tout est lu dans le journal du raid
-([docs/MODELE.md § 28](docs/MODELE.md)).
+([docs/MODELE.fr.md § 28](docs/MODELE.fr.md)).
 
 ![Débriefing du raid de référence : note D, 53 % interceptés ; 98 % des frappes viennent de drones connus mais jamais engagés, 60 postes à sec dès 9 min](docs/images/debriefing.png)
 
@@ -465,7 +465,7 @@ par son algorithme de pistage. La vérité terrain revient au même bouton.
 Le **brouillard de guerre** y est rendu : chaque drone apparaît en piste, au dernier plot reçu, mis à jour toutes les
 10 s et écarté d'une erreur d'au plus 300 m, dans un cercle d'incertitude qui grossit avec l'âge du plot. La traînée
 ne garde que les plots déjà reçus. Seul l'affichage change : la simulation garde les positions vraies
-([docs/MODELE.md § 31](docs/MODELE.md)).
+([docs/MODELE.fr.md § 31](docs/MODELE.fr.md)).
 
 ![Vue du CDC à 7:17 : l'essaim qui entre près de R1 n'est plus qu'un faisceau de pistes, chacune dans son cercle d'incertitude](docs/images/brouillard.png)
 
@@ -661,7 +661,7 @@ battent comme les autres.
 Pour mesurer l'effet d'un changement : `node src/preuve.js duel --variante bleu.conduite.allocation=global/allocation/plus_proche`.
 
 **Depuis un outil externe** (modeleur d'unités, générateur d'algorithmes, export d'un autre simulateur) : le format
-exact de chaque fichier est fixé dans [docs/FORMATS.md](docs/FORMATS.md), avec des schémas JSON par famille dans
+exact de chaque fichier est fixé dans [docs/FORMATS.fr.md](docs/FORMATS.fr.md), avec des schémas JSON par famille dans
 `schemas/` (générés depuis le catalogue) et un validateur qui applique les règles de la conformité :
 
 ```sh
@@ -669,7 +669,7 @@ node outils/valider.js prive/unites/capteurs/radars/mon_radar.json prive/algos/a
 node outils/valider.js --json …     # rapport machine, code de sortie 0 ou 1
 ```
 
-**Le guide complet est dans [docs/CATALOGUE.md](docs/CATALOGUE.md)** : familles d'unités, héritage, suffixes,
+**Le guide complet est dans [docs/CATALOGUE.fr.md](docs/CATALOGUE.fr.md)** : familles d'unités, héritage, suffixes,
 surcharges, rôles et contrat des algorithmes, exemple pas à pas, catalogue privé, conformité, cartes, reliefs,
 liaisons, clés du déploiement, et preuve d'un changement.
 
@@ -728,7 +728,7 @@ pas de temps de 0,5 s a convergé alors que celui de 1 s ne l'a pas.
 
 - Unités SI et géodésie WGS84 dans tout le calcul ; Vincenty vérifié sur les exemples de GeographicLib au millimètre.
 - Hasard à graine : une graine rejoue un raid à l'identique, ordres et pannes compris.
-- Chaque formule codée cite son paragraphe de [docs/MODELE.md](docs/MODELE.md), et un test vérifie que chaque renvoi existe.
+- Chaque formule codée cite son paragraphe de [docs/MODELE.fr.md](docs/MODELE.fr.md), et un test vérifie que chaque renvoi existe.
 - Formules fermées et résolution des scénarios en Python et en JavaScript, vérifiées l'une contre l'autre ; simulation
   confrontée aux formules.
 - Chaque refonte prouvée : le moteur géodésique retrouve les statistiques de la v0.1, le passage aux algorithmes en
@@ -739,9 +739,11 @@ pas de temps de 0,5 s a convergé alors que celui de 1 s ne l'a pas.
 
 ## Documentation
 
-- [docs/MODELE.md](docs/MODELE.md) : toutes les équations et hypothèses.
-- [docs/CATALOGUE.md](docs/CATALOGUE.md) : étendre Égide — unités, algorithmes, catalogue privé, preuve d'un changement.
-- [docs/FORMATS.md](docs/FORMATS.md) : formats d'échange pour les outils externes (unités, liaisons, terrains, algorithmes, scénarios).
+Les documents de référence existent en français (`.fr.md`) et en anglais (même nom, `.md`) ; les plans restent en français.
+
+- [docs/MODELE.fr.md](docs/MODELE.fr.md) : toutes les équations et hypothèses.
+- [docs/CATALOGUE.fr.md](docs/CATALOGUE.fr.md) : étendre Égide — unités, algorithmes, catalogue privé, preuve d'un changement.
+- [docs/FORMATS.fr.md](docs/FORMATS.fr.md) : formats d'échange pour les outils externes (unités, liaisons, terrains, algorithmes, scénarios).
 - [docs/PLAN_V2.md](docs/PLAN_V2.md) : feuille de route, jalons, idées et suggestions retenues.
 - [docs/PLAN_3D.md](docs/PLAN_3D.md) : déployer en 2D stricte, observer en 3D, sortie vers un moteur de jeu.
 - [docs/PLAN_JEU.md](docs/PLAN_JEU.md) : Égide comme jeu de stratégie en temps réel, décisions et étapes.
